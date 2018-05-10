@@ -3,15 +3,15 @@ title: "Introduction to R for Social and Behavioral Sciences"
 author: "Corey Sparks, PhD - UTSA Department of Demography"
 date: "October 19, 2017"
 output:
-  pdf_document:
-    highlight: tango
-    toc: yes
-  html_notebook:
-    toc: yes
   html_document:
     keep_md: no
     toc: yes
+  html_notebook:
+    toc: yes
   word_document:
+    toc: yes
+  pdf_document:
+    highlight: tango
     toc: yes
 ---
 
