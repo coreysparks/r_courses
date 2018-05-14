@@ -1,8 +1,10 @@
 ---
-title: "DEM 7263 Bayesian Regression using the INLA Approximation"
-author: "Corey S. Sparks, Ph.D."
-date: "April 5, 2017"
-output: html_document
+title: "Bayesian Spatial Models using the INLA Approximation"
+author: "Corey S. Sparks, Ph.D. - University of Texas at San Antonio"
+date: "May 9, 2018"
+output: 
+  html_document: 
+    toc: yes
 ---
 
 ##The INLA Approach to Bayesian models
