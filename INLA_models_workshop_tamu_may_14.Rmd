@@ -579,7 +579,7 @@ $$y_{ij} = \beta_{0j} + \sum {\beta x_i} + \sum {\gamma z_j}$$
 $$\beta_{0j} = \beta_0 + \sum {\gamma z_j}+ u_j$$ 
 
 with
-$$u_j \sim N(0, \tau_u) \text{  and } e\sim N(0, \tau_e) $$
+$$u_j \sim N(0, \tau_u)$$
 
 ```{r}
 fit_in2<- inla(obese~ race_eth+agec+giniz+zpblack+zphisp+f(struct, model="iid"),
@@ -601,7 +601,7 @@ plot(m2, type="l", main=c("Posterior distibution for between MSA variance", "- M
 Finally, we model the county level means using the Besag-York and Mollie model that we had used on the areal data last week. In this example, we are modeling the correlation between MSAs at the higher level, instead of like last week, where we were modeling the correlation among neighboring counties.
 
 This is a multi level model with correlation between neighboring MSAs, assuming a [Besag, York and Mollie, 1991](https://link.springer.com/article/10.1007/BF00116466)  convolution prior for the random effects
-$$y_{ij} = \beta_{0j} + \sum {\beta x_i} + \sum {\gamma z_j}$$
+$$y_{ij} = \beta_{0} +\sum {\beta x_i} + \sum {\gamma z_j}  + u_j + v_j$$
 
 $$\beta_{0j} = \beta_0 + \sum {\gamma z_j}+ u_j+v_j$$ 
 
@@ -609,9 +609,8 @@ with
 
 $$u_j \sim N(0, \tau_u)$$
 
-$$v_j \sim N(\frac{1}{\boldsymbol{N}_{i\neq j}} \sum a_{ij}u_j, \tau_v)$$
+$$v_j|v_{\neq j},\sim\text{Normal}(\frac{1}{n_i}\sum_{i\sim j}v_j,\frac{1}{n_i\tau})$$
 
-$$e\sim N(0, \tau_e) $$
 
 ```{r}
 
