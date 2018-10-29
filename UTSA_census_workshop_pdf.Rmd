@@ -350,7 +350,7 @@ First, since this is a different package, you'll need to add your API key to you
 
 ```{r, eval=F}
 
-Sys.setenv(CENSUS_KEY="f67be5a86e696eebf0c84a5a20d85f2c04f7e9ef")
+Sys.setenv(CENSUS_KEY="yourkeyhere")
 # Reload .Renviron
 readRenviron("~/.Renviron")
 # Check to see that the expected key is output in your R console
