@@ -153,7 +153,7 @@ I recommend you install your API key in your Rprofile, just so you don't have to
 #don't use my key, put yours in here
 #use install=T one time only
 #library(censusapi)
-census_api_key(key =  "f67be5a86e696eebf0c84a5a20d85f2c04f7e9ef")
+census_api_key(key =  "yourkeyhere")
 ```
 
 \newpage
