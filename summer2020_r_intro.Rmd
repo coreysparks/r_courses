@@ -23,6 +23,11 @@ If you're coming from SPSS and you've been using the button clicking method, be 
 
 The Rgui is the base version of R, but is not very good to program in. Rstudio is much better, as it gives you a true integrated development environment (IDE), where you can write code in on window, see results in others, see locations of files, see objects you've created
 
+## Installation
+Download R from [CRAN](https://cran.r-project.org/)
+If you're on Windows, I would also install [Rtools](https://cran.r-project.org/), becuase it gives you compilers
+
+I highly recommend Rstudio for an integrated development environment for R. Download that [here](https://rstudio.com/products/rstudio/download/)
 
 ### R file types
 *.R files*
@@ -31,7 +36,7 @@ R uses a basic script file with the .R extension. This type of file is useful if
 *.Rmd files*
 Rstudio uses a form of the markdown formatting language, called Rmarkdown, for creating formatted documents that include code chunks, tables, figures and statistical output. **This entire example is written in Rmarkdown!** 
 
-Rmarkdown is nice for lots of reasons, such as the abiltity to insert latex equations into documents 
+Rmarkdown is nice for lots of reasons, such as the ability to insert latex equations into documents 
 
 $$y_i \sim Normal (x` \beta, \sigma_2)$$
 or to include output tables directly into a document:
@@ -47,7 +52,7 @@ pander(broom::tidy(summary(fit)))
 
 ```
 
-without having to make tables in Word or some other program. You can basically do your entire anlaysis and slideshow or paper writeup, including bibliography in Rstudio.
+without having to make tables in Word or some other program. You can basically do your entire analysis and slideshow or paper write up, including bibliography in Rstudio.
 
 
 ## Getting help in R
@@ -66,7 +71,7 @@ I wish I had a nickel for every time I ran into a problem trying to do something
 
 `RSiteSearch("heteroskedasticity")`
 
-4) Speaking of which, there are multiple [R user email list serves](https://www.r-project.org/mail.html) that you can ask questions on, but they typically want an example of what you're trying to do. I wish I also had nickles for each question i've asked and answered on these forums.
+4) Speaking of which, there are multiple [R user email list serves](https://www.r-project.org/mail.html) that you can ask questions on, but they typically want an example of what you're trying to do. I wish I also had nickles for each question I've asked and answered on these forums.
 
 5) A good source for all things programming is the statistics branch of [Stack Exchange](https://stats.stackexchange.com), which has lots of contributed questions and answers, although many answers are either very snarky or wrong or for an old version of a library, so *caveat emptor*.
 
