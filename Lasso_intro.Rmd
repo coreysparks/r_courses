@@ -238,7 +238,7 @@ test3$beta
 
 In these examples, we will use the Demographic and Health Survey [Model Data](https://dhsprogram.com/data/Model-Datasets.cfm). These are based on the DHS survey, but are publicly available and are used to practice using the DHS data sets, but don't represent a real country.
 
-In this example, we will use the outcome of contraceptive choice (modern vs other/none) as our outcome.
+In this example, we will use the outcome of contraceptive choice (modern vs other/none) as our outcome. An excellent guide for this type of literature is this [article](https://journals.sagepub.com/doi/pdf/10.1177/0021909614547462)
 
 ```{r, warning=TRUE}
 library(haven)
@@ -261,12 +261,15 @@ model.dat2<-model.dat%>%
          livchildren=v218,
          educ = v106,
          currpreg=v213,
+         wealth = as.factor(v190),
+         partnered = ifelse(v701<=1, 0, 1),
+         work = ifelse(v731%in%c(0,1), 0, 1),
          knowmodern=ifelse(v301==3, 1, 0),
          age2=v012^2, 
          rural = ifelse(v025==2, 1,0),
          wantmore = ifelse(v605%in%c(1,2), 1, 0))%>%
-  filter(currpreg==0, v536>0)%>% #notpreg, sex active
-  dplyr::select(caseid, region, modcontra,age, age2,livchildren, educ, knowmodern, rural, wantmore)
+  filter(currpreg==0, v536>0, v701!=9)%>% #notpreg, sex active
+  dplyr::select(caseid, region, modcontra,age, age2,livchildren, educ, knowmodern, rural, wantmore, partnered,wealth, work)
 
 ```
 
@@ -290,7 +293,7 @@ dtest<-model.dat2[-train,]
 ```{r}
 library(glmnet)
 library(MASS)
-fm<-glm(modcontra~region+factor(age)+livchildren+wantmore+rural+factor(educ), data = dtrain, family=binomial) 
+fm<-glm(modcontra~region+factor(age)+livchildren+wantmore+rural+factor(educ)+partnered+work+wealth, data = dtrain, family=binomial) 
 summary(fm)
 ```
 
@@ -306,15 +309,17 @@ coef(smod)
 ### Best subset regression
 ```{r}
 y<-dtrain$modcontra
-x<-model.matrix(~factor(region)+factor(age)+livchildren+rural+wantmore+factor(educ), data=dtrain)
+x<-model.matrix(~factor(region)+factor(age)+livchildren+rural+wantmore+factor(educ)+partnered+work+factor(wealth), data=dtrain)
 x<-(x)[,-1]
 
 yx<-as.data.frame(cbind(x[,-1],y))
 names(yx)
 #names(yx)<-c(paste("X",1:13, sep=""),"y")
+```
+```{r, eval=FALSE}
 library(bestglm)
 
-b1<-bestglm(yx,IC = "AIC", family=binomial, method = "exhaustive")
+b1<-bestglm(yx, family=binomial)
 b1$BestModels
 summary(b1$BestModel)
 ```
@@ -387,7 +392,7 @@ table(predicted.classes, observed.classes)
 
 ### Logistic ridge regression
 ```{r}
-x.test <- model.matrix(~factor(region)+factor(age)+livchildren+rural+wantmore+factor(educ), data=dtest)
+x.test <- model.matrix(~factor(region)+factor(age)+livchildren+rural+wantmore+factor(educ)+partnered+work+factor(wealth), data=dtest)
 x.test<-(x.test)[,-1]
 ytest<-dtrain$modcontra
 
