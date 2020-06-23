@@ -1,0 +1,419 @@
+---
+title: "Demography Informal Methods Seminar - Lasso and Regularized Regression"
+author: "Corey Sparks, Ph.D. - UTSA Department of Demography"
+date: "6/23/2019"
+output:
+   html_document: 
+    df_print: paged
+    fig_height: 7
+    fig_width: 7
+    toc: yes
+    includes:
+      in_header: logo.html
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Regularization in Regression
+
+I would suggest you read Chapter 6 and especially section 6.2 of [An Introduction to Statistical Learning](https://utsacloud-my.sharepoint.com/:b:/g/personal/corey_sparks_utsa_edu/EcwJ43xnPG5Jg2XquDnHdmkBPstgvNIyqTTugCfEeFGDFQ?e=SSlWyT) to get a full treatment of this topic.
+
+
+If you want to read the sources for the Lasso, check out the paper by [Friedman, Hastie and Tibshirani (2010) ](https://web.stanford.edu/~hastie/Papers/glmnet.pdf)
+
+Why do I want to talk about this? The Lasso and regularization are a popular technique in data science today that allows you to perform both variable selection and optimized prediction in one algorithm. It also can alleviate some problems of multicollinearity between predictors. The Lasso can be applied to linear, generalized linear, generalized linear mixed models and the Cox model, and there are R packages that provide this functionality. 
+
+
+We will first have a look at the linear model solution and extend it.
+
+# The good ol' (generalized) linear model
+
+### Linear regression
+The standard linear regression can be written:
+
+$$\hat y = \hat \beta_0 + \sum {\hat \beta_k x_{ik}}$$
+
+where the terms on the right correspond to the linear predictor for the outcome ($y$), given the values of the predictors ($x_k$). The $\hat \beta$ values are the unbiased estimates of the regression parameters, for the linear model, typically found by least squares estimation. 
+
+### Generalized linear model
+* Extension of the linear modeling concept to non-gaussian outcomes.
+
+* Link function $\eta$ links the mean of the outcome to a linear predictor with a nonlinear function $\eta$
+
+* E.G. Logistic regression - 
+
+$$log \left( \frac{p_i}{1-p_i} \right ) =\eta_i = \sum {\beta_k x_{ik}}$$
+To get the probability from the model, we use the inverse logit transform: 
+$$p_i = \frac{1}{1+exp^{\eta}}$$
+
+### Model estimation
+Find the parameters of the model so that the model *Deviance* is minimized. In the linear regression context, Deviance is the same as the *Residual Squared Error* or *Residual Sums of Squares*
+
+$$\text{Deviance} =  \sum (y_i - \sum{\hat{\beta_k x_{ik}}}) ^2  $$
+
+The problem is when there are parameters in the model that are zero or nearly zero, the model may have higher deviance than it could if some of those parameters were not in the model. 
+
+The question is how to go about doing this? 
+
+You may have seen methods of regression subsetting via stepwise, forward or backward selection. These methods iteratively insert or remove predictor variables from the model, and in this process the models are scored via either their RSS or AIC or some other information criteria. 
+
+Here is an example where we fit a linear model and the perform variable subset selection. 
+
+```{r, echo=F, results='asis'}
+library(dplyr)
+load(url("https://github.com/coreysparks/r_courses/blob/master/prb_2008.Rdata?raw=true"))
+
+names(prb)<-tolower(names(prb))
+```
+
+```{r, results='hide', message=FALSE, echo=FALSE}
+library(mice)
+prb2<- prb%>%
+  dplyr::select(-y, -x,-id, -country,-region, -year, -e0male, -e0female, -popdenspersqmile, -percpop1549hivaids2001, -projectedpopmid2025, -projectedpopmid2050, -projectedpopchange_08_50perc)
+imps<-mice(m = 10, data = prb2)
+prb2<-complete(imps)
+```
+
+A common data science approach would be to fit a model with all predictors included, and then winnow the model to include only the significant predictors. We start with this type of model:
+
+```{r}
+library(MASS)
+X<-scale(model.matrix(e0total~. , data=prb2))
+dat<-data.frame(X[,-1])
+dat$y<-prb2$e0total
+
+fm<-glm(y~., data=dat) 
+summary(fm)
+length(coef(fm))
+```
+
+One traditional approach would then be to do some sort of variable selection, what people used to be taught was stepwise (backward or forward) elmination to obtain the best subset of predictors:
+
+### Stepwise selection model 
+
+```{r}
+smod<-fm%>%
+  stepAIC(trace = F, direction = "both")
+
+summary(smod)
+length(smod$coefficients)
+```
+Sure enough, there are fewer predictors in the model, and those that remain have small p values. 
+
+We can also see the relative model fits of the two models:
+
+```{r}
+AIC(fm)
+AIC(smod)
+```
+
+This shows that the original model had `r length(coef(fm))` parameters, while the model that used AIC to find the best subset had `r length(smod$coef)` parameters, and the relative model fit, in terms of AIC went from `r AIC(fm)` for the saturated model to `r AIC(smod)` for the stepwise model. 
+
+
+An alternative to stepwise selection is called *Best Subset Regression* and considers all possible combinations of variables from the data, and scores the model based on seeing all possible predictors. 
+
+```{r}
+library(bestglm)
+yx<-data.frame(cbind(X[,-1],prb2$e0total))
+b1<-bestglm(yx,IC = "AIC", family=gaussian, method = "exhaustive")
+
+summary(b1$BestModel)
+```
+This creates a parsimonious model, with only `r length(b1$BestModel$coefficients)` coefficients and an AIC of `r AIC(b1$BestModel)` which is slightly lower than the stepwise model. 
+
+## Model shrinkage
+
+Variable selection methods are one way to approach finding the most parsimonious model in an analysis, but alternative methods also exist. The modern approach to doing this is lumped under the term *shrinkage methods*
+
+```{r, out.width = "600px"}
+knitr::include_graphics("/media/corey/extra/predictive_workinggroup/images/shrink2.gif")
+```
+
+As opposed to the variable selection methods, shrinkage models fit a model that contains all the predictors in the data, and constrains or regularizes the coefficients so that they shrink towards 0, effectively eliminating the unnecessary parameters from the model. 
+
+There are two main classes of these methods, *Ridge regression* and the *Lasso*. 
+
+## Ridge regression
+Ridge regression is very similar to other regression methods, except the estimates are estimated using a slightly different objective criteria. The estimates of the model coefficient are estimates so that the quantity: 
+
+$$\text{Penalized Deviance} =  \sum (y_i - \sum{\hat{\beta_k x_k}}) ^2 + \lambda \sum_k \beta_k^2 = \text{Deviance} + \lambda \sum_k \beta_k^2$$
+is minimized. This looks a lot like the ordinary Deviance for the models above, except it adds a penalization term to the fit criteria. The term $\lambda$, $\lambda \geq 0$ is a tuning parameter. The Ridge regression coefficients are those that both fit the data well, and penalize the deviance the least. 
+
+Then penalty term is small when the $\beta$s are close to 0. As the value of $\lambda$ increases, the coefficients will be forced to 0. This implies another set of estimation so that the "best" value for $\lambda$ can be found. 
+
+Unlike regular regression, which produces 1 set of regression parameters, the Ridge regression produces a set of regression parameters, each one for a given value of $\lambda$. The best value for $\lambda$ is found by a grid search over a range of values.
+
+Here is an example
+
+```{r}
+library(glmnet)
+x<-X[,-1]
+y<-as.matrix(yx[, 26])
+
+ridgemod<-glmnet(x=x,y=y, alpha = 0, nlambda = 100)
+plot(ridgemod, label = T, xvar = "lambda")
+
+```
+
+So, the y axis represents the value of the $\beta$'s from the model, and the x axis are the various values of $\lambda$ for each specific value of  $\lambda$. As you see when $\lambda$ is 0, the coefficients can be quite large, and as $\lambda$ increase, the $\beta$'s converge to 0. This is nice, but we need to find a "best" value of $\lambda$. This is done via cross-validation, typically.
+
+```{r}
+s1<-cv.glmnet(x =x, y=y, family="gaussian", alpha = 0) #alpha = 0 for ridge regression
+plot(s1)
+s1
+```
+
+The plot shows the mean square error for the model with a particular value of log($\lambda$). The dotted lines represent the "best" value and the value of $\lambda$ that is 1 standard error larger than the true minimum. 
+
+Why the two values? Well, the minimum value of $\lambda$, in this case about `r log(s1$lambda.min)`, and the minimum + 1se is `r log(s1$lambda.1se)`. The smaller value gives the simplest model, while the 1 se value gives the simplest model that also has high accuracy. 
+
+How do the coefficient compare?
+
+```{r}
+options(scipen=999)
+ridgemod2<-glmnet(x=x,y=y, alpha = 0, lambda = s1$lambda.min)
+ridgemod2
+ridgemod2$beta
+
+df1<-data.frame(names = names(coef(fm)) , beta=round(coef(fm),4), mod="gm")
+df2<-data.frame(names = c(names(coef(fm)[1]), row.names(ridgemod2$beta)), beta=round(as.numeric(coef(s1, s = s1$lambda.min)),4), mod="ridge")
+
+dfa<-rbind(df1, df2)
+
+library(ggplot2)
+dfa%>%
+  ggplot()+geom_point(aes(y=beta,x=names, color=mod))+theme_minimal()+theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1))
+```
+
+
+
+An important note about the ridge regression is that no coefficients are forced to zero, so it is not doing variable selection, only shrinkage of the coefficients. The Lasso, on the other hand can do both.
+
+## Lasso
+```{r, out.width = "600px"}
+knitr::include_graphics("/media/corey/extra/predictive_workinggroup/images/cowboy.jpeg")
+```
+
+What is the Lasso? Lasso is short for *least absolute shrinkage and selection operator*. It is designed so that it produces a model that is both strong in the prediction sense, and parsimonious, in that it performs feature (variable) selection as well. 
+
+The Lasso is similar to the ridge regression model, in that it penalizes the regression parameter solution, except that the penalty term is not the sum of squared $\beta$'s, but the sum of the absolute values of the $\beta$'s.
+
+
+$$   \text{Deviance} + \lambda \sum_k | \beta_k| $$
+```{r}
+
+ridgemod3<-glmnet(x=x,y=y, alpha = 1) #alpha = 1 for Lasso
+plot(ridgemod3, label = T, xvar = "lambda")
+
+s2<-cv.glmnet(x =x, y=y, family="gaussian", alpha = 1) #alpha = 1 for Lasso
+plot(s2)
+s2
+
+test<-glmnet(x =x, y=y, family="gaussian", alpha = 1, lambda = s2$lambda.1se)
+test
+print(test$beta)
+```
+
+
+## Elastic net
+
+A third method, the *Elastic net* regression, blends the shrinkage aspects of the ridge regression with the feature selection of the Lasso. This was proposed by Zou and Hastie [2005](https://rss.onlinelibrary.wiley.com/doi/abs/10.1111/j.1467-9868.2005.00503.x)
+
+$$\text{Deviance} + \lambda [(1-\alpha) \sum_k |\beta_k| + \alpha \sum_k  \beta_k^2]$$
+```{r}
+
+ridgemod4<-glmnet(x=x,y=y, alpha = .5, nlambda = 100) #alpha = .5 for elastic net
+plot(ridgemod4, label = T, xvar = "lambda")
+
+s3<-cv.glmnet(x =x, y=y, family="gaussian", alpha = .5) #alpha = .5 for elastic net
+plot(s3)
+s3
+
+test3<-glmnet(x =x, y=y, family="gaussian", alpha = .5, lambda = s3$lambda.1se)
+test3$beta
+```
+
+
+In these examples, we will use the Demographic and Health Survey [Model Data](https://dhsprogram.com/data/Model-Datasets.cfm). These are based on the DHS survey, but are publicly available and are used to practice using the DHS data sets, but don't represent a real country.
+
+In this example, we will use the outcome of contraceptive choice (modern vs other/none) as our outcome.
+
+```{r, warning=TRUE}
+library(haven)
+dat<-url("https://github.com/coreysparks/data/blob/master/ZZIR62FL.DTA?raw=true")
+model.dat<-read_dta(dat)
+
+```
+
+
+
+Here we recode some of our variables and limit our data to those women who are not currently pregnant and who are sexually active.
+
+```{r}
+library(dplyr)
+
+model.dat2<-model.dat%>%
+  mutate(region = v024, 
+         modcontra= ifelse(v364 ==1,1, 0),
+         age = cut(v012, breaks = 5), 
+         livchildren=v218,
+         educ = v106,
+         currpreg=v213,
+         knowmodern=ifelse(v301==3, 1, 0),
+         age2=v012^2, 
+         rural = ifelse(v025==2, 1,0),
+         wantmore = ifelse(v605%in%c(1,2), 1, 0))%>%
+  filter(currpreg==0, v536>0)%>% #notpreg, sex active
+  dplyr::select(caseid, region, modcontra,age, age2,livchildren, educ, knowmodern, rural, wantmore)
+
+```
+
+```{r, results='asis'}
+
+knitr::kable(head(model.dat2))
+
+```
+
+
+```{r}
+library(caret)
+set.seed(1115)
+train<- createDataPartition(y = model.dat2$modcontra , p = .80, list=F)
+
+dtrain<-model.dat2[train,]
+dtest<-model.dat2[-train,]
+```
+
+## Logistic regression
+```{r}
+library(glmnet)
+library(MASS)
+fm<-glm(modcontra~region+factor(age)+livchildren+wantmore+rural+factor(educ), data = dtrain, family=binomial) 
+summary(fm)
+```
+
+## stepwise logistic
+```{r}
+smod<-fm%>%
+  stepAIC(trace = T, direction = "both")
+
+coef(smod)
+```
+
+
+### Best subset regression
+```{r}
+y<-dtrain$modcontra
+x<-model.matrix(~factor(region)+factor(age)+livchildren+rural+wantmore+factor(educ), data=dtrain)
+x<-(x)[,-1]
+
+yx<-as.data.frame(cbind(x[,-1],y))
+names(yx)
+#names(yx)<-c(paste("X",1:13, sep=""),"y")
+library(bestglm)
+
+b1<-bestglm(yx,IC = "AIC", family=binomial, method = "exhaustive")
+b1$BestModels
+summary(b1$BestModel)
+```
+
+## Logistic ridge regression
+```{r}
+
+s1<-cv.glmnet(x = x,y = y, data = dtrain, family="binomial", alpha = 0)
+plot(s1)
+
+```
+
+```{r}
+rmod<-glmnet(x,y, data = dtrain, family="binomial", alpha = 0)
+plot(rmod)
+```
+
+```{r}
+
+rmod1<-glmnet(x,y, data = dtrain, family="binomial", alpha = 0, lambda = s1$lambda.1se)
+rmod1$beta
+
+
+```
+
+## Logistic Lasso
+```{r}
+
+s2<-cv.glmnet(x = x,y = y, data = dtrain, family="binomial", alpha = 1)
+plot(s2)
+
+```
+
+```{r}
+rmod2<-glmnet(x,y, data = dtrain, family="binomial", alpha = 1)
+plot(rmod2)
+```
+
+```{r}
+
+rmod3<-glmnet(x,y, data = dtrain, family="binomial", alpha = 1, lambda = s2$lambda.1se)
+rmod3$beta
+
+
+```
+
+
+
+## classification results
+### Regular GLM
+```{r}
+
+probabilities <- fm %>% predict(dtest, type = "response")
+predicted.classes <- ifelse(probabilities > mean(dtest$modcontra, na.rm=T), 1, 0)
+# Prediction accuracy
+observed.classes <- dtest$modcontra
+mean(predicted.classes == observed.classes, na.rm=T)
+table(predicted.classes, observed.classes)
+```
+
+### stepwise logistic model
+```{r}
+probabilities <- predict(smod, dtest, type = "response")
+predicted.classes <- ifelse(probabilities > mean(dtest$modcontra, na.rm=T), 1, 0)
+# Prediction accuracy
+observed.classes <- dtest$modcontra
+mean(predicted.classes == observed.classes)
+table(predicted.classes, observed.classes)
+```
+
+### Logistic ridge regression
+```{r}
+x.test <- model.matrix(~factor(region)+factor(age)+livchildren+rural+wantmore+factor(educ), data=dtest)
+x.test<-(x.test)[,-1]
+ytest<-dtrain$modcontra
+
+probabilities <-   predict(object=rmod1, newx = x.test, s=s1$lambda.1se, type="response")
+predicted.classes <- ifelse(probabilities > mean(dtest$modcontra), 1,0)
+# Model accuracy
+observed.classes <- dtest$modcontra
+mean(predicted.classes == observed.classes)
+table(predicted.classes, observed.classes)
+```
+
+### Logistic Lasso
+```{r}
+
+probabilities <-   predict(object=rmod3, newx = x.test, s=s2$lambda.1se, type="response")
+predicted.classes <- ifelse(probabilities > mean(dtest$modcontra), 1,0)
+# Model accuracy
+observed.classes <- dtest$modcontra
+mean(predicted.classes == observed.classes)
+table(predicted.classes, observed.classes)
+```
+
+### So what?
+
+By doing any type of regression variable selection, you are going to have the computer tell you what variables are going into your models. A lot of people don't like this, but it is very common in the applied world in order to build the best models, especially in high-dimensional data.
+
+#### Take aways
+1. These methods will lead to more parsimonius models with better predictive power
+2. The models are sensitive to their tuning parameters, so please don't jump into this without tuning the model parameters. 
