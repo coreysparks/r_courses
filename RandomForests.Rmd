@@ -1,0 +1,445 @@
+---
+title: "Demography Informal Methods Seminar - Classification Trees"
+author: "Corey Sparks, Ph.D. - UTSA Department of Demography"
+date: "6/30/2020"
+output:
+  pdf_document: 
+    latex_engine: xelatex
+    toc: yes
+  html_document: 
+    toc: yes
+    includes:
+      in_header: logo.html
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Classification models
+
+I would suggest you read section 5.1 of [Introduction to Statistical Learning](https://utsacloud-my.sharepoint.com/:b:/g/personal/corey_sparks_utsa_edu/EcwJ43xnPG5Jg2XquDnHdmkBPstgvNIyqTTugCfEeFGDFQ?e=SSlWyT) to get a full treatment of this topic
+
+In classification methods, we are typically interested in using some observed characteristics of a case to predict a binary categorical outcome. This can be extended to a multi-category outcome, but the largest number of applications involve a 1/0 outcome.
+
+In these examples, we will use the Demographic and Health Survey [Model Data](https://dhsprogram.com/data/Model-Datasets.cfm). These are based on the DHS survey, but are publicly available and are used to practice using the DHS data sets, but don't represent a real country.
+
+In this example, we will use the outcome of contraceptive choice (modern vs other/none) as our outcome.
+
+```{r}
+library(haven)
+dat<-url("https://github.com/coreysparks/data/blob/master/ZZIR62FL.DTA?raw=true")
+model.dat<-read_dta(dat)
+
+```
+
+Here we recode some of our variables and limit our data to those women who are not currently pregnant and who are sexually active.
+
+```{r}
+library(dplyr)
+
+model.dat2<-model.dat%>%
+  mutate(region = v024, 
+         modcontra= ifelse(v364 ==1,1, 0),
+         age = cut(v012, breaks = 5), 
+         livchildren=v218,
+         educ = v106,
+         currpreg=v213,
+         wealth = as.factor(v190),
+         partnered = ifelse(v701<=1, 0, 1),
+         work = ifelse(v731%in%c(0,1), 0, 1),
+         knowmodern=ifelse(v301==3, 1, 0),
+         age2=v012^2, 
+         rural = ifelse(v025==2, 1,0),
+         wantmore = ifelse(v605%in%c(1,2), 1, 0))%>%
+  filter(currpreg==0, v536>0, v701!=9)%>% #notpreg, sex active
+  dplyr::select(caseid, region, modcontra,age, age2,livchildren, educ, knowmodern, rural, wantmore, partnered,wealth, work)
+
+```
+
+```{r, results='asis'}
+
+knitr::kable(head(model.dat2))
+
+```
+
+
+## Cross-validation of predictive models
+
+The term [cross-validation](https://www.cs.cmu.edu/~schneide/tut5/node42.html) refers to fitting a model on a subset of data and then testing it on another subset of the data. Typically this process is repeated several times. 
+
+The simplest way of doing this is to leave out a single observation, refit the model without it in the data, then predict its value using the rest of the data. This is called **hold out** cross-validation.
+
+**K-fold** cross-validation is a process where you leave out a "group" of observations, it is as follows:
+
+1. Randomize the data
+2. Split the data into k groups, where k is an integer 
+3. For each of the k groups, 
+    + Take one of the groups as a hold out test set
+    + Use the other k-1 groups as training data
+    + Fit a model using the data on the k-1 groups, and test it on the hold out group
+    + Measure predictive accuracy of that model, and **throw the model away!**
+4. Summarize the model accuracy over the measured model accuracy metrics
+
+A further method is called **leave one out, or LOO** cross-validation. This combines hold out and k-fold cross-validation.
+
+
+# Why?
+By doing this, we can see how model accuracy is affected by particular individuals, and overall allows for model accuracy to be measured repeatedly so we can assess things such as model **tuning parameters**.
+
+If you remember from [last time](https://rpubs.com/corey_sparks/631537), the Lasso analysis depended upon us choosing a good value for the **penalty term** $\lambda$. In a cross-validation analysis, we can use the various resamplings of the data to examine the model's accuracy sensitivity to alternative values of this parameter. 
+
+This evaluation can either be done systematically, along a grid, or using a random search. 
+
+
+## Alternative accuracy measures
+We talked last time about using model accuracy as a measure of overall fit. This was calculated using the observed and predicted values of our outcome. For classification model, another commonly used metric of model predictive power is the Receiver Operating Characteristics (**ROC**) curve. This is a probability curve, and is often accompanied by the area under the curve (**AUC**) measure, which summarizes the separability of the classes. Together they tell you how capable the model is of determining difference between the classes in the data. The higher the values of these, the better, and they are both bound on (0,1). 
+
+A nice description of these are found [here](https://towardsdatascience.com/understanding-auc-roc-curve-68b2303cc9c5). 
+
+
+## Regression trees
+
+Regression trees are a common technique used in classification problems. Regression or classification trees attempt to find optimal splits in the data so that the best classification of observations can be found. Chapter 8 of [Introduction to Statistical Learning](https://utsacloud-my.sharepoint.com/:b:/g/personal/corey_sparks_utsa_edu/EcwJ43xnPG5Jg2XquDnHdmkBPstgvNIyqTTugCfEeFGDFQ?e=SSlWyT) is a good place to start with this. 
+
+Regression trees generate a set of splitting rules, which classify the data into a set of classes, based on combinations of the predictors.
+![regression partition](/home/corey/Documents/seminar/rp1.png)
+
+This example, from the text, shows a 3 region partition of data on baseball hitter data. The outcome here is salary in dollars. Region 1 is players who've played less than 4.5 years, they typically have lower salary. The other 2 regions consist of players who've played longer than 4.5 years, and who have either less than 117.5 or greater than 117.5 hits. Those with more hits have higher salary than those with lower hits. 
+
+The regions can be thought of as nodes (or leaves) on a tree. 
+
+Here is a regression tree for these data. The Nodes are the mean salary (in thousands) for players in that region. For example, if a player has less than 4.5 years experiences, and have less than 39.5 hits, their average salary is 676.5 thousand dollars.
+
+```{r, fig.width=7, fig.height=5}
+library(tree)
+data(Hitters, package = "ISLR")
+head(Hitters)
+fit1<-tree(Salary ~ Years+Hits, data=Hitters)
+fit1
+plot(fit1); text(fit1, pretty=1)
+```
+
+The cut points are decided by minimizing the residual sums of squares for a particular region. So we identify regions of the predictor space, $R_1, R_2, \dots, R_j$ so that 
+
+$$\sum_j \sum_{\in R_j} \left ( y_i - \hat{y_{R_j}} \right )^2$$
+where $\hat{y_{R_j}}$ is the mean for a particular region *j*.
+
+Often this process may over-fit the data, meaning it creates too complicated of a tree (too many terminal nodes). It's possible to *prune* the tree to arrive at a simpler tree split that may be easier to interpret. 
+
+We can tune the tree depth parameter by cross-validation of the data, across different tree depths. In this case a depth of 3 is optimal.
+
+```{r}
+cvt<-cv.tree(fit1)
+plot(cvt$size, cvt$dev, type="b")
+
+```
+
+Then, we can prune the tree, to basically get the tree version of the figure from above
+
+```{r}
+tree2<-prune.tree(fit1, best=3)
+plot(tree2); text(tree2, pretty=1)
+# plot(x=Hitters$Years, y=Hitters$Hits)
+# abline(v=4.5,  col=3, lwd=3)
+# abline(h=117.5, col=4, lwd=3)
+
+```
+
+Prediction works by assigning the mean value from a region to an observation who matches the decision rule. For example, let's make up a player who has 6 years experience and 200 hits
+
+```{r}
+
+new<-data.frame(Hits=200, Years=6)
+
+pred<-predict(fit1, newdata = new)
+pred
+```
+
+### Classification trees
+If our outcome is categorical, or binary, the tree will be a *classification tree*. Instead of the mean of a particular value being predicted, the classification tree predicts the value of the *most common class* at a particular terminal node. So in addition to the tree predicting the class at each node, it also gives the class proportions at each node. The *classification error rate* is the percent of of observations at a node that do not belong to the most common class. 
+
+$$Error = 1- max (\hat p_{mk})$$
+This is not a good method for growing trees, and instead either the Gini index or the entropy is measured at each node:
+
+$$Gini = \sum_k \hat p_{mk}(1-\hat p_{mk})$$
+The Gini index is used as a measure of *node purity*, if a node only contains 1 class, it is considered *pure*
+
+$$Entropy = D = - \sum_k \hat p_{mk} \text{log} \hat p_{mk}$$
+
+### Bagging and Random Forests
+The example above is a single "tree", if we did this type of analysis a large number of times, then we would end up with a *forest* of such trees. 
+
+**Bagging** is short for *bootstrap aggragation*. This is a general purpose procedure for reducing the variance in a statistical test, but it is also commonly used in regression tree contexts. How this works in this setting is the data are bootstrapped into a large number of training sets, each of the same size. The regression tree is fit to each of these large number of trees and not pruned. By averaging these bootstrapped trees, the accuracy is actually higher than for a single tree alone. 
+
+**Random forests** not only bag the trees, but at each iteration a different set of predictors is chosen from the data, so not only do we arrive at a more accurate bagged tree, but we can also get an idea of how important any particular variable is, based on its averaged Gini impurity across all the trees considered. 
+
+```{r, echo=F, results='asis'}
+library(dplyr)
+load(url("https://github.com/coreysparks/r_courses/blob/master/prb_2008.Rdata?raw=true"))
+
+names(prb)<-tolower(names(prb))
+```
+
+```{r, results='hide', message=FALSE, echo=FALSE}
+library(mice)
+prb2<- prb%>%
+  dplyr::select(-y, -x,-id, -country,-region, -year, -e0male, -e0female, -popdenspersqmile, -percpop1549hivaids2001, -projectedpopmid2025, -projectedpopmid2050, -projectedpopchange_08_50perc)
+imps<-mice(m = 10, data = prb2)
+prb2<-complete(imps)
+
+```
+
+### simple example using PRB data - Regression tree
+```{r, fig.width=7, fig.height=6}
+#set up training set identifier
+train1<-sample(1:dim(prb2)[1], size = .75*dim(prb2)[1], replace=T)
+
+fit<-tree(e0total~., data=prb2[train1,])
+fit
+plot(fit); text(fit, pretty=1)
+
+
+cv.fit<-cv.tree(fit)
+plot(cv.fit$size, cv.fit$dev, type="b")
+
+
+pt1<-prune.tree(fit, best=7)
+plot(pt1); text(pt1, pretty=1)
+```
+
+### Bagged regression tree from PRB data - 100 trees - 3 variables each
+```{r, fig.width=7, fig.height=6}
+library(randomForest)
+set.seed(1115)
+bag.1<-randomForest(e0total~., data=prb2[train1,], mtry=3, ntree=100,importance=T) #mtry = 3; choose 3 variables for each tree
+bag.1
+plot(bag.1)
+importance(bag.1)
+varImpPlot(bag.1, n.var = 10, type=2)
+```
+
+
+### Classification tree for life expectancy - low or high
+```{r, fig.width=7, fig.height=6}
+prb2$lowe0<-as.factor(ifelse(prb2$e0total<median(prb2$e0total), "low", "high"))
+
+fit<-tree(lowe0~., data=prb2[train1,-12])
+fit
+plot(fit); text(fit, pretty=1)
+
+cv.fit<-cv.tree(fit)
+cv.fit
+plot(cv.fit$size, cv.fit$dev, type="b")
+
+pt1<-prune.tree(fit, best=cv.fit$size[which.min(cv.fit$dev)])
+plot(pt1); text(pt1, pretty=1)
+```
+
+### Random forest tree for PRB low life expectancy
+```{r}
+#Tune to find best number of variables to try
+t1<-tuneRF(y=prb2$lowe0, x=prb2[,c(-12,-23)], trace=T, stepFactor = 2, ntreeTry = 1000, plot=T)
+t1
+
+bag.2<-randomForest(lowe0~., data=prb2[train1,-12], mtry=4, ntree=500,importance=T)
+bag.2
+plot(bag.2)
+importance(bag.2,scale = T )
+varImpPlot(bag.2, n.var = 10, type=2)
+
+pred<-predict(bag.2, newdata=prb2[-train1,])
+table(pred, prb2[-train1, "lowe0"])
+mean(pred==prb2[-train1, "lowe0"]) #accuracy
+```
+
+## More complicated example
+### using caret to create training and test sets.
+We use an 80% training fraction
+```{r}
+library(caret)
+set.seed(1115)
+train<- createDataPartition(y = model.dat2$modcontra , p = .80, list=F)
+
+dtrain<-model.dat2[train,]
+dtest<-model.dat2[-train,]
+```
+
+
+### Create design matrix
+
+If we have a mixture of factor variables and continuous predictors in our analysis, it is best to set up the design matrix for our models before we run them. Many methods within `caret` won't use factor variables correctly unless we set up the dummy variable representations first.
+
+```{r}
+y<-dtrain$modcontra
+y<-as.factor(ifelse(y==1, "mod", "notmod"))
+x<-model.matrix(~factor(region)+factor(age)+livchildren+factor(rural)+factor(wantmore)+factor(educ)+partnered+factor(work)+factor(wealth), data=dtrain)
+x<-data.frame(x)[,-1]
+
+
+table(y)
+prop.table(table(y))
+
+
+xtest<-model.matrix(~factor(region)+factor(age)+livchildren+factor(rural)+factor(wantmore)+factor(educ)+partnered+factor(work)+factor(wealth), data=dtest)
+xtest<-xtest[,-1]
+xtest<-data.frame(xtest)
+
+yt<-dtest$modcontra
+yt<-as.factor(ifelse(yt==1, "mod", "notmod"))
+prop.table(table(yt))
+```
+
+### Set up caret for repeated 10 fold cross-validation
+To set up the training controls for a caret model, we typically have to specify the type of re-sampling method, the number of resamplings, the number of repeats (if you're doing repeated sampling).
+Here we will do a 10 fold cross-validation, 10 is often recommended as a choice for k based on experimental sensitivity analysis. 
+
+The other things we specify are:
+
+* repeats - These are the number of times we wish to repeat the cross-validation, typically 3 or more is used
+* classProbs = TRUE - this is necessary to assess accuracy in the confusion matrix
+* search = "random" is used if you want to randomly search along the values of the tuning parameter
+* sampling - Here we can specify alternative sampling methods to account for unbalanced outcomes
+* SummaryFunction=twoClassSummary - keeps information on the two classes of the outcome 
+* savePredictions = T - have the process save all the predicted values throughout the process, we need this for the ROC curves
+
+```{r}
+fitctrl <- trainControl(method="repeatedcv", 
+                        number=10, 
+                        repeats=5,
+                        classProbs = TRUE,
+                     search="random", #randomly search on different values of the tuning parameters
+                     sampling = "down", #optional, but good for unbalanced outcomes like this one
+                     summaryFunction=twoClassSummary,
+                     savePredictions = "all")
+
+```
+
+### Train regression classification models using caret
+Here we fit a basic regression classification tree using the `rpart()` function
+```{r, fig.width=8, fig.height=6}
+fitctrl <- trainControl(method="cv", 
+                        number=10, 
+                        #repeats=5,
+                        classProbs = TRUE,
+                     search="random",
+                     sampling = "down",
+                     summaryFunction=twoClassSummary,
+                     savePredictions = "all")
+
+rp1<-caret::train(y=y, x=x, 
+           metric="ROC",
+           method ="rpart",
+          tuneLength=20, #try 20 random values of the tuning parameters
+           trControl=fitctrl,
+          preProcess=c("center", "scale"))
+
+rp1
+
+library(rpart.plot)
+plot(rp1)
+#plot(rp1$finalModel)
+prp(rp1$finalModel,type=4, extra = 4, 
+    main="Classification tree for using modern contraception")
+varImp(rp1)
+plot(varImp(rp1), top=10)
+```
+
+```{r}
+##Accuracy on training set
+pred1<-predict(rp1, newdata=x)
+confusionMatrix(data = pred1,reference = y, positive = "mod" )
+
+
+
+predt1<-predict(rp1, newdata=xtest)
+confusionMatrix(data = predt1, yt, positive = "mod" )
+
+```
+
+### Bagged tree model
+
+```{r}
+fitctrl <- trainControl(method="cv", 
+                        number=10, 
+                        #repeats=5,
+                        classProbs = TRUE,
+                     search="random",
+                     sampling = "down",
+                     summaryFunction=twoClassSummary,
+                     savePredictions = "all")
+
+bt1<-caret::train(y=y, x=x, 
+           metric="ROC",
+           method ="treebag",
+          tuneLength=20, #try 20 random values of the tuning parameters
+           trControl=fitctrl,
+          preProcess=c("center", "scale"))
+
+print(bt1)
+plot(varImp(bt1))
+
+```
+
+```{r}
+##Accuracy on training set
+pred1<-predict(bt1, newdata=x)
+confusionMatrix(data = pred1,reference = y, positive = "mod" )
+
+
+
+predt1<-predict(bt1, newdata=xtest)
+confusionMatrix(data = predt1,yt, positive = "mod" )
+
+```
+
+### Random forest model using caret
+
+```{r}
+library(rpart)
+rf1<-caret::train(y=y, x=x, 
+           data=dtrain,
+           metric="ROC",
+           method ="rf",
+          tuneLength=20, #try 20 random values of the tuning parameters
+           trControl=fitctrl, 
+          preProcess=c("center", "scale"))
+
+rf1
+
+
+##Accuracy on training set
+predrf1<-predict(rf1, newdata=x)
+confusionMatrix(data = predrf1,y, positive = "mod" )
+
+
+
+predgl1<-predict(rf1, newdata=xtest)
+confusionMatrix(data = predgl1,yt, positive = "mod" )
+
+```
+
+We see that by down sampling the more common level of the outcome, we end up with much more balanced accuracy in terms of specificity and sensitivity.
+
+
+You see that the best fitting model is much more complicated than the previous one. Each node box displays the classification, the probability of each class at that node (i.e. the probability of the class conditioned on the node) and the percentage of observations used at that node. [From here](https://blog.revolutionanalytics.com/2013/06/plotting-classification-and-regression-trees-with-plotrpart.html).
+
+### ROC curve
+The ROC curve can be shown for the model:
+
+```{r}
+
+library(pROC)
+# Select a parameter setting
+mycp<-rf1$pred$mtry==rf1$bestTune$mtry
+selectedIndices <- mycp==T
+# Plot:
+plot.roc(rf1$pred$obs[selectedIndices], rf1$pred$mod[selectedIndices], grid=T)
+
+#Value of ROC and AUC
+roc(rf1$pred$obs[selectedIndices],  rf1$pred$mod[selectedIndices])
+auc(rf1$pred$obs[selectedIndices],  rf1$pred$mod[selectedIndices])
+
+```
+
+
