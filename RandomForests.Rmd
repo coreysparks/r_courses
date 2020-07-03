@@ -1,15 +1,15 @@
 ---
-title: "Demography Informal Methods Seminar - Classification Trees"
+title: "Demography Informal Methods Seminar - Classification and Regression Trees"
 author: "Corey Sparks, Ph.D. - UTSA Department of Demography"
 date: "6/30/2020"
 output:
-  pdf_document: 
-    latex_engine: xelatex
-    toc: yes
   html_document: 
     toc: yes
     includes:
       in_header: logo.html
+  pdf_document: 
+    latex_engine: xelatex
+    toc: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -129,7 +129,7 @@ Often this process may over-fit the data, meaning it creates too complicated of 
 
 We can tune the tree depth parameter by cross-validation of the data, across different tree depths. In this case a depth of 3 is optimal.
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 cvt<-cv.tree(fit1)
 plot(cvt$size, cvt$dev, type="b")
 
@@ -191,12 +191,12 @@ prb2<-complete(imps)
 ```
 
 ### simple example using PRB data - Regression tree
-```{r, fig.width=7, fig.height=6}
+```{r, fig.width=7, fig.height=6, warning=FALSE, message=FALSE}
 #set up training set identifier
 train1<-sample(1:dim(prb2)[1], size = .75*dim(prb2)[1], replace=T)
 
 fit<-tree(e0total~., data=prb2[train1,])
-fit
+summary(fit)
 plot(fit); text(fit, pretty=1)
 
 
@@ -212,16 +212,19 @@ plot(pt1); text(pt1, pretty=1)
 ```{r, fig.width=7, fig.height=6}
 library(randomForest)
 set.seed(1115)
-bag.1<-randomForest(e0total~., data=prb2[train1,], mtry=3, ntree=100,importance=T) #mtry = 3; choose 3 variables for each tree
+t1<-tuneRF(y=prb2$e0total, x=prb2[,c(-12,-23)], trace=T, stepFactor = 2, ntreeTry = 1000, plot=T)
+t1 #gewt mtry
+
+bag.1<-randomForest(e0total~., data=prb2[train1,-23], mtry=14, ntree=100,importance=T) #mtry = 3; choose 3 variables for each tree
 bag.1
 plot(bag.1)
 importance(bag.1)
-varImpPlot(bag.1, n.var = 10, type=2)
+varImpPlot(bag.1, n.var = 10, type=1)
 ```
 
 
 ### Classification tree for life expectancy - low or high
-```{r, fig.width=7, fig.height=6}
+```{r, fig.width=7, fig.height=6, warning=FALSE, message=FALSE}
 prb2$lowe0<-as.factor(ifelse(prb2$e0total<median(prb2$e0total), "low", "high"))
 
 fit<-tree(lowe0~., data=prb2[train1,-12])
@@ -239,10 +242,10 @@ plot(pt1); text(pt1, pretty=1)
 ### Random forest tree for PRB low life expectancy
 ```{r}
 #Tune to find best number of variables to try
-t1<-tuneRF(y=prb2$lowe0, x=prb2[,c(-12,-23)], trace=T, stepFactor = 2, ntreeTry = 1000, plot=T)
+t1<-tuneRF(y=prb2$e0total, x=prb2[,c(-12,-23)], trace=T, stepFactor = 2, ntreeTry = 1000, plot=T)
 t1
-
-bag.2<-randomForest(lowe0~., data=prb2[train1,-12], mtry=4, ntree=500,importance=T)
+y<-prb2$e0total[train]
+bag.2<-randomForest(y=y,x=prb2[train,c(-12,-23)],  mtry=14, ntree=500,importance=T)
 bag.2
 plot(bag.2)
 importance(bag.2,scale = T )
@@ -276,7 +279,14 @@ y<-as.factor(ifelse(y==1, "mod", "notmod"))
 x<-model.matrix(~factor(region)+factor(age)+livchildren+factor(rural)+factor(wantmore)+factor(educ)+partnered+factor(work)+factor(wealth), data=dtrain)
 x<-data.frame(x)[,-1]
 
+km1<-kmeans(x, centers = 2, nstart=10)
+km1
 
+dtrain$cluster<- km1$cluster
+
+summary(glm(modcontra~factor(cluster), family = binomial, data=dtrain))
+
+head(x)
 table(y)
 prop.table(table(y))
 
