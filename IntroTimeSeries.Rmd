@@ -1,0 +1,39 @@
+---
+title: "Demography Informal Methods Seminar - Introduction to Time Series Analysis"
+author: "Corey Sparks, Ph.D. - UTSA Department of Demography"
+date: "7/14/2020"
+output:
+  html_document: 
+    toc: yes
+    includes:
+      in_header: logo.html
+  pdf_document: 
+    latex_engine: xelatex
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Time Series Analysis
+
+I would suggest you read chapters 1 through 3 of [Time Series Analysis and Its Applications  4th ed](https://utsacloud-my.sharepoint.com/:b:/g/personal/corey_sparks_utsa_edu/Ear7EgBI0FVJmN-GhNqe0mIBNI5bNdB5QVZzeY2M1dnZUg?e=cA8e68) to get a introductory treatment of this topic.
+
+In time series analysis, we are typically interested in describing the pattern of variation of a variable over time. This can be extended to include multiple variables, but the largest number of applications involve a single variable.
+
+Time series data are very different from other data you may have encountered. These are *NOT* the same as longitudinal data, nor are they the same as event history data. Sometimes these terms are thrown around as if they are the same, but they are not.
+
+Much of time series analysis is decriptive, in that we are wanting to describe a few basic qualities of a time series. 
+
+In these examples, we will use the Demographic and Health Survey [Model Data](https://dhsprogram.com/data/Model-Datasets.cfm). These are based on the DHS survey, but are publicly available and are used to practice using the DHS data sets, but don't represent a real country.
+
+In this example, we will use the outcome of contraceptive choice (modern vs other/none) as our outcome.
+
+```{r}
+library(haven)
+dat<-url("https://github.com/coreysparks/data/blob/master/ZZIR62FL.DTA?raw=true")
+model.dat<-read_dta(dat)
+
+```
+
