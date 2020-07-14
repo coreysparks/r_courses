@@ -342,8 +342,6 @@ Which just combines the auto-regression and the moving average models.
 ### ARIMA models
 If we add a trend component to the time series model, we get the **ARIMA(p,d,q)** model
 
-### Exponential smoothing
-These are popular models, where forecasts are 
 
 ## Forecasting
 Forecasting is the process of predicting future values of a variable, based on the observed patterns of the variable from the past. If we have the observed time series, $x_t$, then we may want to predict future values of the series at $m$ periods in the future, $x_{n+m}$
