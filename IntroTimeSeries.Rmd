@@ -20,20 +20,443 @@ knitr::opts_chunk$set(echo = TRUE)
 
 I would suggest you read chapters 1 through 3 of [Time Series Analysis and Its Applications  4th ed](https://utsacloud-my.sharepoint.com/:b:/g/personal/corey_sparks_utsa_edu/Ear7EgBI0FVJmN-GhNqe0mIBNI5bNdB5QVZzeY2M1dnZUg?e=cA8e68) to get a introductory treatment of this topic.
 
+I also strongly urge you to check out [Rob Hyndman's book on forecasting](https://otexts.com/fpp2/), which is free.
+
 In time series analysis, we are typically interested in describing the pattern of variation of a variable over time. This can be extended to include multiple variables, but the largest number of applications involve a single variable.
 
-Time series data are very different from other data you may have encountered. These are *NOT* the same as longitudinal data, nor are they the same as event history data. Sometimes these terms are thrown around as if they are the same, but they are not.
+Time series data are very different from other data you may have encountered. These are *NOT* the same as longitudinal data, nor are they the same as event history data. Sometimes these terms are thrown around as if they are the same, but they are not. Time series data are collected on a very regular basis, such as every minute, day, week, month, etc, and are typically measured for a long period of time, often years.
 
-Much of time series analysis is decriptive, in that we are wanting to describe a few basic qualities of a time series. 
+Much of time series analysis is descriptive, in that we are wanting to describe a few basic qualities of a time series. 
 
-In these examples, we will use the Demographic and Health Survey [Model Data](https://dhsprogram.com/data/Model-Datasets.cfm). These are based on the DHS survey, but are publicly available and are used to practice using the DHS data sets, but don't represent a real country.
+In these examples, we will use both simulated and real data. Data come from two sources:
+ - [BLS monthly unemployment rates](https://www.bls.gov/webapps/legacy/cpsatab1.htm)
+ - [Daily air quality for Bexar County](https://aqs.epa.gov/aqsweb/airdata/download_files.html#Daily) 
 
-In this example, we will use the outcome of contraceptive choice (modern vs other/none) as our outcome.
+
+### Data
 
 ```{r}
-library(haven)
-dat<-url("https://github.com/coreysparks/data/blob/master/ZZIR62FL.DTA?raw=true")
-model.dat<-read_dta(dat)
+#unemployment
+load(url("https://github.com/coreysparks/r_courses/blob/master/bls_unemp.Rdata?raw=true"))
+#air quality
+load(url("https://github.com/coreysparks/r_courses/blob/master/bexar_air.Rdata?raw=true"))
+
+```
+
+### Libraries
+```{r}
+library(dplyr)
+library(ggplot2)
+library(ggfortify)
+library(forecast)
+```
+
+## Time series data
+
+#### Air quality data
+These are daily data, which start at January 1, 2019. We tell R these are daily data by stating that the frequency is 365 (days)
+```{r}
+#daily Air quality index from January 1, 2019 - March 31, 2020
+ts1<-ts(bexar$AQI, frequency = 365, start=c(2019,1))
+print(ts1)        
+
+plot(ts1)
+
+ggplot(data=bexar, aes(x=date, y=AQI))+geom_line()+labs(title = "Bexar County, TX - Air Quality Index",subtitle = "January 2019 to March 2020",
+       caption = "Source: EPA Air Data \n Calculations by Corey S. Sparks, Ph.D.",
+       x = "Date",
+       y = "AQI")
+
+bexar%>%
+  dplyr::select(date, AQI)%>%
+  head(n=10)
+```
+
+
+#### BLS Unemployment data
+This data set is a time series of monthly unemployment rates from 2000 to 2020. These data are Monthly, so we tell R that their frequency is 12 months (every month is repeated every 12 observations), with start and end dates of January 2000 and June 2020
+
+```{r}
+#Montly unemployment Rate from January 2000 - June, 2020
+unemp<-unemp[unemp$Series.ID=="LNU04000000",]
+unemp<- t(unemp[-1])
+unemp<-unemp[is.na(unemp)==F]
+
+
+
+ts2<-ts(unemp, start=c(2000,1), end=c(2020,6), freq=12)
+library(ggfortify)
+
+autoplot(ts2)+labs(title = "US Monthly Unemployment Rate",subtitle = "January 2000 to June 2020",
+       caption = "Source: EPA Air Data \n Calculations by Corey S. Sparks, Ph.D.",
+       x = "Date",
+       y = "Unemployment Rate")
+
+unemp2<-data.frame(rate=unemp, date=seq(from=as.Date("2000-01-01"), to=as.Date("2020-06-01"), by="months"))
+head(unemp2, n=10)
+```
+
+
+#### Fake data example - White noise
+White noise can be though of as a random variable with no discernible trend or pattern to them. They are typically thought of as a random Gaussian variable. If we did a histogram of it, it would be a nice, pretty mound shaped, symmetric distribution.
+```{r}
+set.seed(1115)
+x<-rnorm(200)
+plot(x, type="l", main="White Noise")
+```
+
+### More fake data - Random walk with drift
+Another type of random pattern are random walks. These are cumulative sums of random variables. They can increase or decrease over time, but they are only doing so based on recent previous events and their values. 
+
+```{r}
+w<-rnorm(200); x=cumsum(w)
+wd<- w+.2; xd=cumsum(wd)
+plot.ts(xd, main = "Random Walk with Drift", col=2, ylim=c(-30, 40))
+lines(x, col=1)
+abline(h=0, lty=2)
+```
+
+### Signal and Noise
+Often in time series data, we will have a noisy series, meaning that there is an underlying signal that we want to describe, but there is random white noise that accompanies it. Below, we simulate a cosine curve and add a small amount and a large amount of noise to  it. With a small amount of noise, the signal is still visible, but with a large amount of random variation, the signal becomes almost indiscernible. 
+
+```{r}
+t<-1:200
+c<-2*cos(2*pi*t/50)
+w<-rnorm(200)
+
+ts3<-ts(c+w)
+par(mfrow=c(3,1))
+plot.ts(c, main="signal")
+plot.ts(c+w, main="signal+ low noise")
+plot.ts(c+5*w,  main="signal + large noise")
+```
+
+### Some terminology
+ - lag = a value of the time series that occurs at some regular interval before the current value. For example, if this is our series:
+ 
+```{r}
+x1<-rnorm(10)
+x1
+
+lag(x1, 1) #first lag
+lag(x1, 5) #fifth lag
+```
+ 
+ - Trend = increase or decrease in the mean of a variable, often over the long term. For example, this variable should have no trend:
+ 
+```{r}
+x2<-rnorm(20)
+plot(x2)
+lines(ksmooth(y=x2,x=1:length(x2), "normal", bandwidth=5), col=2)
+
+```
+ 
+While this one increases over time:
+```{r}
+b0<-0; b1=.5
+t<-seq(1, 100, 1)
+x3<-rnorm(100, b0+b1*t, 5)
+tx3<-ts(x3)
+plot(tx3)
+abline(coef=coef(lm(x3~t)), col=3)
+```
+
+ - Seasonality = This is a regular pattern of variation in a  time series. It is a patter that repeats (like the cosine wave above) at a regular pattern within the data. 
+
+### Auto-correlation in Time Series
+
+Auto-correlation of a time series is $\gamma (h)$ measures how correlated a time series is with different lags of itself.
+
+$$\gamma (h) = E[(x_{t+h} - \mu)(x_t - \mu)$$
+
+$$\rho(h) = \frac{\gamma(t+h,t)}{\sqrt{\gamma(t+h,t+h)\gamma(t,t) )}} = \frac{\gamma(h)}{\gamma(0)}$$
+
+shows the correlation of a variable with itself at a given time lag $h$. 
+
+```{r}
+acf(ts1, main="ACF of Air Quality Data")
+acf(ts2, main="ACF of Unemployment Data")
+acf(ts3, main="ACF of Noisy Cosine Wave data")
+
+```
+
+
+### Stationary Time Series
+A stationary time series is one that has no trend to it, in other words, the mean of the variable doesn't change over the range of the observation. A second quality of a secondary series is that its variance is constant over time. The white noise data from above is stationary
+
+We can often detect trend by using the linear regression model, with time as the predictor
+```{r}
+fit1<-lm(AQI~date, data=bexar); summary(fit1) #negative trend
+plot(x=bexar$date, y=bexar$AQI)
+abline(coef(fit1), col=2, lwd=2)
+
+fit2<-lm(rate~date, data=unemp2); summary(fit2) #no trend
+plot(x=unemp2$date, y=unemp2$rate)
+abline(coef(fit2), col=2, lwd=2)
+
+fit3<-lm(ts3~seq(1, length(ts3), 1)); summary(fit3) #no trend
+plot(x=seq(1, length(ts3), 1), y=(c+w))
+abline(coef(fit3), col=2, lwd=2)
+
+```
+
+
+### Non-stationary time series
+A complement to the stationary series is a non-stationary series, which has a global trend to it, in that it increases or decreases in value over time
+
+### Removing trend in a series
+Often we want to be able to measure auto-correlation without the trend being present, in that case, we can *de-trend* the data and make the series a stationary series. 
+
+If $x_t$ is our time series, we can write it as being a sum of two things, the trend, $\mu_t$ and $y_t$ which is the stationary component. 
+
+$$x_t = \mu_t + y_t$$
+If the trend is a straight line, then we may have
+
+$$\mu_t = \beta_0 + \beta_1 t$$
+which is just a linear regression, and in this case, the stationary component $y_t$ will be the residuals from the model:
+
+```{r}
+fit1<-lm(AQI~date, data=bexar); summary(fit1) #negative trend
+plot(x=bexar$date, y=bexar$AQI)
+abline(coef(fit1), col=2, lwd=2)
+
+plot(x=bexar$date, y=resid(fit1), main= "De trended time series of air quality")
+acf(resid(fit1))
+```
+
+### Differencing a time series
+A way to remove seasonality in a time series is by *differencing* the series. The difference operation is:
+
+$$\nabla^d = (1-B)^d$$
+
+This is just the difference between the value of $x_t$ and the value that occurs $d$ values prior. For example, the *first difference* is often taken to remove seasonality in a series:
+
+```{r}
+x<- 1: 10
+x
+diff(x)
+
+x<-c+w
+
+plot(x)
+plot(diff(x))
+
+```
+We see that the second plot no longer has the regular cosine wave pattern to it.
+
+
+
+## Smoothing a time series
+One descriptive technique that is commonly used in time series analysis is a smoothing model for the data. There are several kinds of these and we will look at a few next.
+
+### Moving Average of Time Series
+
+The moving average of a time series is:
+
+$$ m_t = \sum_{j=-k}^k \alpha_j x_{t-j}$$
+This function takes a set of the $k$ observations, centered around $x_t$ and finds the mean of them. You've probably seen a lot of these during the [COVID-19 pandemic](https://coronavirus.jhu.edu/data/new-cases)
+
+The reason we do this is to try to identify the systematic component or components in the data. If the data are noisy, like the cosine data above:
+
+```{r}
+plot.ts(c+5*w,  main="signal + large noise")
+
+```
+
+If we take a moving average of the series, we may be able to identify the signal in the noise:
+
+```{r}
+plot(c+5*w,  main="signal + large noise")
+x=c+5*w
+lines(c, col=1, lty=3)
+
+lines(ma(x, order=5), col=2)#5 day moving average
+lines(ma(x, order=20), col=3)#20 day moving average
+```
+
+#### Kernel smoothing
+Another modern approach is to use a smoothing spline or kernel-based smoother, which 
+
+```{r}
+plot(c+5*w,  main="signal + large noise")
+x=c+5*w
+t<-1:length(x)
+lines(c, col=1, lty=3)
+lines(ksmooth(x=t, y=x, "normal", bandwidth=5), col=2)
+lines(ksmooth(x=t, y=x, "normal", bandwidth=10), col=3)
+lines(ksmooth(x=t, y=x, "normal", bandwidth=20), col=4)
+```
+
+
+#### Smoothing splines
+```{r}
+plot(c+5*w,  main="signal + large noise")
+x=c+5*w
+t<-1:length(x)
+lines(c, col=1, lty=3)
+lines(smooth.spline(x=t, y=x, spar=1), col=2)
+lines(smooth.spline(x=t, y=x, spar=.5), col=3)
+lines(smooth.spline(x=t, y=x, spar=.01), col=4)
+
+
+#lines(ksmooth(x=t, y=x, "normal", bandwidth=10), col=3)
+#lines(ksmooth(x=t, y=x, "normal", bandwidth=20), col=4)
+```
+
+## ARIMA Models
+One of the fundamental models in time series analysis is the *A*uto*R*egressive *I*ntegrated *M*oving *A*verage
+
+An auto-regressive model is one that predicts a future value, based on weighted average of previous values. The weights will decrease as the distance in time between the current and past values increase. 
+
+An auto-regressive model of order *p*, abbreviated **AR(p)** is:
+
+$$x_t = \phi_1 x_{t-1} + \phi_2 x_{t-2}  + \dots +\phi_p x_{t-p} + w_t$$
+where, the $\phi_p$ terms represent auto-regressive coefficients and where $w_t$ is a Gaussian white noise residual. The auto-regressive operation can be more succinctly defined using the *Backshift operator*
+
+$$Bx_t = x_{t-1}$$
+
+and we can power this operator up to include greater lags of  $x_t$
+
+$$B^k x_t  = x_{t-k}$$
+
+A commonly used model when modeling temporal dependence is that *AR(1)* model, where the current value of $x$ is predicted using the immediately preceding value:
+
+$$x_t = \sum_{j=0}^\infty \phi^j w_{t-j}$$
+
+
+#### Moving average models
+The moving average model of order *q*, or **MA(q)** is :
+
+$$x_t = w_t + \theta_1 w_{t-1} + \theta_2 w_{t-2} + \dots + \theta_q w_{t-q}$$
+where the $\theta$ values are lags of the series, of order $q$ and $w_t$ is again Gaussian white noise.
+
+
+#### ARMA process
+If we combine these two, we get an *A*uto*R*egressive *M*oving *A*verage, or **ARMA(p,q)** model.
+
+$$x_t = \alpha + \phi_1 x_{t-1} + \phi_2 x_{t-2}  + \dots +\phi_p x_{t-p} + w_t + \theta_1 w_{t-1} + \theta_2 w_{t-2} + \dots + \theta_q w_{t-q} $$
+
+
+Which just combines the auto-regression and the moving average models. 
+
+### ARIMA models
+If we add a trend component to the time series model, we get the **ARIMA(p,d,q)** model
+
+### Exponential smoothing
+These are popular models, where forecasts are 
+
+## Forecasting
+Forecasting is the process of predicting future values of a variable, based on the observed patterns of the variable from the past. If we have the observed time series, $x_t$, then we may want to predict future values of the series at $m$ periods in the future, $x_{n+m}$
+
+In order to do this, we assume that $x_t$ is stationary and the model parameters are known (but we typically estimate them from the data). 
+
+For example, if we want to forecast the air quality in Bexar County in the future, we would first estimate the parameters of the model we want, then apply that model to forecast the future values.
+
+The `forecast` package is a great place to start for basic forecasting models. 
+
+Below are some simple methods, see [Hyndmans's ch 3 for these](https://otexts.com/fpp2/simple-methods.html)
+```{r}
+library(forecast)
+
+#Simple mean forecast
+plot(meanf(ts1, h=60))
+
+#Naive method - same as the last observation
+plot(naive(ts1, h=60))
+plot(rwf(ts1, h=60))
+
+autoplot(ts1)+
+  autolayer(ma(ts1, 30), series="30 day MA")+
+  xlab("Day")+ylab("AQI")+
+  ggtitle("Air Quality in Bexar county, 30 Day moving average")
+
+```
+## ARIMA forecasting
+
+```{r}
+ts2 %>% stl(s.window='periodic') %>% seasadj() -> unemp3
+autoplot(unemp3)
+
+#first differnce
+unemp3%>% diff() %>%ggtsdisplay(main="First difference")
+
+#automatically estimate the model parameters
+fit<-auto.arima(ts2)
+fit
+
+autoplot(forecast(fit))
+
+
+fit2<-auto.arima(unemp3)
+autoplot(forecast(fit2))
+
+
+
+fit2%>%
+  forecast(h=12)%>%
+  autoplot(main="12 month forecast for unemployment")
+
+
+fit3<-auto.arima(ts1)
+fit3%>%
+  forecast(h=60)%>%
+  autoplot(main="60 day forecast of AQI")
+
+```
+
+## Classical Decomposition
+One method of exploring the components of a time series is *decomposition*
+There are two basic forms of this, *Additive* and *Multiplicative* decomposition.
+
+ - Additive decomposition decomposes the series as:
+
+$$x_t = R_t + T_t + S_t$$
+Where $R_t$ is a residual, $T_t$ is the trend of the data and $S_t$ is the seasonal component of the data
+
+```{r, fig.height=9, fig.width=8}
+ts2%>%
+  decompose(type="additive")%>% autoplot() + xlab("Day") +
+  ggtitle("Classical additive decomposition
+    of US Unemployment")
+```
+
+ - Multiplicative decomposition: The second form of decomposition is multiplicative, this decomposes the series as:
+
+$$x_t = R_t * T_t * S_t$$
+```{r}
+ts2%>%
+  decompose(type="multiplicative")%>% autoplot() + xlab("Day") +
+  ggtitle("Classical multiplicative decomposition
+    of US Unemployment")
+```
+
+### Seasonal adjustment
+In unemployment data, the BLS usually presents the *seasonally adjusted* unemployment rate. This is because there is seasonality in the pattern of unemployment, with some months consistently having higher or lower unemployment. To produce this, they take the series and subtract out the seasonal component, as in the above decomposition.
+
+```{r}
+adjust1<-decompose(ts2,type =  "add")
+adjust2<-ts2 - adjust1$seasonal
+
+test<-data.frame(month = unique(unemp2$date), unemprate = adjust2)
+
+ggplot()+geom_line(data=test, aes(x=month, y=unemprate, color="green"))+geom_line(data=unemp2, aes(x=date, y=rate, color="red") )+labs(title = "Seasonally Adjusted Unemployment Rate",
+       subtitle = "Jan 2000 to June 2020",
+       caption = "Source: IPUMS BLS Monthly Data \n Calculations by Corey S. Sparks, Ph.D.",
+       x = "Month",
+       y = "Unemployment Rate")+theme_minimal()+scale_color_discrete(name = "Rates", labels = c("Adjusted", "Raw"))
+
+```
+
+```{r}
+adjust3<-ts2 - adjust1$trend
+
+test<-data.frame(month = unique(unemp2$date), unemprate = adjust3)
+
+ggplot()+geom_line(data=test, aes(x=month, y=unemprate, color="green"))+geom_line(data=unemp2, aes(x=date, y=rate, color="red") )+labs(title = "Detrended Unemployment Rate",
+       subtitle = "Jan 2000 to June 2020",
+       caption = "Source: IPUMS BLS Monthly Data \n Calculations by Corey S. Sparks, Ph.D.",
+       x = "Month",
+       y = "Unemployment Rate")+theme_minimal()+scale_color_discrete(name = "Rates", labels = c("Adjusted", "Raw"))
 
 ```
 
