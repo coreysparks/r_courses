@@ -1,0 +1,316 @@
+---
+title: "Lee Carter for US"
+author: "Corey Sparks, PhD"
+date: "7/10/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(demography)
+library(ggplot2)
+library(tidyverse)
+library(StMoMo)
+library(fds)
+```
+
+## data
+```{r}
+usdat<-hmd.mx(country = "USA", username = "corey.sparks@utsa.edu", password = "1429845433", label="USA")
+AUSStMoMO <- StMoMoData(usdat,series = "male")
+summary(AUSStMoMO)
+
+D<-as.numeric(AUSStMoMO$Dxt)
+E<-as.numeric(AUSStMoMO$Ext)
+nage<-dim(AUSStMoMO$Dxt)[1]
+nyear<-dim(AUSStMoMO$Dxt)[2]
+age<-rep(AUSStMoMO$ages,nyear )
+years<-rep(AUSStMoMO$years, nage)
+
+dat<-data.frame(D=round(D,0), E=E, age=age, years=years)
+dat$lr<-log(dat$D/dat$E)
+library(mgcv)
+fit1<-gam(lr~s(age)+years, family = gaussian,data= dat)
+summary(fit1)
+
+new<-expand.grid(age=seq(50,90,10), years=seq(2018, 2050,1))
+new$est<-predict(fit1, newdata=new)
+plot(y=new$est[new$age==60], x=new$years[new$age==60])
+lines(y=new$est[new$age==70], x=new$years[new$age==70], col=2)
+lines(y=new$est[new$age==80], x=new$years[new$age==80], col=3)
+
+library(dplyr)
+library(ggplot2)
+new%>%
+  ggplot(aes(x=age, y=est, group=years, color=years))+geom_line()
+
+
+```
+
+
+```{r}
+Years <- 1933:2017
+Age <- 1:111
+d <- AUSStMoMO$Dxt
+e <- AUSStMoMO$Ext
+m <- d/e
+m <- log(m)
+n.x = nrow(m) # 111
+n.y = ncol(m) # 85
+
+m_mat <- matrix(m, nrow = n.x, ncol = n.y) # 111 X 85
+plot(x=Age, y=m_mat[,1], type = "l") #mortality of all ages in year 1933
+# Mean log mortality for all age groups under consideration (Age)
+a_age <- rowMeans(m_mat)
+lines(x = Age, y = a_age, col = 2)#average mortality for all age groups
+
+# plotting mortality for Age = 65 as a trial run to see if code is working
+# as exxpected
+plot(x = Years, y = m_mat[65,], pch = 18, xlab = "Years", ylab = "log m", col = 2) #working!!!
+
+# Average mortality across each year
+a_year <- colMeans(m_mat)
+
+#We need to estimate parameters ax, bx and kt of the Lee-Carter model
+# ax is the avg of log mortality rates over time. ie sum(log m)/n.y
+# avg of log rates -> a_hat <- rowSums(m)/94
+# Subtracting a from all years in m_mat
+m_hat <- matrix(1, nrow = n.y, ncol = n.x) #Dummy matrix with dim 85 X 111
+m_hat <- t(m_mat)
+m_mat <- t(m_mat)
+for(i in 1:n.y) m_hat[,i] <- m_mat[,i] - a_age[i]
+m_hat <- m_hat[,1:85]
+age_mod <- 1:85
+#SVD
+svd_ <- svd(m_hat,1,1)
+v <- svd_$v
+u <- svd_$u
+d <- svd_$d
+
+b <- v/sum(v)
+k <- u * sum(v) * d[1]
+fit_1 = a_age[age_mod] + (b * k[1])
+plot(x = age_mod, y = m_mat[1,age_mod], pch = 19, xlab = "Age", ylab = "m")
+lines(x = age_mod, y = fit_1, col = 2, lwd = 2, xlab = "Age", ylab = "m")
+
+fit_end <- a_age[age_mod] + (b * k[84])
+plot(x = age_mod, y = m_mat[84,age_mod], pch = 18)
+lines(x = age_mod, y = fit_end, col = 2, lwd = 2)
+
+#Plotting parameter
+par(mfrow = c(2,2))
+plot(x = Years, y = k, type = "l")
+plot(x = age_mod, y = a[age_mod], type = "l", xlab = "Ages", ylab = "ax")
+plot(x = age_mod, y = b[age_mod], type = "l", xlab = "Ages", ylab = "bx" )
+#plotting m over "Years"
+plot(x = Years, y = m_mat[,1], pch = 19, ylab = "m", xlab = "Years", type = "l")
+par(mfrow = c(1,1))
+
+########################################################################################
+##Performing SVD over ages 40:90
+Age_new <- 40:90
+m_mat_new <- m_mat[,Age_new]
+m_hat_new <- m_hat[,Age_new]
+n_x <- nrow(m_hat_new)
+n_y <- ncol(m_hat_new)
+
+for(i in 1:n_y) m_hat_new[,i] <- m_mat[,i] - a_age[i]
+
+#SVD
+svd_ <- svd(m_hat_new,1,1)
+v_1 <- svd_$v
+u_1 <- svd_$u
+d_1 <- svd_$d
+
+b_1 <- v_1/sum(v_1)
+k_1 <- u_1 * sum(v_1) * d_1[1]
+fit_1_new = a_age[Age_new] + (b_1 * k_1[1])
+plot(x = Age_new, y = m_mat_new[1,], pch = 19, xlab = "Age", ylab = "m")
+lines(x = Age_new, y = fit_1_new, col = 2, lwd = 2)
+
+fit_end_new <- a_age[Age_new] + (b_1 * k_1[84])
+plot(x = Age_new, y = m_mat_new[84,], pch = 18, xlab = "Age", ylab = "m")
+lines(x = Age_new, y = fit_end_new, col = 2, lwd = 2)
+
+#Plotting parameter
+par(mfrow = c(2,2))
+plot(x = Years, y = k_1, type = "l",  type = "l", xlab = "Years", ylab = "k")
+plot(x = Age_new, y = a_age[Age_new], type = "l", type = "l", xlab = "Ages", ylab = "ax")
+plot(x = Age_new, y = b_1, type = "l",  type = "l", xlab = "Ages", ylab = "bx")
+par(mfrow = c(1,1))
+
+############################################################################################
+#Forecasting
+#Initialising a dummy matrix to hold our simulation of random walk
+#for kt
+library(ggplot2)
+S <- matrix(0,61,100)
+
+for(j in 1:100) S[,j] <- -54.3332 + cumsum(-0.75 + rnorm(61, 0, 0.75))
+
+quan <- function(x) quantile(x, c(0.05,0.5, 0.95))
+sim <- apply(S, 1, quan)
+
+##Forecast of kt showing 5%,50% and 95% confidence intervals of the random walk.
+#plot(x = Years, y = k_1, xlab = "Years",type = "l", ylab = "k",
+#     xlim = c(1920,2064), ylim = c(-90,50))
+#lines(x = 2014:2074, y = sim[1,], col = 4, lty = "dashed")
+#lines(x = 2014:2074, y = sim[2,], col = 2, lty = "dotted")
+#lines(x = 2014:2074, y = sim[3,], col = 4, lty = "dashed")
+
+ggplot() +
+  xlim(1920,2064) +
+  ylim(-90,50) +
+  geom_line(data = NULL, aes(x = Years, y = k_1)) +
+  geom_line(data = NULL, aes(x = 2014:2074, y = sim[1,]), col = 2) +
+  geom_line(data = NULL, aes(x = 2014:2074, y = sim[2,]), col = 4) +
+  geom_line(data = NULL, aes(x = 2014:2074, y = sim[3,]), col = 2)
+  
+
+# LC with StMoMo-----
+# Extracting male and female dat from HMD, after creating a StMoMo data object
+# "Male" and "Female" data are assigned to different variables for easier
+# data wrangling.
+library(colorspace)
+library(gridExtra)
+library(cowplot)
+library(RColorBrewer)
+
+usdat<-hmd.mx(country = "USA", username = "corey.sparks@utsa.edu", password = "1429845433", label="USA")
+AUSStMoMO_m <- StMoMoData(usdat,series = "male")
+AUSStMoMO_f <- StMoMoData(usdat,series = "female")
+
+#Under a Binomial setting
+#Becasue I'm opting to use the data with the Lee-Carter model under a Binomial setting
+#the exposures have to be converted to the initial exposures.
+LC1 <- lc(link = "logit")
+data_m <- central2initial(AUSStMoMO_m)
+data_f <- central2initial(AUSStMoMO_f)
+ages_fit <- 40:90
+
+
+#This can be ussed ot generate a weight matrix over the ages and years in the data.
+# clips = 1 assigns 0 weights to the first and last cohorts.
+wxt_m <- genWeightMat(ages = ages_fit, years = data_m$years,
+                     clip = 1)
+wxt_f <- genWeightMat(ages = ages_fit, years = data_f$years,
+                      clip = 1)
+
+#For males
+LCfit_m <- fit(LC1, data = data_m, ages.fit = ages_fit, wxt = wxt_m)
+
+#For females
+LCfit_f <- fit(LC1, data = data_f, ages.fit = ages_fit, wxt = wxt_f)
+
+#plotting parameters
+par(mfrow = c(1,3))
+plot(x = ages_fit, y = LCfit_m$ax, col = 2, type = "l")     #males
+lines(x = ages_fit, y = LCfit_f$ax, col = 4)     #females
+
+plot(x = ages_fit, y = LCfit_m$bx, col = 2, type = "l")
+lines(x = ages_fit, y = LCfit_f$bx, col = 4)
+
+plot(x = Years, y = LCfit_m$kt[1,], col = 2, type = "l")
+lines(x = Years, y = LCfit_f$kt[1,], col = 4)
+par(mfrow = c(1,1))
+
+#Goodness-of-fit analysis-----
+# For males
+res_m <- residuals(LCfit_m)
+aic_ <- AIC(LCfit_m)
+bic_ <- BIC(LCfit_m)
+aic_
+bic_
+#For females
+res_f <- residuals(LCfit_f)
+
+#Plotting colour maps of males and females
+p1 <- plot(res_m, type = "colourmap", main = "Residuals of Male data")
+p2 <- plot(res_f, type = "colourmap", main = "Residuals of Female data")
+
+#Plotting residuals of males and females
+pal <-RColorBrewer::brewer.pal(4,"Greys")
+plot(res_m, type = "scatter", col = pal)
+plot(res_f, type = "scatter", col = pal)
+
+#Forecasting----
+LCfore_m <- forecast(LCfit_m, h = 50)
+LCfore_f <- forecast(LCfit_f, h = 50) 
+
+## Comparison of forcasting done in three instances:
+# a.) Forecasting kt with random walk using the forecast funciton.
+# b.) Forecast of kt done with SVD and first principles.
+# c.) Forecast of kf done with forecast and iarima.
+par(mfrow=c(1,3))
+plot(x = Years, y = LCfit_m$kt[1,], type = "l", xlim = c(1920,2065),
+     ylim = c(-70,20), sub = "a)", ylab = "kt")
+lines(x = 2014:2063, y = LCfore_m$kt.f$mean, col = 2)
+lines(x = 2014:2063, y = LCfore_m$kt.f$upper[1,,1], col = 4)
+lines(x = 2014:2063, y = LCfore_m$kt.f$lower[1,,1], col = 4)
+
+plot(x = Years, y = k_1, xlab = "Years",type = "l", ylab = "kt",
+     xlim = c(1920,2064), ylim = c(-90,50), sub = "b)")
+lines(x = 2014:2074, y = sim[1,], col = 4, lty = "dashed")
+lines(x = 2014:2074, y = sim[2,], col = 2, lty = "dotted")
+lines(x = 2014:2074, y = sim[3,], col = 4, lty = "dashed")
+
+LCforeArima <- forecast(LCfit_m, h = 50, kt.method = "iarima",
+                        kt.order = c(1, 1, 2))
+
+plot(LCforeArima, only.kt = TRUE, sub = "c)")
+par(mfrow=c(1,1))
+
+## Simulation for LC
+LCsim_m <- simulate(LCfit_m, nsim = 500, h = 50)
+LCsim_f <- simulate(LCfit_f, nsim = 500, h = 50)
+
+#Simulation of kt for males and females
+par(mfrow=c(1,2))
+plot(x = Years, y = LCfit_m$kt, ylim = range(LCfit_m$kt,LCsim_m$kt.s$sim[1, , 1:20]),
+     xlim = range(LCfit_m$years, LCsim_m$kt.s$years), type = "l")
+matlines(LCsim_m$kt.s$years, LCsim_m$kt.s$sim[1, , 1:20], type = "l", lty = 1)
+
+plot(x = Years, y = LCfit_f$kt, ylim = range(LCfit_f$kt,LCsim_f$kt.s$sim[1, , 1:20]),
+     xlim = range(LCfit_f$years, LCsim_f$kt.s$years), type = "l")
+matlines(LCsim_f$kt.s$years, LCsim_f$kt.s$sim[1, , 1:20], type = "l", lty = 1)
+par(mfrow=c(1,1))
+
+
+f<-data_f$Dxt/data_f$Ext 
+
+m<-data_m$Dxt/data_m$Ext 
+
+#Simulation of mortality for males
+par(mfrow=c(1,2))
+a_ <- range(m[75, ], LCsim_m$rates[35, , 1:20])
+b_ <- range(f[75, ], LCsim_f$rates[35, , 1:20])
+plot(LCfit_m$years, exp(m[75, ]), xlim = range(LCfit_m$years, LCsim_m$years),
+       ylim = c(0.001,0.09) ,type = "l",
+      xlab = "year", ylab = "rate", main = "Male mortality rates at age 75")
+matlines(LCsim_m$years, LCsim_m$rates[35, , 1:20], type = "l", lty = 1)
+  
+plot(LCfit_f$years, f[75, ], xlim = range(LCfit_f$years, LCsim_f$years),
+     ylim = b_ ,type = "l",
+     xlab = "year", ylab = "rate", main = "Female mortality rates at age 75")
+matlines(LCsim_f$years, LCsim_f$rates[35, , 1:20], type = "l", lty = 1)
+par(mfrow=c(1,1))
+
+#Research-----
+y_ <- 40:80
+ag_ <- 1:94
+lin_mod <- lm(m[y_,]~y_)
+plot(lin_mod)
+pr.lm <- predict(lin_mod)
+plot(pr.lm[1,])
+
+
+plot(m[40:80,1], col = 2, pch = 19, ylim = c(-7,-2))
+points(m[40:80,94], pch = 19, col = 4)
+
+matplot(m[40:80,], col = pal, type = "l")
+matlines(m[40:80,94], col = pal, pch = 19)
+```
+
