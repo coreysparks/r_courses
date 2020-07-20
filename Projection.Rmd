@@ -1,0 +1,131 @@
+---
+title: "Population Projection via Leslie Matrices"
+author: "Corey Sparks, PhD"
+date: "7/20/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(HMDHFDplus)
+library(tidycensus)
+```
+
+
+```{r}
+myusername <- userInput()
+mypassword <- userInput() #1429845433
+UShmd<- readHMDweb(item ="fltper_5x5", mypassword,myusername)
+#49 for item, 51 for US
+
+us_mort<-UShmd%>%
+  filter(Year == 2015)
+
+us_mort$qx[us_mort$Age==0]<-us_mort$qx[us_mort$Age==0]+us_mort$qx[us_mort$Age==1]
+us_mort$Lx[us_mort$Age==0]<-us_mort$Lx[us_mort$Age==0]+us_mort$Lx[us_mort$Age==1]
+
+us_mort<-us_mort[-2,]
+  
+head(us_mort)
+
+UShfd<-readHFDweb(CNTRY="USA",username = myusername,password =  mypassword)
+#30
+us_fert<-UShfd%>%
+  filter(Year==2015)%>%
+  mutate(age_grp = cut(Age, breaks = seq(10, 55, 5), include.lowest = T))%>%
+  group_by(age_grp)%>%
+  summarise(asfr5 = sum(ASFR))%>%
+  filter(is.na(age_grp)==F)%>%
+  ungroup()
+us_fert$age5<-seq(10,50,5)
+
+us_dem<-merge(us_mort, us_fert, by.x="Age", by.y="age5", all.x=T)
+us_dem$asfr5<-ifelse(is.na(us_dem$asfr5)==T, 0, us_dem$asfr5)
+
+ggplot(us_dem)+geom_line( aes(x=Age, y=asfr5), color="red")+geom_line( aes(x=Age, y=qx), color="blue")+xlim(0, 110)+ylab("Rate")+xlab("Age")+theme_minimal()
+  
+us_popn<-get_estimates(geography="us", product = "characteristics", breakdown = c("AGE", "SEX"), year = 2015)
+#Ages here https://www.census.gov/data/developers/data-sets/popest-popproj/popest/popest-vars.html
+us_popn<-us_popn%>%
+  filter(AGEGROUP>0&AGEGROUP<19, SEX==2)%>%
+  #mutate(case_when(.$AGEGROUP==1))%>%
+  arrange(AGEGROUP)
+```
+
+$$\begin{pmatrix}
+n_1\\ 
+n_2\\ 
+n_3
+\end{pmatrix} (t+1)=  
+\begin{pmatrix}
+F_1 & F_2 & F_3\\ 
+P_1 & 0 & 0\\ 
+0 & P_2 & 0
+\end{pmatrix}
+\begin{pmatrix}
+n_1\\ 
+n_2\\ 
+n_3
+\end{pmatrix}(t)$$
+
+
+Or as:
+$$n(t+1) = \mathbf{A} n(t)$$
+### Leslie Matrix Constuction
+```{r}
+
+A<-matrix(0, nrow=dim(us_popn)[1], ncol=dim(us_popn)[1])
+A
+size<-dim(A)[1]
+sxf1<-array(0,c(size-1))
+Lxf<-us_dem$Lx/100000
+for (i in 1:size-1){sxf1[i]<-(Lxf[i+1]/Lxf[i])}
+
+#make matrix with survivals on off diagonal
+sf1<-rbind(0,cbind(diag(sxf1),0))
+
+##SPECIAL CALCULATION FOR OPEN-ENDED AGE GROUP OF LESLIE MATRICES
+sf1[size,size]<-sf1[size,size-1]<-Lxf[size]/(Lxf[size]+Lxf[size-1])
+
+ffab<-0.4882846
+##MAKE THE LESLIE MATRICES FOR FEMALES
+fert<-us_dem$asfr5/sum(us_dem$asfr5)
+
+for(j in 1:size-1)
+{sf1[1,j]<-(Lxf[1]/10)*(fert[j]+fert[j+1]*(sxf1[j]))*ffab}
+sf1
+
+sf1[size,size]<-0
+A<-sf1
+plot(x=seq(0, 80, 5), y=diag(sf1[-1,-ncol(sf1)]), type="l", ylim=c(0, 1), ylab="Rate", xlab="Age")
+lines(x=seq(0, 80, 5), y = sf1[1, -size], col=2)
+```
+
+```{r}
+##MAKE ARRAYS TO HOLD THE DATA
+nproj<-10
+newpop<-matrix(0, nrow=size, ncol=nproj)
+newpop[,1]<-us_popn$value
+for(i in 2:nproj){
+newpop[,i]<-(A%*%newpop[,i-1])}
+head(newpop)
+
+plot(apply(newpop, 2, sum))
+```
+
+```{r}
+ea<-eigen(A)
+ea
+log(ea$values[1])
+plot(y=ea$vectors[,1], x=seq(0, 85, 5))
+v.cory=Re(ea$vectors[,which.max(Re(ea$values))]) # the proportional reproductive value is ok!
+v.cory
+
+vr.cory<-v.cory/v.cory[1]
+plot(vr.cory)
+```
+
