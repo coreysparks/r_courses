@@ -66,11 +66,16 @@ plot(x=Age, y=m_mat[,1], type = "l") #mortality of all ages in year 1933
 # Mean log mortality for all age groups under consideration (Age)
 a_age <- rowMeans(m_mat)
 lines(x = Age, y = a_age, col = 2)#average mortality for all age groups
+```
 
+```{r}
 # plotting mortality for Age = 65 as a trial run to see if code is working
 # as exxpected
 plot(x = Years, y = m_mat[65,], pch = 18, xlab = "Years", ylab = "log m", col = 2) #working!!!
+```
 
+
+```{r}
 # Average mortality across each year
 a_year <- colMeans(m_mat)
 
@@ -95,23 +100,29 @@ k <- u * sum(v) * d[1]
 fit_1 = a_age[age_mod] + (b * k[1])
 plot(x = age_mod, y = m_mat[1,age_mod], pch = 19, xlab = "Age", ylab = "m")
 lines(x = age_mod, y = fit_1, col = 2, lwd = 2, xlab = "Age", ylab = "m")
+```
 
+```{r}
 fit_end <- a_age[age_mod] + (b * k[84])
 plot(x = age_mod, y = m_mat[84,age_mod], pch = 18)
 lines(x = age_mod, y = fit_end, col = 2, lwd = 2)
+```
 
+```{r}
 #Plotting parameter
 par(mfrow = c(2,2))
 plot(x = Years, y = k, type = "l")
-plot(x = age_mod, y = a[age_mod], type = "l", xlab = "Ages", ylab = "ax")
+plot(x = age_mod, y = a_age[age_mod], type = "l", xlab = "Ages", ylab = "ax")
 plot(x = age_mod, y = b[age_mod], type = "l", xlab = "Ages", ylab = "bx" )
 #plotting m over "Years"
 plot(x = Years, y = m_mat[,1], pch = 19, ylab = "m", xlab = "Years", type = "l")
 par(mfrow = c(1,1))
+```
 
+```{r}
 ########################################################################################
 ##Performing SVD over ages 40:90
-Age_new <- 40:90
+Age_new <- 40:85
 m_mat_new <- m_mat[,Age_new]
 m_hat_new <- m_hat[,Age_new]
 n_x <- nrow(m_hat_new)
@@ -137,11 +148,14 @@ lines(x = Age_new, y = fit_end_new, col = 2, lwd = 2)
 
 #Plotting parameter
 par(mfrow = c(2,2))
-plot(x = Years, y = k_1, type = "l",  type = "l", xlab = "Years", ylab = "k")
-plot(x = Age_new, y = a_age[Age_new], type = "l", type = "l", xlab = "Ages", ylab = "ax")
-plot(x = Age_new, y = b_1, type = "l",  type = "l", xlab = "Ages", ylab = "bx")
+plot(x = Years, y = k_1, type = "l",  xlab = "Years", ylab = "k")
+plot(x = Age_new, y = a_age[Age_new], type = "l", xlab = "Ages", ylab = "ax")
+plot(x = Age_new, y = b_1, type = "l", xlab = "Ages", ylab = "bx")
 par(mfrow = c(1,1))
 
+```
+
+```{r}
 ############################################################################################
 #Forecasting
 #Initialising a dummy matrix to hold our simulation of random walk
@@ -169,7 +183,9 @@ ggplot() +
   geom_line(data = NULL, aes(x = 2014:2074, y = sim[2,]), col = 4) +
   geom_line(data = NULL, aes(x = 2014:2074, y = sim[3,]), col = 2)
   
+```
 
+```{r}
 # LC with StMoMo-----
 # Extracting male and female dat from HMD, after creating a StMoMo data object
 # "Male" and "Female" data are assigned to different variables for easier
@@ -298,19 +314,6 @@ plot(LCfit_f$years, f[75, ], xlim = range(LCfit_f$years, LCsim_f$years),
 matlines(LCsim_f$years, LCsim_f$rates[35, , 1:20], type = "l", lty = 1)
 par(mfrow=c(1,1))
 
-#Research-----
-y_ <- 40:80
-ag_ <- 1:94
-lin_mod <- lm(m[y_,]~y_)
-plot(lin_mod)
-pr.lm <- predict(lin_mod)
-plot(pr.lm[1,])
 
-
-plot(m[40:80,1], col = 2, pch = 19, ylim = c(-7,-2))
-points(m[40:80,94], pch = 19, col = 4)
-
-matplot(m[40:80,], col = pal, type = "l")
-matlines(m[40:80,94], col = pal, pch = 19)
 ```
 
