@@ -1,60 +1,33 @@
 ---
-title: "Population Projection via Leslie Matrices"
-author: "Corey Sparks, PhD"
-date: "7/20/2020"
+title: "Demography Informal Methods Seminar - Population Projection and the Lee-Carter Model"
+author: "Corey Sparks, Ph.D. - UTSA Department of Demography"
+date: "7/21/2020"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-```{r}
-library(tidyverse)
-library(HMDHFDplus)
-library(tidycensus)
-```
-
-
-```{r}
-myusername <- userInput()
-mypassword <- userInput() #1429845433
-UShmd<- readHMDweb(item ="fltper_5x5", mypassword,myusername)
-#49 for item, 51 for US
-
-us_mort<-UShmd%>%
-  filter(Year == 2015)
-
-us_mort$qx[us_mort$Age==0]<-us_mort$qx[us_mort$Age==0]+us_mort$qx[us_mort$Age==1]
-us_mort$Lx[us_mort$Age==0]<-us_mort$Lx[us_mort$Age==0]+us_mort$Lx[us_mort$Age==1]
-
-us_mort<-us_mort[-2,]
+## Population Projection
+ - One of the most fundamental forms of demographic analysis
+ - Uses age-structured rates of fertility and mortality to project the population structure forward into time
+ - Shows patterns of population growth and age composition in future populations
+ - Further analysis can show population growth rates and sensitivity of the growth rate to the vital rates
+ 
+### Methods
+ * Cohort component method 
+  + $$P_{t+n} = P_t + B_t - D_t + M_t$$
+  + [Example](https://www.measureevaluation.org/resources/training/online-courses-and-resources/non-certificate-courses-and-mini-tutorials/population-analysis-for-planners/lesson-8/lesson-8-the-cohort-component-population-projection-method)
+ 
+ * Hamilton-Perry method
+  + Very low data requirements
+  + Uses cohort change ratios from two previous censuses to project the population forward
+  + $$P_{t+n} = CCR_{t, t-n} * P_t$$
+  Where the $CCR$ is the ratio of the population age structure at the two previous censuses.
+  + Good description is [here](https://demographics.coopercenter.org/sites/demographics/files/2019-08/VAPopProj%20Methodology_2019_Updated.pdf) and [here](https://demographics.texas.gov/Resources/Presentations/ADC/2014/ADC2014_2C_Swanson.pdf)
+  + Original article [here](https://utsacloud-my.sharepoint.com/:b:/g/personal/corey_sparks_utsa_edu/EVRxaOrCh21FikL16bWklzkBJly961agP92K5j2JKvk-qA?e=a1eBaT)
   
-head(us_mort)
-
-UShfd<-readHFDweb(CNTRY="USA",username = myusername,password = 47515)
-#30
-us_fert<-UShfd%>%
-  filter(Year==2015)%>%
-  mutate(age_grp = cut(Age, breaks = seq(10, 55, 5), include.lowest = T))%>%
-  group_by(age_grp)%>%
-  summarise(asfr5 = sum(ASFR))%>%
-  filter(is.na(age_grp)==F)%>%
-  ungroup()
-us_fert$age5<-seq(10,50,5)
-
-us_dem<-merge(us_mort, us_fert, by.x="Age", by.y="age5", all.x=T)
-us_dem$asfr5<-ifelse(is.na(us_dem$asfr5)==T, 0, us_dem$asfr5)
-
-ggplot(us_dem)+geom_line( aes(x=Age, y=asfr5), color="red")+geom_line( aes(x=Age, y=qx), color="blue")+xlim(0, 110)+ylab("Rate")+xlab("Age")+theme_minimal()
-  
-us_popn<-get_estimates(geography="us", product = "characteristics", breakdown = c("AGEGROUP", "SEX"), year = 2015)
-#Ages here https://www.census.gov/data/developers/data-sets/popest-popproj/popest/popest-vars.html
-us_popn<-us_popn%>%
-  filter(AGEGROUP>0&AGEGROUP<19, SEX==2)%>%
-  #mutate(case_when(.$AGEGROUP==1))%>%
-  arrange(AGEGROUP)
-```
+ * Leslie Matrix model [Leslie, 1945](https://www.jstor.org/stable/pdf/2332297.pdf?casa_token=jl7ggpaUHlgAAAAA:nBBAiLiNzOoobVn2vsrfnir6V0-0qYvwlDnmlCl8ofL-gXzNqZu6Q2hA5yNRBG3NluuZ3kQzZbRq1mELaDJO4Eyr9Wbmod9h_K6_rlmhFX4ZFNpJTG4)
+  + Birth Pulse model
+  + People reproduce at specific ages after surviving to that age
+  + Very thorough treatment in [Keyfitz and Caswell, 2005, Chapters 3, 7 and 9](https://utsacloud-my.sharepoint.com/:b:/g/personal/corey_sparks_utsa_edu/EYFWQYGEoXBCukP3O75Xj1kBBmnky2P9hLFbzCbWFZ-EOQ?e=DapuF5)
 
 $$\begin{pmatrix}
 n_1\\ 
@@ -72,10 +45,118 @@ n_2\\
 n_3
 \end{pmatrix}(t)$$
 
-
 Or as:
 $$n(t+1) = \mathbf{A} n(t)$$
-### Leslie Matrix Constuction
+
+$n_k$ are the population sizes, $F_k$ are the reproductive values at each age, and $P_k$ are the survivorship ratios at each age
+
+  * Very flexible - accomodates both age and stage structure, more general population model than cohort component
+  * [Notes by James Holland Jones ](https://web.stanford.edu/~jhj1/teachingdocs/Jones-Leslie1-050208.pdf)
+  
+  * Bayesian projection methods
+    + [Bayespop](https://bayespop.csss.washington.edu/)
+    + Uses methods from Bayesian statistics to project TFR, $e_0$ and population structure 
+    + Incorporates uncertainty in all levels of analysis
+    + Leads to projections with errors incorporated
+    + Used by the [UN Population Division ](https://www.un.org/development/desa/pd/#:~:text=The%20Population%20Division%20of%20the,area%20of%20population%20and%20development.)
+
+## Example - Leslie Matrix Model
+Below, I will illustrate how to use data from the [Human Mortality Database](https://www.mortality.org/) and the [Human Fertility Database](https://www.humanfertility.org/cgi-bin/main.php) for the US to create a Leslie Matrix model.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(HMDHFDplus)
+library(tidycensus)
+```
+### Data from HMD/HFD
+The human mortality and human fertility databases are excellent sources for national historic series of mortality and fertility rates. You need to register with them to get access to the data.
+
+```{r, echo=FALSE}
+mypassword="1429845433"
+myusername="corey.sparks@utsa.edu"
+```
+
+```{r}
+UShmd<- readHMDweb(CNTRY = "USA", item ="fltper_5x5", password =mypassword,username = myusername)
+#49 for item, 51 for US
+
+us_mort<-UShmd%>%
+  filter(Year == 2015)
+
+#average qx and lx for ages 0 to 1 and 1 to 4
+us_mort$qx[us_mort$Age==0]<-us_mort$qx[us_mort$Age==0]+us_mort$qx[us_mort$Age==1]
+us_mort$Lx[us_mort$Age==0]<-us_mort$Lx[us_mort$Age==0]+us_mort$Lx[us_mort$Age==1]
+
+us_mort<-us_mort[-2,]
+  
+head(us_mort)
+```
+
+```{r, echo=FALSE}
+myotherpassword="47515"
+```
+
+Fertility data are by single year of age, so I aggregate to 5 year intervals
+```{r}
+UShfd<-readHFDweb(CNTRY="USA",username = myusername,password =myotherpassword, item = "asfrRR")
+#30
+us_fert<-UShfd%>%
+  filter(Year==2015)%>%
+  mutate(age_grp = cut(Age, breaks = seq(10, 55, 5), include.lowest = T))%>%
+  group_by(age_grp)%>%
+  summarise(asfr5 = sum(ASFR))%>%
+  filter(is.na(age_grp)==F)%>%
+  ungroup()
+us_fert$age5<-seq(10,50,5)
+
+head(us_fert)
+
+```
+
+Combine these together
+```{r}
+us_dem<-merge(us_mort, us_fert, by.x="Age", by.y="age5", all.x=T)
+us_dem$asfr5<-ifelse(is.na(us_dem$asfr5)==T, 0, us_dem$asfr5)
+
+head(us_dem)
+
+```
+
+```{r}
+ggplot(us_dem)+geom_line( aes(x=Age, y=asfr5), color="red")+geom_line( aes(x=Age, y=qx), color="blue")+xlim(0, 110)+ylab("Rate")+xlab("Age")+theme_minimal()
+
+```
+
+## Population data
+I get the 2015 population age distribution from the census estimates using `tidycensus`
+You can see the various parameters [here](https://www.census.gov/data/developers/data-sets/popest-popproj/popest/popest-vars.html)
+```{r}
+us_popn<-get_estimates(geography="us", product = "characteristics", breakdown = c("AGEGROUP", "SEX"), year = 2015)
+us_popn<-us_popn%>%
+  filter(AGEGROUP>0&AGEGROUP<19, SEX==2)%>%
+  #mutate(case_when(.$AGEGROUP==1))%>%
+  arrange(AGEGROUP)
+
+head(us_popn)
+```
+
+
+### Leslie Matrix Construction
+* Need matrix $A$, that is # of ages by # of ages in size, in this case, it will be `r dim(us_popn)[1]` x `r dim(us_popn)[1]`
+* The first row are the reproductive values, $F_k$ **THESE ARE NOT AGE SPECIFIC FERTILITY RATES**, they also have to incorporate the probability of surviving to the age of reproduction. 
+
+$$F_k = l(.5) \left ( \frac{m_i+P_i m_{i+1}}{2} \right)$$
+
+* The *sub-diagonal is the survival ratios, these are calculated as $L_{x+1}/L_{x})$
+
+* Another note is that this is a one-sex population model, in this case, for females only. 
+
+* I use code from [Eddie Hunsinger's Leslie Matrix Code](https://raw.githubusercontent.com/AppliedDemogToolbox/Hunsinger_BasicProjection/master/BasicProjectionCode.R), so the good ideas here belong to him. 
+
 ```{r}
 
 A<-matrix(0, nrow=dim(us_popn)[1], ncol=dim(us_popn)[1])
@@ -91,228 +172,210 @@ sf1<-rbind(0,cbind(diag(sxf1),0))
 ##SPECIAL CALCULATION FOR OPEN-ENDED AGE GROUP OF LESLIE MATRICES
 sf1[size,size]<-sf1[size,size-1]<-Lxf[size]/(Lxf[size]+Lxf[size-1])
 
+# proportion of female births
 ffab<-0.4882846
-##MAKE THE LESLIE MATRICES FOR FEMALES
-fert<-us_dem$asfr5/sum(us_dem$asfr5)
 
+##MAKE THE LESLIE MATRICES FOR FEMALES
+#convert fertilities to proportions
+fert<-us_dem$asfr5#/sum(us_dem$asfr5)
+
+##Make first row of matrix - reproductive values
 for(j in 1:size-1)
 {sf1[1,j]<-(Lxf[1]/10)*(fert[j]+fert[j+1]*(sxf1[j]))*ffab}
 sf1
 
+#assemble matrix
 sf1[size,size]<-0
 A<-sf1
 plot(x=seq(0, 80, 5), y=diag(sf1[-1,-ncol(sf1)]), type="l", ylim=c(0, 1), ylab="Rate", xlab="Age")
 lines(x=seq(0, 80, 5), y = sf1[1, -size], col=2)
 ```
 
+## Project the population
+Since these data represent 5 year age intervals, the projections will move the population forward in increments of 5 years. 
+Below, I project the population forward by 10 periods, or 50 years. Given that we start at 2015 using data from the HMD/HFD, this will take us to 2065.
+
+The weakness of this model is that it does not incorporate migration, so this is an incomplete model, but reflects the extrapolation of the population using current and unchanging rates of fertility and mortality. The model can be expanded to incorporate segmented populations, however, with exchanges between areas. 
+
 ```{r}
 ##MAKE ARRAYS TO HOLD THE DATA
 nproj<-10
 newpop<-matrix(0, nrow=size, ncol=nproj)
-newpop[,1]<-us_popn$value
+newpop[,1]<-us_popn$value #first column is current population size
+
+#loop over the new periods
 for(i in 2:nproj){
 newpop[,i]<-(A%*%newpop[,i-1])}
+
 head(newpop)
 
+#Plot the new total population sizes
 options(scipen=999)
 plot(y = apply(newpop, 2, sum), x= seq(2015, 2060, 5) , main="Total Female Population Size to 2060")
 ```
 
 
+### Further analysis of the matrix...
+See [Jamie's Notes](https://web.stanford.edu/~jhj1/teachingdocs/Jones-Leslie1-050208.pdf) and [Ch 13 of Keyfitz and Caswell](https://utsacloud-my.sharepoint.com/:b:/g/personal/corey_sparks_utsa_edu/EYFWQYGEoXBCukP3O75Xj1kBBmnky2P9hLFbzCbWFZ-EOQ?e=DapuF5) for more details on this.
+
+We can do a eigenvalue decomposition of the matrix $A$, and recover the population growth rate from the log of the first eigenvalue. The *stable age structure* can also be recovered by the standardized first eigenvector of the matrix. 
+
+```{r}
+e<-eigen(A)
+e$values[1]
+log(e$values[1])
+arv<-abs(Re(e$vectors[,1]))
+stableage<-arv/sum(arv)
+plot(stableage, ylim=c(0, .1))
+```
+
+
+Even more analysis....
+
+```{r}
+library(demogR)
+A2<-leslie.matrix(lx=us_dem$lx/100000, mx=us_dem$asfr5, one.sex = T, SRB = 1.048, infant.class = F)
+ea<-eigen.analysis(A2)
+ea
+plot(ea$stable.age)
+plot(ea$sensitivities)
+plot(ea$elasticities)
+plot(ea$repro.value)
+```
+
+While this may seem strange, there are [other analyses](https://www.census.gov/content/dam/Census/library/publications/2020/demo/p25-1146.pdf) that show a decline in the US population in the absence of migration. Also see [this report](https://www.washingtonpost.com/local/us-population-will-decline-faster-without-steady-immigration-census-report-says/2020/02/13/1ccff6d6-4ea7-11ea-b721-9f4cdc90bc1c_story.html) in the Washington Post.
+
+## Lee-Carter Method for Mortality Forecasting
+This method originates with [Lee & Carter, 1992](https://www.tandfonline.com/doi/pdf/10.1080/01621459.1992.10475265?casa_token=eyudM2tuE8EAAAAA:FMWxjbOeaJ2NzvSQI5QkYO7xD4WA1UCIFhc47DypkjFDOsYoa2_8WMpSQNffz-v-WgwQoHYv8d-y)
+
+They describe a method of forecasting age-specific mortality rates. Their method takes a series of age-specific mortality rates and writes it as a decomposition into an age specific average mortality, a vector of age specific changes in mortality and a period level vector of mortality trends.
+
+$$ln(m_{x,t} = \alpha_x + \beta_x k_t +\epsilon_{x,t})$$
+
+The solution to this equation comes from an eigenvalue decomposition of the $m_{x,t}$ matrix. Several additions and extensions of the method have been published over the years, and is an active area of research. 
+
 ```{r}
 library(demography)
-
 library(StMoMo)
 library(fds)
 ```
 
 ## data
+Again, get data from the HMD, here for the US
+**Don't use my password!!**
+
 ```{r}
-usdat<-hmd.mx(country = "USA", username = "corey.sparks@utsa.edu", password = "1429845433", label="USA")
-usdatp<-hmd.pop(country = "USA", username = "corey.sparks@utsa.edu", password = "1429845433", label="USA")
-#usdate<-hmd.e0(country = "USA", username = "corey.sparks@utsa.edu", password = "1429845433")
+usdat<-hmd.mx(country = "USA", username = myusername, password = mypassword, label="USA")
 
 usdat<-extract.years(usdat, years=1940:2017)
-usdatp<-extract.years(usdatp,years=1940:2017)
+
+#male data
 usdatm<-demogdata(data=usdat$rate$male,pop=usdat$pop$male,ages = usdat$age,years=usdat$year,label = usdat$label,name="male", type="mortality")
 
+#Female data
 usdatf<-demogdata(data=usdat$rate$female,pop=usdat$pop$female,ages = usdat$age,years=usdat$year,label = usdat$label,name="female", type="mortality")
 
+summary(usdatf)
+```
 
+
+### Fit Lee - Carter model
+I use the highest age as 90
+```{r}
+
+#males
 lca1<-lca(usdatm, max.age=90)
-lca2<-lca(usdatf, max.age=90)
-
-lca1<-fdm(usdatm, max.age=90, order = 3)
-lca2<-fdm(usdatf, max.age=90)
-
+summary(lca1)
 plot(lca1)
 
+plot(x=lca1$age, y=log(lca1$male[,1]), type="l", lty=1,
+     main="Observed vs fitted Lee Carter Model - 1940 and 2017 Male Mortality",
+     ylim=c(-10, 0))
+lines(lca1$age, y=lca1$fitted$y[,1],
+      col=1, lty=2)
+
+lines(x=lca1$age, y=log(lca1$male[,78]), col=3)
+lines(lca1$age, y=lca1$fitted$y[,78],
+      col=3, lty=2)
+legend("top", legend=c("Obs 1940", "Pred 1940", "Obs 2017", "Pred 2017"), col=c(1,1,3,3), lty=c(1,2,1,2))
+
+```
+
+```{r}
+#females
+lca2<-lca(usdatf, max.age=90)
+summary(lca2)
 plot(lca2)
+plot(x=lca2$age, y=lca2$female[,1], type="l", lty=1,
+     main="Observed vs fitted Lee Carter Model - 1940 and 2017 Female Mortality",
+     ylim=c(-10, 0))
+lines(lca2$age, y=lca2$fitted$y[,1],
+      col=1, lty=2)
+lines(x=lca2$age, y=lca2$female[,78], col=3)
+lines(lca2$age, y=lca2$fitted$y[,78],
+      col=3, lty=2)
+legend("top", legend=c("Obs 1940", "Pred 1940", "Obs 2017", "Pred 2017"), col=c(1,1,3,3), lty=c(1,2,1,2))
+
+#lca1<-fdm(usdatm, max.age=90, order = 3)
+#lca2<-fdm(usdatf, max.age=90)
+
+```
+
+
+```{r, fig.height=8, fig.width=9}
 #par(mfrow=c(1,2))
-plot(usdatm,years=1940:2017,ylim=c(-11,1), ages = 50:70)
-out1<-forecast(lca1,h=20,jumpchoice="fit")
+plot(usdatm,years=1940:2017,ylim=c(-11,1), ages = 60:90, main="Males - Ages 60 - 90")
+out1<-forecast(lca1,h=20)
 
-plot(usdatf,years=1940:2017,ylim=c(-11,1), ages = 50:70)
-out2<-forecast(lca2,h=20,jumpchoice="fit")
+plot(usdatf,years=1940:2017,ylim=c(-11,1), ages = 60:90, main="Females - Ages 60 - 90")
+out2<-forecast(lca2,h=20)
 
-plot(forecast(lca1,h=20,jumpchoice="fit"),ylim=c(-11,1), )
-lines(forecast(lca2,h=20,jumpchoice="fit"))
+par(mfrow=c(2,1))
+plot(forecast(lca1,h=20,jumpchoice="fit"),ylim=c(-11,1) )
+lines(log(lca1$male[, 1]))
 
-plot(out1)
-plot(out2)
+plot(forecast(lca2,h=20,jumpchoice="fit"),ylim=c(-11,1))
+lines(lca2$female[, 1])
+
+par(mfrow=c(1,1))
 ```
 
-```{r}
-AUSStMoMO <- StMoMoData(usdat,series = "male")
-summary(AUSStMoMO)
-
-D<-as.numeric(AUSStMoMO$Dxt)
-E<-as.numeric(AUSStMoMO$Ext)
-nage<-dim(AUSStMoMO$Dxt)[1]
-nyear<-dim(AUSStMoMO$Dxt)[2]
-age<-rep(AUSStMoMO$ages,nyear )
-years<-rep(AUSStMoMO$years, nage)
-
-dat<-data.frame(D=round(D,0), E=E, age=age, years=years)
-dat$lr<-log(dat$D/dat$E)
-library(mgcv)
-fit1<-gam(lr~s(age)+years, family = gaussian,data= dat)
-summary(fit1)
-
-new<-expand.grid(age=seq(50,90,10), years=seq(2018, 2050,1))
-new$est<-predict(fit1, newdata=new)
-plot(y=new$est[new$age==60], x=new$years[new$age==60])
-lines(y=new$est[new$age==70], x=new$years[new$age==70], col=2)
-lines(y=new$est[new$age==80], x=new$years[new$age==80], col=3)
-
-library(dplyr)
-library(ggplot2)
-new%>%
-  ggplot(aes(x=age, y=est, group=years, color=years))+geom_line()
-
-
-```
-
+# Mechanics of Lee - Carter
+I got this example largely from [here](http://rstudio-pubs-static.s3.amazonaws.com/466062_fda07a1b42af4793b1f75e4b87435e3a.html). It uses the `StMoMo` [library ](https://cran.r-project.org/web/packages/StMoMo/vignettes/StMoMoVignette.pdf). You should also totally check out [this video by the author of that package](https://www.youtube.com/watch?v=prk-0G689GU), as to how great it is, also as to why it's called StMoMo.
 
 ```{r}
-Years <- 1933:2017
-Age <- 1:111
-d <- AUSStMoMO$Dxt
-e <- AUSStMoMO$Ext
-m <- d/e
+usdat2<-hmd.mx(country = "USA", username = myusername, password = mypassword, label="USA")
+usdat2_m <- StMoMoData(usdat2,series = "male")
+usdat2_f <- StMoMoData(usdat2,series = "female")
+
+
+Years <- usdat2$year
+Age <- usdat2$age
+
+m <- usdat2$rate$male
 m <- log(m)
 n.x = nrow(m) # 111
-n.y = ncol(m) # 85
+n.y = ncol(m) #78
 
 m_mat <- matrix(m, nrow = n.x, ncol = n.y) # 111 X 85
-plot(x=Age, y=m_mat[,1], type = "l") #mortality of all ages in year 1933
+plot(x=Age, y=m_mat[,1], type = "l", ylim=c(-10, 0), ylab="log rate") #mortality of all ages in year 1940
 # Mean log mortality for all age groups under consideration (Age)
 a_age <- rowMeans(m_mat)
 lines(x = Age, y = a_age, col = 2)#average mortality for all age groups
+legend("topleft", legend=c("1940 Mortality - M - Obs","Average Mortality - Male"), col=c(1,2), lty=c(1,1))
 
-# plotting mortality for Age = 65 as a trial run to see if code is working
+```
+
+```{r}
+# plotting mortality for Age = 60 as a trial run to see if code is working
 # as exxpected
-plot(x = Years, y = m_mat[65,], pch = 18, xlab = "Years", ylab = "log m", col = 2) #working!!!
+plot(x = Years, y = m_mat[60,], pch = 18, xlab = "Years", ylab = "log m", col = 2,
+     main="Age 60 mortality over time") #working!!!
+```
 
-# Average mortality across each year
-a_year <- colMeans(m_mat)
 
-#We need to estimate parameters ax, bx and kt of the Lee-Carter model
-# ax is the avg of log mortality rates over time. ie sum(log m)/n.y
-# avg of log rates -> a_hat <- rowSums(m)/94
-# Subtracting a from all years in m_mat
-m_hat <- matrix(1, nrow = n.y, ncol = n.x) #Dummy matrix with dim 85 X 111
-m_hat <- t(m_mat)
-m_mat <- t(m_mat)
-for(i in 1:n.y) m_hat[,i] <- m_mat[,i] - a_age[i]
-m_hat <- m_hat[,1:85]
-age_mod <- 1:85
-#SVD
-svd_ <- svd(m_hat,1,1)
-v <- svd_$v
-u <- svd_$u
-d <- svd_$d
 
-b <- v/sum(v)
-k <- u * sum(v) * d[1]
-fit_1 = a_age[age_mod] + (b * k[1])
-plot(x = age_mod, y = m_mat[1,age_mod], pch = 19, xlab = "Age", ylab = "m")
-lines(x = age_mod, y = fit_1, col = 2, lwd = 2, xlab = "Age", ylab = "m")
-
-fit_end <- a_age[age_mod] + (b * k[84])
-plot(x = age_mod, y = m_mat[84,age_mod], pch = 18)
-lines(x = age_mod, y = fit_end, col = 2, lwd = 2)
-
-#Plotting parameter
-par(mfrow = c(2,2))
-plot(x = Years, y = k, type = "l")
-plot(x = age_mod, y = a[age_mod], type = "l", xlab = "Ages", ylab = "ax")
-plot(x = age_mod, y = b[age_mod], type = "l", xlab = "Ages", ylab = "bx" )
-#plotting m over "Years"
-plot(x = Years, y = m_mat[,1], pch = 19, ylab = "m", xlab = "Years", type = "l")
-par(mfrow = c(1,1))
-
-########################################################################################
-##Performing SVD over ages 40:90
-Age_new <- 40:90
-m_mat_new <- m_mat[,Age_new]
-m_hat_new <- m_hat[,Age_new]
-n_x <- nrow(m_hat_new)
-n_y <- ncol(m_hat_new)
-
-for(i in 1:n_y) m_hat_new[,i] <- m_mat[,i] - a_age[i]
-
-#SVD
-svd_ <- svd(m_hat_new,1,1)
-v_1 <- svd_$v
-u_1 <- svd_$u
-d_1 <- svd_$d
-
-b_1 <- v_1/sum(v_1)
-k_1 <- u_1 * sum(v_1) * d_1[1]
-fit_1_new = a_age[Age_new] + (b_1 * k_1[1])
-plot(x = Age_new, y = m_mat_new[1,], pch = 19, xlab = "Age", ylab = "m")
-lines(x = Age_new, y = fit_1_new, col = 2, lwd = 2)
-
-fit_end_new <- a_age[Age_new] + (b_1 * k_1[84])
-plot(x = Age_new, y = m_mat_new[84,], pch = 18, xlab = "Age", ylab = "m")
-lines(x = Age_new, y = fit_end_new, col = 2, lwd = 2)
-
-#Plotting parameter
-par(mfrow = c(2,2))
-plot(x = Years, y = k_1, type = "l",  type = "l", xlab = "Years", ylab = "k")
-plot(x = Age_new, y = a_age[Age_new], type = "l", type = "l", xlab = "Ages", ylab = "ax")
-plot(x = Age_new, y = b_1, type = "l",  type = "l", xlab = "Ages", ylab = "bx")
-par(mfrow = c(1,1))
-
-############################################################################################
-#Forecasting
-#Initialising a dummy matrix to hold our simulation of random walk
-#for kt
-library(ggplot2)
-S <- matrix(0,61,100)
-
-for(j in 1:100) S[,j] <- -54.3332 + cumsum(-0.75 + rnorm(61, 0, 0.75))
-
-quan <- function(x) quantile(x, c(0.05,0.5, 0.95))
-sim <- apply(S, 1, quan)
-
-##Forecast of kt showing 5%,50% and 95% confidence intervals of the random walk.
-#plot(x = Years, y = k_1, xlab = "Years",type = "l", ylab = "k",
-#     xlim = c(1920,2064), ylim = c(-90,50))
-#lines(x = 2014:2074, y = sim[1,], col = 4, lty = "dashed")
-#lines(x = 2014:2074, y = sim[2,], col = 2, lty = "dotted")
-#lines(x = 2014:2074, y = sim[3,], col = 4, lty = "dashed")
-
-ggplot() +
-  xlim(1920,2064) +
-  ylim(-90,50) +
-  geom_line(data = NULL, aes(x = Years, y = k_1)) +
-  geom_line(data = NULL, aes(x = 2014:2074, y = sim[1,]), col = 2) +
-  geom_line(data = NULL, aes(x = 2014:2074, y = sim[2,]), col = 4) +
-  geom_line(data = NULL, aes(x = 2014:2074, y = sim[3,]), col = 2)
-  
-
+```{r}
 # LC with StMoMo-----
 # Extracting male and female dat from HMD, after creating a StMoMo data object
 # "Male" and "Female" data are assigned to different variables for easier
@@ -322,17 +385,13 @@ library(gridExtra)
 library(cowplot)
 library(RColorBrewer)
 
-usdat<-hmd.mx(country = "USA", username = "corey.sparks@utsa.edu", password = "1429845433", label="USA")
-AUSStMoMO_m <- StMoMoData(usdat,series = "male")
-AUSStMoMO_f <- StMoMoData(usdat,series = "female")
-
 #Under a Binomial setting
 #Becasue I'm opting to use the data with the Lee-Carter model under a Binomial setting
 #the exposures have to be converted to the initial exposures.
 LC1 <- lc(link = "logit")
-data_m <- central2initial(AUSStMoMO_m)
-data_f <- central2initial(AUSStMoMO_f)
-ages_fit <- 40:90
+data_m <- central2initial(usdat2_m)
+data_f <- central2initial(usdat2_f)
+ages_fit <- 20:60
 
 
 #This can be ussed ot generate a weight matrix over the ages and years in the data.
@@ -350,16 +409,19 @@ LCfit_f <- fit(LC1, data = data_f, ages.fit = ages_fit, wxt = wxt_f)
 
 #plotting parameters
 par(mfrow = c(1,3))
-plot(x = ages_fit, y = LCfit_m$ax, col = 2, type = "l")     #males
+plot(x = ages_fit, y = LCfit_m$ax, col = 2, type = "l", ylim=c(-10, -3), main="ax")     #males
 lines(x = ages_fit, y = LCfit_f$ax, col = 4)     #females
 
-plot(x = ages_fit, y = LCfit_m$bx, col = 2, type = "l")
+plot(x = ages_fit, y = LCfit_m$bx, col = 2, type = "l", ylim=c(0, .04), main="bx")
 lines(x = ages_fit, y = LCfit_f$bx, col = 4)
 
-plot(x = Years, y = LCfit_m$kt[1,], col = 2, type = "l")
-lines(x = Years, y = LCfit_f$kt[1,], col = 4)
+plot(x = usdat2_m$years, y = LCfit_m$kt[1,], col = 2, type = "l", ylim=c(-25,40), main="kt")
+lines(x = usdat2_m$years, y = LCfit_f$kt[1,], col = 4)
 par(mfrow = c(1,1))
 
+```
+
+```{r}
 #Goodness-of-fit analysis-----
 # For males
 res_m <- residuals(LCfit_m)
@@ -374,11 +436,12 @@ res_f <- residuals(LCfit_f)
 p1 <- plot(res_m, type = "colourmap", main = "Residuals of Male data")
 p2 <- plot(res_f, type = "colourmap", main = "Residuals of Female data")
 
-#Plotting residuals of males and females
-pal <-RColorBrewer::brewer.pal(4,"Greys")
-plot(res_m, type = "scatter", col = pal)
-plot(res_f, type = "scatter", col = pal)
+```
 
+
+
+### Ok, actual forecast
+```{r}
 #Forecasting----
 LCfore_m <- forecast(LCfit_m, h = 50)
 LCfore_f <- forecast(LCfit_f, h = 50) 
@@ -387,74 +450,65 @@ LCfore_f <- forecast(LCfit_f, h = 50)
 # a.) Forecasting kt with random walk using the forecast funciton.
 # b.) Forecast of kt done with SVD and first principles.
 # c.) Forecast of kf done with forecast and iarima.
-par(mfrow=c(1,3))
-plot(x = Years, y = LCfit_m$kt[1,], type = "l", xlim = c(1920,2065),
-     ylim = c(-70,20), sub = "a)", ylab = "kt")
-lines(x = 2014:2063, y = LCfore_m$kt.f$mean, col = 2)
-lines(x = 2014:2063, y = LCfore_m$kt.f$upper[1,,1], col = 4)
-lines(x = 2014:2063, y = LCfore_m$kt.f$lower[1,,1], col = 4)
-
-plot(x = Years, y = k_1, xlab = "Years",type = "l", ylab = "kt",
-     xlim = c(1920,2064), ylim = c(-90,50), sub = "b)")
-lines(x = 2014:2074, y = sim[1,], col = 4, lty = "dashed")
-lines(x = 2014:2074, y = sim[2,], col = 2, lty = "dotted")
-lines(x = 2014:2074, y = sim[3,], col = 4, lty = "dashed")
-
-LCforeArima <- forecast(LCfit_m, h = 50, kt.method = "iarima",
-                        kt.order = c(1, 1, 2))
-
-plot(LCforeArima, only.kt = TRUE, sub = "c)")
-par(mfrow=c(1,1))
-
-## Simulation for LC
-LCsim_m <- simulate(LCfit_m, nsim = 500, h = 50)
-LCsim_f <- simulate(LCfit_f, nsim = 500, h = 50)
-
-#Simulation of kt for males and females
 par(mfrow=c(1,2))
-plot(x = Years, y = LCfit_m$kt, ylim = range(LCfit_m$kt,LCsim_m$kt.s$sim[1, , 1:20]),
-     xlim = range(LCfit_m$years, LCsim_m$kt.s$years), type = "l")
-matlines(LCsim_m$kt.s$years, LCsim_m$kt.s$sim[1, , 1:20], type = "l", lty = 1)
+plot(x = LCfit_m$years, y = LCfit_m$kt[1,], type = "l",
+     ylim=c(-60, 30), xlim=c(min(usdat2_m$years),max(LCfore_m$years)), 
+     main="kt for males - forecast",
+      ylab = "kt")
+lines(x = LCfore_m$years, y = LCfore_m$kt.f$mean, col = 2)
+lines(x = LCfore_m$years, y = LCfore_m$kt.f$upper[1,,1], col = 4)
+lines(x = LCfore_m$years, y = LCfore_m$kt.f$lower[1,,1], col = 4)
 
-plot(x = Years, y = LCfit_f$kt, ylim = range(LCfit_f$kt,LCsim_f$kt.s$sim[1, , 1:20]),
-     xlim = range(LCfit_f$years, LCsim_f$kt.s$years), type = "l")
-matlines(LCsim_f$kt.s$years, LCsim_f$kt.s$sim[1, , 1:20], type = "l", lty = 1)
-par(mfrow=c(1,1))
+plot(x = LCfit_m$years, y = LCfit_f$kt[1,], xlab = "Years",type = "l",
+     ylim=c(-60, 30), xlim=c(min(usdat2_m$years),max(LCfore_m$years)),
+     main="kt for females - forecast",
+     ylab = "kt")
+lines(x = LCfore_m$years, y = LCfore_f$kt.f$mean, col = 2)
+lines(x = LCfore_m$years, y = LCfore_f$kt.f$upper[1,,1], col = 4)
+lines(x = LCfore_m$years, y = LCfore_f$kt.f$lower[1,,1], col = 4)
 
-
-f<-data_f$Dxt/data_f$Ext 
-
-m<-data_m$Dxt/data_m$Ext 
-
-#Simulation of mortality for males
-par(mfrow=c(1,2))
-a_ <- range(m[75, ], LCsim_m$rates[35, , 1:20])
-b_ <- range(f[75, ], LCsim_f$rates[35, , 1:20])
-plot(LCfit_m$years, exp(m[75, ]), xlim = range(LCfit_m$years, LCsim_m$years),
-       ylim = c(0.001,0.09) ,type = "l",
-      xlab = "year", ylab = "rate", main = "Male mortality rates at age 75")
-matlines(LCsim_m$years, LCsim_m$rates[35, , 1:20], type = "l", lty = 1)
-  
-plot(LCfit_f$years, f[75, ], xlim = range(LCfit_f$years, LCsim_f$years),
-     ylim = b_ ,type = "l",
-     xlab = "year", ylab = "rate", main = "Female mortality rates at age 75")
-matlines(LCsim_f$years, LCsim_f$rates[35, , 1:20], type = "l", lty = 1)
-par(mfrow=c(1,1))
-
-#Research-----
-y_ <- 40:80
-ag_ <- 1:94
-lin_mod <- lm(m[y_,]~y_)
-plot(lin_mod)
-pr.lm <- predict(lin_mod)
-plot(pr.lm[1,])
-
-
-plot(m[40:80,1], col = 2, pch = 19, ylim = c(-7,-2))
-points(m[40:80,94], pch = 19, col = 4)
-
-matplot(m[40:80,], col = pal, type = "l")
-matlines(m[40:80,94], col = pal, pch = 19)
 ```
 
 
+```{r, fig.height=8, fig.width=12}
+LCfit <- fit(lc(link = "logit"), data = usdat2_m, ages.fit = 30:80)
+
+LCfor<-forecast(LCfit, h=50)
+plot(LCfor)
+
+```
+
+#More simulations
+```{r, fig.height=8, fig.width=12}
+LCsim.mrwd <- simulate(LCfit, nsim = 100)
+LCsim.iarima <- simulate(LCfit, nsim = 100, kt.method = "iarima")
+
+
+par(mfrow=c(2, 2))
+plot(LCfit$years, LCfit$kt[1, ], xlim = range(LCfit$years, LCsim.mrwd$kt.s$years),
+     ylim = range(LCfit$kt, LCsim.mrwd$kt.s$sim), type = "l", 
+     xlab = "year", ylab = "kt", 
+     main = "Lee-Carter: Simulated paths of the period index kt (mrwd)")
+matlines(LCsim.mrwd$kt.s$years, LCsim.mrwd$kt.s$sim[1, , ], type = "l", lty = 1)
+
+plot(LCfit$years, (LCfit$Dxt / LCfit$Ext)["65", ], 
+     xlim = range(LCfit$years, LCsim.mrwd$years),
+     ylim = range((LCfit$Dxt / LCfit$Ext)["65", ], LCsim.mrwd$rates["65", , ]), 
+     type = "l", xlab = "year", ylab = "rate", 
+     main = "Lee-Carter: Simulated mortality rates at age 65")
+matlines(LCsim.mrwd$years, LCsim.mrwd$rates["65", , ], type = "l", lty = 1)
+
+plot(LCfit$years, LCfit$kt[1, ], xlim = range(LCfit$years, LCsim.iarima$kt.s$years),
+     ylim = range(LCfit$kt, LCsim.iarima$kt.s$sim), type = "l", 
+     xlab = "year", ylab = "kt", 
+     main = "Lee-Carter: Simulated paths of the period index kt (ARIMA(0,1,0))")
+matlines(LCsim.iarima$kt.s$years, LCsim.iarima$kt.s$sim[1, , ], type = "l", lty = 1)
+
+plot(LCfit$years, (LCfit$Dxt / LCfit$Ext)["65", ], 
+     xlim = range(LCfit$years, LCsim.iarima$years),
+     ylim = range((LCfit$Dxt / LCfit$Ext)["65", ], LCsim.iarima$rates["65", , ]), 
+     type = "l", xlab = "year", ylab = "rate", 
+     main = "Lee-Carter: Simulated mortality rates at age 65 (ARIMA(0,1,0))")
+matlines(LCsim.iarima$years, LCsim.iarima$rates["65", , ], type = "l", lty = 1)
+
+```
