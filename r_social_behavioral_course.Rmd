@@ -46,7 +46,7 @@ names(prb)<-tolower(names(prb))
 fit<-lm(imr~tfr+percurban+percpoplt15+percmarwomcontraall, prb)
 library(broom)
 library(pander)
-pander(broom::tidy(summary(fit)))
+pander(broom::tidy(fit))
 
 ```
 
@@ -347,11 +347,11 @@ load("C:/Users/ozd504/Documents/GitHub/r_courses/prb_2008.Rdata")
 Let's have a look at some descriptive information about the data:
 ```{r}
 #Frequency Table of # of Contries by Continent
-table(prb$Continent)
+table(prb$continent)
 
 
 #basic summary statistics for the fertility rate
-summary(prb$TFR)
+summary(prb$tfr)
 
 ```
 
@@ -373,7 +373,7 @@ Numerical measures tell us a lot about the form of a distribution without resort
 Here is an example from the PRB data. R has a few different ways to get a variable from a dataset. One way is the `$` notation, used like `dataset$variable`
 
 ```{r}
-mean(prb$TFR)
+mean(prb$tfr)
 
 ```
 
@@ -381,7 +381,7 @@ Whoops! What happened? This means that R can't calculate the mean because there'
 
 
 ```{r}
-mean(prb$TFR, na.rm = T)
+mean(prb$tfr, na.rm = T)
 
 
 ```
@@ -395,8 +395,8 @@ One typical set of descriptive statistics that is very frequently used is the so
 
 ```{r}
 ?fivenum
-fivenum(prb$TFR) 
-summary(prb$TFR)
+fivenum(prb$tfr) 
+summary(prb$tfr)
 ```
 
 ###Variance
