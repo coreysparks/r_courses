@@ -423,7 +423,7 @@ I can read it from my github repository directly by using the `load()` function 
 
 ```{r load data}
 
-load(file=url("https://github.com/coreysparks/r_courses/blob/master/census_data.Rdata?raw=true"))
+census<-readRDS(file = url("https://github.com/coreysparks/r_courses/blob/master/census_data.rds?raw=true"))
 
 #from disk
 #load("C:/Users/ozd504/Documents/census_data.Rdata")
