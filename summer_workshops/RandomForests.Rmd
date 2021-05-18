@@ -116,7 +116,7 @@ library(tree)
 data(Hitters, package = "ISLR")
 head(Hitters)
 fit1<-tree(Salary ~ Years+Hits, data=Hitters)
-fit1
+#fit1
 plot(fit1); text(fit1, pretty=1)
 ```
 
@@ -228,7 +228,7 @@ varImpPlot(bag.1, n.var = 10, type=1)
 prb2$lowe0<-as.factor(ifelse(prb2$e0total<median(prb2$e0total), "low", "high"))
 
 fit<-tree(lowe0~., data=prb2[train1,-12])
-fit
+#fit
 plot(fit); text(fit, pretty=1)
 
 cv.fit<-cv.tree(fit)
@@ -328,19 +328,19 @@ fitctrl <- trainControl(method="repeatedcv",
 ### Train regression classification models using caret
 Here we fit a basic regression classification tree using the `rpart()` function
 ```{r, fig.width=8, fig.height=6}
-fitctrl <- trainControl(method="cv", 
-                        number=10, 
-                        #repeats=5,
+fitctrl <- trainControl(method="repeatedcv", 
+                        number=5, 
+                        repeats=5,
                         classProbs = TRUE,
-                     search="random",
-                     sampling = "down",
+                     #search="random",
+                     #sampling = "down",
                      summaryFunction=twoClassSummary,
                      savePredictions = "all")
 
 rp1<-caret::train(y=y, x=x, 
            metric="ROC",
-           method ="rpart",
-          tuneLength=20, #try 20 random values of the tuning parameters
+           method ="rf",
+          tuneLength=5, #try 20 random values of the tuning parameters
            trControl=fitctrl,
           preProcess=c("center", "scale"))
 
@@ -353,6 +353,8 @@ prp(rp1$finalModel,type=4, extra = 4,
     main="Classification tree for using modern contraception")
 varImp(rp1)
 plot(varImp(rp1), top=10)
+library(rattle)
+fancyRpartPlot(rp1$finalModel)
 ```
 
 ```{r}

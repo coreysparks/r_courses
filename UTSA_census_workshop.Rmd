@@ -1,65 +1,34 @@
 ---
 title: "Analyzing Census Data Using R"
-author: "Corey S. Sparks, Ph.D."
-date: "October 30, 2018"
+author: "Corey S. Sparks, Ph.D. - University of Texas at San Antonio"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
-  pdf_document:
-    toc: yes
   html_document:
     df_print: tibble
     fig_caption: yes
     toc: yes
-    includes:
-      in_header: logo.html
+    toc_float: yes
+    code_download: true
 ---
 
 
-##Welcome!
+## Welcome!
 
-##Structure of workshop
+## Structure of workshop
 1) About me
-2) Using Rstudio on shamu
-3) Types of census data
-4) The Census API
+2) Types of census data
+3) The Census API
 4) Using `tidycensus` and `censusapi` to get data on places
 5) Using the `ipumsr` package to get data on people
 
-##About me
-I am an associate professor in the [UTSA Department of Demography](http://copp.utsa.edu/demography/) and have been at UTSA since 2006. 
+## About me
+I am an associate professor in the [UTSA Department of Demography](https://hcap.utsa.edu/demography/) and have been at UTSA since 2006. 
 
 Research interests include data science, Bayesian methods, education demography and health disparities.
  \newpage
 
-##Using Rstudio on shamu
-[Request Shamu account](http://www.utsa.edu/oit/AboutUs/RCSG/HPC.html)
 
-I would recommend [MobaXterm](https://mobaxterm.mobatek.net/) for accessing Shamu.
-
-Shamu [FAQ](http://hpcsupport.utsa.edu/foswiki/bin/view/Main/WebHome), which is **very** helpful.
-
-With your shamu access account, you log into Shamu. When you first login, you're on the login node. This is not where you want to run Rstudio. However, if you want to install packages in Rstudio on your Shamu account, this is the best place to do this, since you have access to all of the build tools and compilers. 
-
-![log in](C:/Users/ozd504/Google Drive/talks/login.PNG)
-
-###Get a compute node
-At the login node, type `qlogin` and you will be on a computation node. 
-![qlogin](C:/Users/ozd504//Google Drive/talks/qlogin.PNG)
-
-###Load modules
-You need to first load the R 3.5.1 module
-![R](C:/Users/ozd504//Google Drive/talks/loadr.PNG)
-
-then the Rstudio 1.1.383
-![Rstudio](C:/Users/ozd504//Google Drive/talks/loadrstudio.PNG)
-
-then you run Rstudio!
-![run it!](C:/Users/ozd504//Google Drive/talks/rstudio.PNG)
-
-And you see your old friend:
-![run it!](C:/Users/ozd504/Google Drive/talks/rstudiowindow.PNG)
-
-
-##Types of Census Data 
+## Types of Census Data 
 
 Decennial Census
 
@@ -70,7 +39,7 @@ County Business Patterns
 Population Estimates Program - SAIPE and SAHIE
 \newpage
 
-###Decennial Census Summary File 1 
+### Decennial Census Summary File 1 
 The Census Summary File 1(SF 1) contains the data compiled from the questions asked of all people and about every housing unit. 
 
 Population items include sex, age, race, Hispanic or Latino origin, household relationship, household type, household size, family type, family size, and group quarters. Housing items include occupancy status, vacancy status, and tenure (whether a housing unit is owner-occupied or renter-occupied). 
@@ -81,7 +50,7 @@ The decennial Census summary file 1 **_does not_** contain information on educat
 
 Up until 2010, the Census bureau surveyed 1 out of every 6 households to measure these characteristics, which was referred to as the Census "long form", which was tabulated into a product called the Summary File 3. The year 2000 was the last year this survey was conducted, and beginning in 2005, the American Community Survey replaced the "long form" as the tool to measure socioeconomic characteristics of the population. (US Census Bureau, 2010)
 
-###American Community Survey Summary File
+### American Community Survey Summary File
 The American Community Survey (ACS) is part of the U.S. Census Bureau's Survey
 Program and is designed to provide current demographic, social, economic, and housing
 estimates throughout the decade. 
@@ -96,7 +65,7 @@ The American Community Survey Summary File (ACSSF) is a unique data product that
 
 These data represent totals of population counts, along with the measurement errors in those counts for places, not for individuals, which is the subject of the ACS Public Use Microdata.
  
-###American Community Survey Public Use Microdata
+### American Community Survey Public Use Microdata
 The Public Use Microdata Sample **_(PUMS)_** contains a sample of actual responses to the American Community Survey (ACS). The PUMS dataset includes variables for nearly every question on the survey, as well as many new variables that were derived after the fact from multiple survey responses (such as poverty status). 
 
 Each record in the file represents a **_single person, or--in the household-level dataset--a single housing unit_**. In the person-level file, individuals are organized into households, making possible the study of people within the contexts of their families and other household members. 
@@ -113,20 +82,20 @@ The PUMS data are most easily accessed from the University of Minnesota's **_Int
 
 \newpage
 
-#Using the tidycensus package
+# Using the tidycensus package
 They [tidycensus](https://github.com/walkerke/tidycensus) is part of the `tidyverse`, and was written and maintained by [Dr. Kyle Walker](http://personal.tcu.edu/kylewalker/) at TCU.
 
 It allows you to dynamically download and map data from the decennial Census and ACS for any level of [Census geography](https://www.census.gov/geo/reference/webatlas/), except blocks!
 
 If you want data on places, this is the easiest way to get it.
 
-###Census table names
+### Census table names
 The Census publishes data for places in **_summary tables_**. These follow a pattern for their names, you can find a description of this [here](https://www.census.gov/programs-surveys/acs/guidance/which-data-tool/table-ids-explained.html). The biggest problem with finding data from the Census is knowing the table name you want. 
 
 You can find table names for the ACS [here](https://www.census.gov/data/developers/data-sets/acs-5year.html)
 
 
-###What kind of table do you want?
+### What kind of table do you want?
 There are several types of tables the Census publishes. 
 
 The [Detailed tables](https://api.census.gov/data/2016/acs/acs5/variables.html) are very detailed summaries of the data for places, in the 2015 data there were more than 64,000 tables published. These can be a little overwhelming to use, but we'll see an example below
@@ -135,13 +104,13 @@ The [Detailed tables](https://api.census.gov/data/2016/acs/acs5/variables.html) 
  
 [Data Profile tables](https://api.census.gov/data/2016/acs/acs5/profile.html) contain broad social, economic, housing, and demographic information. The data are presented as both counts and percentages. There are over 2,400 variables in this dataset. These are very useful summaries and what I personally rely on for most of my data extracts. 
 
-###Get a Census developer API Key
+### Get a Census developer API Key
 Obtain one at http://api.census.gov/data/key_signup.html
 
-###Save your API key to your working directory
+### Save your API key to your working directory
 I recommend you install your API key in your Rprofile, just so you don't have to keep pasting it into your code. To do this, type `tidycensus::census_api_key(key =  "yourkeyhere", install = T)` one time to install your key for use in `tidycensus`.
 
-###Let's do some stuff!
+### Let's do some stuff!
 
 ```{r, eval=FALSE, include=FALSE}
 #install.packages("censusapi")
@@ -154,7 +123,7 @@ census_api_key(key =  "f67be5a86e696eebf0c84a5a20d85f2c04f7e9ef")
 \newpage
 
 
-###Look at available ACS variables
+### Look at available ACS variables
 As I mentioned above, finding the right table can be a challenge, especially for new data users. `tidycensus` has the `load_variables()` function that will load all of the available tables for a specific table type. 
 
  For example, if we are interested in variables from the ACS [data profile](https://www.census.gov/acs/www/data/data-tables-and-tools/data-profiles/2016/) tables, we can load all available variables then use R to search for what we need.
@@ -176,7 +145,7 @@ v15_Profile <- load_variables(year = 2015 , dataset = "acs5/profile",
                               cache = TRUE) #demographic profile tables
 
 #Open the data for examination
-View(v15_Profile)
+knitr::kable(head(v15_Profile))
 
 #Search for variables by keywords in the label
 v15_Profile[grep(x = v15_Profile$label, "Median household"), c("name", "label")]
@@ -201,7 +170,7 @@ If you are interested in variables from the decennial census, change the `datase
 
 
 \newpage
-##Extract from ACS summary file data profile variables from 2015 for Bexar County, TX Census Tracts
+## Extract from ACS summary file data profile variables from 2015 for Bexar County, TX Census Tracts
 Here is a real example
 
 The data profile tables are very useful because they contain lots of pre-calculated variables.
@@ -245,12 +214,12 @@ sa_acs2 %>%
 ```
 
 
-###ACS margins of error
+### ACS margins of error
 The ACS is a survey and in areas where the sample size is small, the errors in estimates can be quite large. As a way to let users know how uncertain the estimates are for any given area, the Census publishes **_Margins of Error_** for each estimate published. In states, counties and cities, these margins of error are usually small since the overall sample size in those larger areas is large enough to provide more certainty about the population estimates. 
 
 In areas that are smaller, tracts and especially block groups, the margins of error can be be very large relative to the estimates. One way to visualize this is to map the **_coefficient of variation_** in the estimates, which is: $CV= \frac{\sigma}{\theta}$, where $\theta$ is the estimate of interest. 
 
-####mapping of errors in variables
+#### mapping of errors in variables
 Here I generate a quantile break for the coefficient of variation in census tract income estimates 
 ```{r, message=FALSE}
 
@@ -267,7 +236,7 @@ sa_acs2 %>%
 
 
 
-###Metro area incomes
+### Metro area incomes
 Here is another example where we get data for metro/micropolitan areas in the US. I use a detailed table request this time. 
 
 ```{r, results='hide'}
@@ -275,7 +244,7 @@ Here is another example where we get data for metro/micropolitan areas in the US
 v15_acs<- load_variables(year = 2015 , dataset = "acs5",
                          cache = TRUE) #regular ACS profile tables
 
-View(v15_acs)
+knitr::kable(head(v15_acs))
 
 #Search for variables by keywords in the label 
 v15_acs[grep(x = v15_Profile$label, "Median household"), c("name", "label")]
@@ -310,7 +279,7 @@ met_join<-met_join%>%
 ##Create our map
 
 map1<-met_join%>%
-  st_transform(crs = 102740)%>%
+  st_transform(crs = 2278)%>%
   ggplot( aes(fill = med_income, color = med_income)) + 
   geom_sf() + 
   ggtitle("Median Household Income", 
@@ -335,7 +304,7 @@ mapview(met_join, zcol="med_income", col.regions=pal, legend=T,map.types="OpenSt
 ```
 
 
-#Using the censusapi package
+# Using the censusapi package
 The Census has lots of APIs that are available. `tidycensus` is great for accessing the ACS and decennial census, but if you want data from another API, the more general `censusapi` package gives you access to all of the Census APIs
 
 First, since this is a different package, you'll need to add your API key to your `.Renviron` data. You can do this by following the example below:
@@ -353,7 +322,7 @@ Now we load all of the available APIs into an R object so we can look what's ava
 
 ```{r}
 apis <- listCensusApis()
-View(apis)
+knitr::kable(head(apis))
 
 ```
 
@@ -373,7 +342,7 @@ head(sahevars)
 
 ```
 
-###Get the data for states
+### Get the data for states
 ```{r}
 ui_rates<-getCensus(name = "timeseries/healthins/sahie",
           vars = c("STATE", "YEAR","RACECAT", "PCTUI_PT"), 
@@ -385,7 +354,7 @@ head(ui_rates)
 ```
 
 
-###Clean up the data and make a line plot:
+### Clean up the data and make a line plot:
 
 ```{r}
 ui_rates%>%
@@ -424,12 +393,17 @@ p_rates%>%
   mutate(yr=as.numeric(YEAR), tot_pov_rate=as.numeric(SAEPOVRTALL_PT), child04_poverty=as.numeric(SAEPOVRT0_4_PT))%>%
   filter(STATE%in%c("06", "48"))%>%
   select(STATE,  yr, tot_pov_rate, child04_poverty)%>%
-  ggplot(aes(x=yr, y=tot_pov_rate))+geom_line(aes(color= STATE, group=STATE))+ylim(low=0,high=40)+ylab("% In Poverty")+xlab("Year")+ggtitle("% Below the Poverty Line in Texas and California ", subtitle = "SAIPE Estimates")
+  ggplot(aes(x=yr, y=tot_pov_rate))+
+  geom_line(aes(color= STATE, group=STATE))+
+  ylim(low=0,high=40)+
+  ylab("% In Poverty")+
+  xlab("Year")+
+  ggtitle("% Below the Poverty Line in Texas and California ", subtitle = "SAIPE Estimates")
 
 ```
 
 
-#Using the ipumsr package
+# Using the ipumsr package
 The previous examples focused on getting data for places from several Census program. This section focuses on getting data on *individuals*. 
 
 Each year, when the ACS is done, or on a decennial year when the Census is carried out, each individual survey is published in a **_Public Use Microdata_** file. For example, in the 2011 - 2016 ACS 5 year data release, there were 15,681,972 persons in the data, while the 1 year file contained 3,156,487 persons. 
@@ -452,7 +426,7 @@ Here is a link to an [introduction to the package](https://cran.r-project.org/we
 Here is a [CPS example](https://cran.r-project.org/web/packages/ipumsr/vignettes/ipums-cps.html) done by IPUMS staff and a [NHGIS example](https://cran.r-project.org/web/packages/ipumsr/vignettes/ipums-nhgis.html).
 
 
-###Getting your own IPUMS data
+### Getting your own IPUMS data
 First create an account with the IPUMS project, let them know who you are and what you will be using their data for, and most importantly that you will not be using it for EVIL!
 
 Browse the IPUMS data source of your choice <see on screen example>
@@ -463,9 +437,10 @@ Wait....
 
 Download the data file and the XML file, and save them somewhere  you will remember. To use the `ipumsr` package, download the DDI codebook and the .DAT unformatted data file. Otherwise, we could download the stata or SPSS format files and read them in using the `haven` library, easy peasy. 
 
-![IPUMS - Waiting](C:/Users/ozd504/Google Drive/talks/ipums1.PNG)
+![IPUMS - Waiting](C:/Users/ozd504/OneDrive - University of Texas at San Antonio/ipums1.PNG)
 
-![IPUMS - Data](C:/Users/ozd504/Google Drive/talks/ipums2.PNG)
+
+![IPUMS - Data](C:/Users/ozd504/OneDrive - University of Texas at San Antonio/ipums2.PNG)
 
 Then use `ipumsr`!
 
@@ -473,7 +448,7 @@ Then use `ipumsr`!
 ```{r, results='hide'}
 if (!require("ipumsr")) stop("Reading IPUMS data into R requires the ipumsr package. It can be installed using the following command: install.packages('ipumsr')")
 
-ddi <- read_ipums_ddi("~/Google Drive/talks/usa_00071.xml")
+ddi <- read_ipums_ddi("~/OneDrive - University of Texas at San Antonio//usa_00071.xml")
 data <- read_ipums_micro(ddi)
 
 
@@ -484,7 +459,7 @@ So, now we have the 2016 ACS 1 year data read into memory in R, and we could do 
 
 I use these data for lots of reasons, but I'll show a few general things that you need to do in order to use them. 
 
-###Recoding IPUMS variables
+### Recoding IPUMS variables
 **_Survey data are a mess!_** They have missing data codes, top codes, numerical values when you want categorical values, and vice versa. Generally, you have to recode variables in order to have them be useful. 
 
 Here, I recode several things into standards used in social demographic research. 
@@ -584,21 +559,21 @@ summary(inc_mod)
 
 \newpage
 
-#Other Resources
-###Miktek
+# Other Resources
+### Miktek
 To build pdf's you'll need a version of Latex installed, [Miktek](https://miktex.org/download) is a good option
 
-###R-markdown cheat sheets
+### R-markdown cheat sheets
 Rstudio keeps a variety of [cheat sheets](https://www.rstudio.com/resources/cheatsheets/) for various topics, they can be helpful in a pinch
 
 
-###UCLA Statistical computing help
+### UCLA Statistical computing help
 [This page](http://www.ats.ucla.edu/stat/) has lots of examples of using R for various types of analysis.
 
-###Other examples
+### Other examples
 On [my Rpubs page](http://rpubs.com/corey_sparks) I have lots of examples of various types of analysis using R and you can get the data for these on [my Github data  page](https://github.com/coreysparks/data)
 
-##Thanks!
+## Thanks!
 Let me know how I can help!
 
 [@Coreysparks1](https://twitter.com/CoreySparks1)
