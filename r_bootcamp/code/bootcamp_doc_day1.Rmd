@@ -1,8 +1,14 @@
 ---
-title: "R Bootcamp for Demography Graduate Students"
-author: "Corey Sparks PhD"
-date: "August 17 & 18"
-output: html_document
+title: "R Bootcamp for Demography Graduate Students - Day 1"
+author: "Corey Sparks, PhD"
+date:  "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+   html_document:
+    df_print: paged
+    fig_height: 7
+    fig_width: 7
+    toc: yes
+    toc_float: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -12,7 +18,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ![](../images/dem.png)
 
 ## R Bootcamp for Incoming Graduate Students
-When: August 17 & 18, 6pm to 8pm
+When: August 17, 6pm to 8pm
 Where: [Zoom Link Here](https://utsa.zoom.us/j/3610228956?from=addon)
 
 ## What we’ll do:

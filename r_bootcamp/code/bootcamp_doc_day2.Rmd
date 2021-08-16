@@ -1,7 +1,7 @@
 ---
-title: "R Bootcamp for Demography Graduate Students"
+title: "R Bootcamp for Demography Graduate Students - Day 1"
 author: "Corey Sparks PhD"
-date: "August 17 & 18"
+date: "August 17, 2021"
 output: html_document
 ---
 
@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ![](../images/dem.png)
 
 ## R Bootcamp for Incoming Graduate Students
-When: August 17 & 18, 6pm to 8pm
+When: August 17, 6pm to 8pm
 Where: [Zoom Link Here](https://utsa.zoom.us/j/3610228956?from=addon)
 
 ## What we’ll do:
