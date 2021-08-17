@@ -1,8 +1,14 @@
 ---
-title: "R Bootcamp for Demography Graduate Students - Day 1"
-author: "Corey Sparks PhD"
-date: "August 17, 2021"
-output: html_document
+title: "R Bootcamp for Demography Graduate Students - Day 2"
+author: "Corey Sparks, PhD"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+   html_document:
+    df_print: paged
+    fig_height: 7
+    fig_width: 8
+    toc: yes
+    toc_float: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -12,7 +18,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ![](../images/dem.png)
 
 ## R Bootcamp for Incoming Graduate Students
-When: August 17, 6pm to 8pm
+When: August 18, 6pm to 8pm
 Where: [Zoom Link Here](https://utsa.zoom.us/j/3610228956?from=addon)
 
 ## What we’ll do:
@@ -26,15 +32,8 @@ This bootcamp will get you set up on your personal computer using R. This includ
 
 ```{r, include=FALSE, results='asis'}
 
-t1<-data.frame(Day = c(rep("Tuesday", 7), rep("Wednesday", 7)),
-               topic = c("Introduction/What is R?",
-"Installing R and Rstudio on your computer",
-"Introduction to Rstudio",
-"Break",
-"Reading common files into R",
-"Using R to summarize data",
-"Q&A",
-"Q&A",
+t1=data.frame(Day = c( rep("Wednesday", 7)),
+               topic = c("Q&A",
 "Basic ggplot",
 "Break",
 "Basic dplyr",
@@ -46,176 +45,630 @@ knitr::kable(t1, caption = "Agenda", align = "c", format="html")
 
 ```
 
-# Day 1
+# Day 2
 
-## What is R?
-R was first implemented in the early 1990’s by Robert Gentleman and Ross Ihaka, both faculty members at the University of Auckland. It is an open source software system that specializes in statistical analysis and graphics. R is its own programming language and the R ecosystem includes over 18,000 user-contributed additions to the software, known as packages.
+### Our data for today
+```{r, message = FALSE }
+library(readr, quietly = TRUE)
+prb = read_csv(file = "https://raw.githubusercontent.com/coreysparks/r_courses/master/2018_WPDS_Data_Table_FINAL.csv")
+names(prb) = tolower(names(prb))
+```
 
-I’ve used R for twenty years. I was also trained in SPSS and SAS along the way, by various mentors. Some tried to get me to learn more general purpose languages like Delphi (of all things) or Perl, or Basic, and I’ve been chastised for not knowing the depths of Python, but R presents a nimble and rigorous platform to do demography. My top three reasons for teaching and using R are:
+
+## The tidyverse
+
+So far, most of the functions I have discussed have been from the base R
+ecosystem, with some specific functions from other downloadable
+packages. One of the biggest changes to R in recent years has been the
+explosion in popularity of the **tidyverse** @tidyverse. The tidyverse
+is a large collection of related packages that share a common philosophy
+of how data and programming relate to one another and work together to
+produce a more streamlined, literate way of programming with data.
+
+To get the core parts of the tidyverse, install it using
+`install.packages("tidyverse")` in your R session. This will install the
+core components of the tidyverse that can then be used throughout the
+rest of the book [^introtor-1].
+
+Two of the workhorses in the tidyverse are the packages `dplyr` @dplyr
+and `ggplot2` @ggplot2. The `dplyr` package is very thoroughly described
+in the book *R for Data Science* @Wickham2017R, and the `ggplot2`
+package also has a book-length description in the book *ggplot2: Elegant
+Graphics for Data Analysis* @ggplot2, so I won't waste time and space
+here with complete descriptions. Instead, I will show some pragmatic
+examples of how these work in my own work flow, and also use these
+packages together to produce some descriptive data visualizations.
+
+[^introtor-1]: If you followed the script at the beginning of this
+    chapter, the tidyverse will already be installed.
+
+Let's load the library:
+
+```{r}
+library(tidyverse)
+```
+
+
+## Basic ggplot
+
+Let's say that we want to compare the distributions of income from the
+above examples graphically. Since the `ggplot2` library is part of the
+tidyverse, it integrates directly with dplyr and we can do plots within
+pipes too.
+
+In generally, `ggplot()` has a few core statements.
+
+1)  `ggplot()` statement - This tells R the data and the basic aesthetic
+    that will be plotted, think x and y axis of a graph. The aesthetic
+    is defined using the `aes()` function. This is where you pass values
+    to be plotted to the plot device.
+2)  Define the geometries you want to use to plot your data, there are
+    many types of plots you can do, some are more appropriate for
+    certain types of data
+3)  Plot annotations - Titles, labels etc. This allows you to customize
+    the plot with more information to make it more easily
+    understandable.
+
+Now I will illustrate some basic ggplot examples, and I'm going to use
+the PRB data that I have been using for other examples. In order to
+better illustrate the code, I will walk through a *very* minimal
+example, line by line.
+
+`library(ggplot2)` Loads the ggplot package
+
+`ggplot(data = prb, mapping = aes(x = tfr))+` Use the ggplot function,
+on the prb dataframe. The variable we are plotting is the total
+fertility rate, `tfr`. In this case, it is the only variable we are
+using. I include a `+` at the end of the line to tell R that more
+elements of the plot are going to be added.
+
+`geom_histogram()+` Tells R that the `geom`etry we are using is a
+histogram, again we have the `+` at the end of the line to indicate that
+we will add something else to the plot, in this case a title.
+
+`ggtitle(label = "Distribution of the Total Fertility Rate, 2018")`
+Tells R the primary title for the plot, which describes what is being
+plotted. I'm also going to add an additional annotation to the x-axis to
+indicate that it is showing the distribution of the TFR:
+
+`xlab(label = "TFR")`
+
+Now, let's see all of this together:
+
+```{r prbhist, message = FALSE}
+library(ggplot2)
+
+ggplot(data=prb,
+       mapping=aes(x = tfr))+
+  geom_histogram()+
+  ggtitle(label = "Distribution of the Total Fertility Rate, 2018")+
+  xlab(label = "TFR")
+
+```
+
+The above example named the data frame explicitly in the `ggplot()`
+call, but we can also use `dplyr` to pipe data into the plot:
+
+```{r}
+prb%>%
+  ggplot(mapping=aes(x = tfr))+
+  geom_histogram()+
+  ggtitle(label = "Distribution of the Total Fertility Rate, 2018")+
+  xlab(label = "TFR")
   
-  1. It’s free - This is important, because, why should we pass along more costs to people, especially our students? This also make R code accessible to people, worldwide.
-  2. It’s the hotbed of methodological development. The R ecosystem has thousands of packages that represent the bleeding edge of data analysis, visualization and data science. This makes R attractive because it can pivot quickly to adopt new methods, which often lag in their development in other environments.
-  3. It has a supportive community of users. While there are some debates over how friendly some R users are to new users, overall, after spending 20 years in the R community, I’ve personally assisted hundreds of users, and been personally helped by many others. The open source nature of R lends itself to sharing of ideas and collaboration between users.
+```
 
-## Installing R and Rstudio on your computer
-Steps:
+We can likewise incorporate a `dplyr` workflow directly into our
+plotting, using the example from before, we will create histograms for
+the high and low fertility groups using the `facet_wrap()` function.
 
-  1. Install base R using the appropriate installer for your computer (Windows, Mac, Linux)
-If you already have an R version installed on your computer, it’s best to install the current version (4.1.1 as of this document)
-  2. Install Rstudio, an Integrated Development Environment for R
-  3. If you are a Windows user, install Rtools, which provides other tools for R to use on Windows systems.
-
-### Links:
-[R installers](https://cran.r-project.org/)
-[R studio download](https://www.rstudio.com/products/rstudio/download/#download)
-[Rtools download (windows only)](https://cran.r-project.org/bin/windows/Rtools/rtools40v2-x86_64.exe) 
-
-
-##Introduction to Rstudio
-Rstudio is an open source Integrated Development Environment (IDE) for R. It is a much better interface for using R because it allows you to write code in multiple languages, navigate your computer’s files, and see your output in a very nice single place. The Rstudio IDE has several components that we will explore.
-
-![](../images/rstudio.png)
-
-### Code window/Source editor pane
- - This is where you write your R code. You can write R code in a few different file types (more on this later), but the basic one is an R script, with file extension .R
+```{r}
+prb%>%
+  mutate(high_tfr = ifelse(test = tfr > 3,
+                           yes = "high",
+                           no = "low") )%>%
+  group_by(high_tfr)%>%
+  ggplot(mapping=aes(x = imr))+
+  geom_histogram(aes( fill = high_tfr))+
+  facet_wrap( ~ high_tfr)+
+  ggtitle(label = "Distribution of the Infant Mortality Rate, 2018",
+          subtitle = "Low and High Fertility Countries")+
+  xlab(label = "Infant Mortality Rate")
  
- - The code window allows you to write and execute your code one line at a time, or to run an entire script at once. I use this to develop new code and when I want to test if things work (a VERY common exercise when writing any code).
  
- - To run a single line of code, put your cursor on the line and hit Ctrl-Enter (on Mac CMD-Enter also does this)
+```
 
- - To run multiple lines of code, highlight the lines you want to run and do the same thing
+You also notice that I used the `aes(fill = high_tfr)` to tell R to
+color the histogram bars according to the variable `high_tfr`. The
+`aes()` function allows you to modify colors, line types, and fills
+based of values of a variable.
 
-### Console Pane
+Another way to display the distribution of a variable is to use
+`geom_density()` which calculates the kernel density of a variable.
+Again, I use a variable, this time the continent a country is on, to
+color the lines for the plot.
 
-- This is where most of your non-graphical output will be shown. Any numeric output will appear here, as well as any warnings or error messages. In R a warning doesn’t necessarily mean something went wrong, its just R’s polite way of telling you to pay attention.
+```{r}
+prb%>%
+ggplot(mapping = aes(tfr,
+                     colour = continent,
+                     stat = ..density..))+
+  geom_density()+
+  ggtitle(label = "Distribution of the Total Fertility Rate by Continent",
+          subtitle = "2018 Estimates")+
+  xlab(label = "TFR")
 
-- An Error means something did go wrong. This is often because you left off a ) or a , sometimes because you misspelled something. I routinely spell length as lenght which causes R to print an error message. If you see an error, don’t worry, R will print some kind of message telling you what went wrong. 
+```
 
- - R’s output is in plain text, although we can produce much prettier output using other output methods, and we’ll talk more about that later. 
+### Stem and leaf plots/Box and Whisker plots
 
-- You can type commands or code into the console as well, and you’ll immediately get the result, versus if you write it in the Source/Code window, you have to run it to see the result. I will often work in the console when I want to get “fast” answers, meaning little checks that I will often do to see the value of something. 
+Another visualization method is the stem and leaf plot, or box and
+whisker plot. This is useful when you have a continuous variable you
+want to display the distribution of across levels of a categorical
+variable. This is basically a graphical display of Tukey's 5 number
+summary of data.
 
-### Environment or Workspace browser pane
- - The R environment is where any object you create is stored. In R, anything you read in or create with your code is called an object, and R is said to be an object oriented programming language. 
+```{r, fig.height=8, fig.width=10}
+prb%>%
+  ggplot( mapping = aes(x = continent, y = tfr))+
+  geom_boxplot()+
+  ggtitle(label = "Distribution of the Total Fertility Rate by Continent",
+          subtitle = "2018 Estimates")
+```
 
- - Depending on the type of object something is, you may be able to click on the object in the environment and see more about it. 
+You can flip the axes, by adding `coord_flip()`
 
- - For instance if the object is a data frame, R will open it in a viewer where you can explore it like a spreadsheet, and sort and filter it as well.
- 
- - Other objects may not do anything when you click on them.
- 
- - There is also a useful History tab here that shows you recently executed lines of code from the console or the code pane. 
+```{r, fig.height=8, fig.width=10}
+prb%>%
+ggplot( mapping = aes( x = continent,
+                       y = tfr))+
+  geom_boxplot()+
+  ggtitle(label = "Distribution of the Total Fertility Rate by Continent",
+          subtitle = "2018 Estimates")+
+  coord_flip()
+
+```
+
+You can also color the boxes by a variable, Here, I will make a new
+variable that is the combination of the continent variable with the
+region variable, using the `paste()` function. It's useful for combining
+values of two strings.
+
+```{r, fig.height=8, fig.width=10}
+
+prb%>%
+  mutate(newname = paste(continent, region, sep = "-"))%>%
+  ggplot(aes(x = newname,
+             y = tfr,
+             fill = continent))+
+  geom_boxplot()+
+  coord_flip()+
+  ggtitle(label = "Distribution of the Total Fertility Rate by Continent",
+          subtitle = "2018 Estimates")
 
 
-### Files/Output/Help pane
+```
 
- - The files and output area is where you can interact with files on your local computer, such as data files or code files, or images that R can open. 
+### X-Y Scatter plots
 
- - This area also has a plots window that will display plots you create in R either via typing directly into the console or by running a line(s) of code from the source/code pane. 
- 
- - There is also a very valuable part of this pane that lets you access the help system in R. If you are either looking for something, or you just want to explore the functions, you can get access to all of this here. 
+These are useful for finding relationships among two or more continuous
+variables. `ggplot()` can really make these pretty. The `geom_point()`
+geometry adds points to the plot.
 
-# Break
+Here are a few riffs using the PRB data:
 
-## Reading common file types into R
-Many of you have data or maybe R code you’ve written before that you want to open in R. Depending on the type of file there are many ways to do this. Using the Files pane is an easy way to get R to open existing files for you. This will use an appropriate R function to read in the file and load it into R’s workspace/environment. 
+```{r}
+prb%>%
+ggplot(mapping= aes(x = tfr,
+                    y = imr))+
+  geom_point()+
+  ggtitle(label = "Relationship between Total Fertility and Infant Mortality",
+          subtitle = "2018 Estimates")+
+  xlab(label = "TFR")+
+  ylab(label = "IMR")
+```
 
-Excel spreadsheets and their text equivalent Comma Separated Value (`csv`) files are able to be clicked on in the Files pane and will open directly into R. R will also import via the point and click method data files from SPSS (`.sav`) and Stata (`.dta`). Likewise R’s own native data sets (`.rds` or `.rdata`) files can also be clicked on directly in the files pane and loaded directly into the environment.
+R also makes it easy to overlay linear and spline smoothers for the data
+(more on splines later).
 
-Some files, particularly data files produced by SAS require special functions to read into R. To read a SAS dataset (`.sas7bdat`) into R, use:
+```{r, warning=FALSE, message=FALSE, results='hide'}
+prb%>%
+ggplot(mapping = aes(x = tfr,
+                    y = imr))+
+  geom_point()+
+  geom_smooth(method = "lm",
+              color = "black",
+              se = F)+ #linear regression fit
+  geom_smooth(color = "blue",
+              method = "loess",
+              se = FALSE)+
+  ggtitle(label = "Relationship between Total Fertility and Infant Mortality",
+          subtitle = "2018 Estimates")+
+  xlab(label = "TFR")+
+  ylab(label = "IMR")
+```
+
+Now we color the points by continent
+
+```{r,warning=FALSE, message=FALSE}
+prb%>%
+ggplot(mapping = aes(x = tfr, 
+                     y = imr,
+                     color =continent))+
+  geom_point()+
+  geom_smooth(method = "lm",
+              se = FALSE)+
+  ggtitle(label = "Relationship between Total Fertility and Infant Mortality",
+          subtitle = "2018 Estimates")+
+  xlab(label = "TFR")+
+  ylab(label = "IMR")
+```
+
+### Facet plots
+
+Facet plots are nice, they allow you to create a plot separately based
+on a grouping variable. This allows you to visualize if the relationship
+is constant across those groups. Here, I repeat the plot above, but I
+facet on the continent, and include the regression line for each
+continent.
+
+```{r,warning=FALSE, message=FALSE}
+prb%>%
+ggplot(mapping= aes(x = tfr,
+                    y = imr,
+                    color = continent))+
+  geom_point()+
+  geom_smooth(method = "lm",
+              se = FALSE,
+              color = "black")+
+  facet_wrap( ~ continent)+
+  ggtitle(label = "Relationship between Total Fertility and Infant Mortality",
+          subtitle = "2018 Estimates")+
+  xlab(label = "TFR")+
+  ylab(label = "IMR")
+```
+
+Another example, this time of a bad linear plot! `ggplot` makes it easy
+to examine if a relationship is linear or curvilinear, at least
+visually.
+
+```{r}
+ggplot(data = prb,mapping = aes(x = tfr, y = pctlt15_2018))+
+  geom_point()+
+  geom_smooth( method = "lm",
+               se = FALSE,
+               color = "black")+
+  geom_smooth( method = "loess",
+               se = FALSE,
+               color = "blue")+
+  ggtitle(label = "Relationship between Total Fertility and Percent under age 15",
+          subtitle = "2018 Estimates- Linear & Loess fit")+
+  xlab(label = "Percent under age 15")+
+  ylab(label = "IMR")
+```
+
+### Break
+
+## Basic dplyr
+
+The `dplyr` package has many functions that work together to produce
+succinct, readable and highly functional code. I often say about base R
+packages in comparison to things like SAS, that I can do something in R
+in about 10 lines of code compared to 50 in SAS. Using dplyr, you can do
+even more, faster.
+
+The package consists of core "verbs" that are used to clean, reshape,
+and summarize data. Using "pipes", the user can chain these verbs
+together so that you only have to name the data being used once, which
+makes for more efficient code, since you're not constantly having to
+name the dataframe. The pipes also allow for all variables within a
+dataframe to be accessed, without using the `$` or `[]` notation
+described earlier in this chapter.
+
+Perhaps a short tour of using dplyr would be good at this point, and we
+will see it used throughout the book. In the following code, I will use
+the `prb` data from earlier, and I will do a series of tasks. First, I
+will create a new variable using the `mutate()` function, then group the
+data into groups (similar to SAS's 'by' processing) , then do some
+statistical summaries of other variables using the `summarise()`
+function.
+
+Here we go:
+
+```{r}
+library(dplyr)
+
+prb %>%
+  mutate(high_tfr = ifelse(test = tfr > 3,
+                           yes =  "high",
+                           no =  "low") )%>%
+  group_by(high_tfr) %>%
+  summarise(n = n(),
+            across(.cols = c(e0male, e0female, gnigdp, imr),
+                   .fns = mean,
+                   na.rm = TRUE))%>%
+  ungroup()
+  
+
+```
+
+The `prb%>%` line says, take the prb data and feed it into the next verb
+using the pipe. The next line
+`mutate(high_tfr = ifelse(test = tfr > 3,yes =  "high", no =  "low") )%>%`
+tells R to create a new variable called `high_tfr`, the value of the
+variable will be created based on conditional logic. If the value of the
+tfr is over 3, the value will be `"high"` and if the value of the tfr is
+less than 3, the value of the variable will be `"low"`.
+
+The `group_by(high_tfr)%>%` line tells R to form a "grouped data frame",
+basically this is how `dplyr` segments data into discrete groups, based
+off a variable, and then performs operations on those groups. This is
+the same thing as stratification of data. You can use multiple variables
+in this function, to group your data by multiple attributes.
+
+The last line
+`summarise(n=n() , across(.cols = c(e0male, e0female, gnigdp, imr), .fns = mean, na.rm = TRUE))`
+tells R to first count the number of cases in each group `n = n()`, then
+summarize multiple variables, in this case male and female life
+expectancy at birth, GDP, and the infant mortality rate, by each of the
+levels of the `high_tfr` variable. The summary I want to do is the mean
+of each variable, being sure to remove missing values before calculating
+the mean.
+
+Finally, we `ungroup()` the dataframe to remove the grouping, this is
+customary whenever using the `group_by()` verb.
+
+We see then the estimates of the four other indicators for countries
+that have TFR over 3, versus countries with a TFR under 3.
+
+This is a basic `dplyr` use, but it is far from what the package can do.
+Throughout the rest of the book, this process will be used to do
+calculations, aggregate data, present model results and produce
+graphics. This example was trying to show a simple workflow in dplyr,
+and introduce the pipe concept.
+
+## R file types
+
+*.R files* R uses a basic text file with the .R extension. This type of
+file is useful if you're going to write a function or do some analysis
+and don't want to have formatted output or text. You can use these files
+for everything, but they are limited in their ability to produce reports
+and formatted output, so I recommend people work with R Markdown files
+instead.
+
+*.Rmd files* Rstudio uses a form of the markdown formatting language,
+called R Markdown, for creating formatted documents that include code,
+tables, figures and statistical output. **This book is written in R
+Markdown!**
+
+R Markdown is nice for lots of reasons, such as the ability to insert
+latex equations into documents.
+
+$$
+{y_i \sim Normal (x'\beta, \sigma_2)}
+$$ 
+
+or to include output tables directly into a document:
+
+```{r, echo = FALSE, results='hide', message = FALSE }
+library(readr, quietly = TRUE)
+prb = read_csv(file = "https://raw.githubusercontent.com/coreysparks/r_courses/master/2018_WPDS_Data_Table_FINAL.csv")
+names(prb) = tolower(names(prb))
+```
+
+```{r}
+library(broom)
+library(pander)
+fit = lm(imr~tfr+pcturban+pctlt15_2018+pctwomcontra_all, 
+          data = prb)
+pander(broom::tidy(fit))
+
+```
+
+This allows you to make tables in Rmarkdown without having to do
+non-repeatable tasks in Word or some other program. You can basically do
+your entire analysis, or a sideshow for a presentation, or an entire
+paper, including bibliography, in Rstudio.
+
+### R projects
+
+Rstudio allows you to create a R project, which basically sets up a
+specific location to store R code for a given project you may be doing.
+For instance, this book is a single R project, which helps me organize
+all the chapters, bibliographies, figures, etc.
+
+R projects also allow you to use version control, including Git and SVN,
+to collaborate and share code and data with others.
+
+### R data files
+
+R allows you to read and write its own *native* data formats, as well as
+read and write text formatted files and data files from other
+statistical software packages. Two native R data formats are `.rds` and
+`.rdata` formats. `.rds` files allow you to save a single R object to an
+external files, while `.rdata` files allow you to save one or more
+objects to a file.
+
+Here is a short example of doing this, where I create 2 vectors, `x` and
+`y` and save them.
+
+```{r}
+x = c(1, 2,3)
+
+y = c(4, 5, 6)
+
+saveRDS(x, 
+        file="~/x.rds")
+
+save(list=c("x","y"),
+     file="xy.rdata")
+
+```
+
+I can also load these into R again:
+
+```{r}
+readRDS(file = "~/x.rds")
+load("xy.rdata")
+```
+
+Standard methods for importing text data such as comma separated value
+or tab delimited files can be read into R using `read.csv()` or
+`read.table()` and similar writing functions are available.
+
+To read in a dataset from another statistical package, I recommend using
+the `haven` package. It allows you to read and write SAS (both sas7bdat
+and xpt files), Stata, SPSS (both .por and .sav files).
+
+For example, here I write out a dataframe containing `x` and `y` from
+above to a SAS version 7 file:
+
+```{r}
+xy = data.frame(x = x, y = y)
+xy
+
+library(haven)
+
+write_sas(data = xy,
+          path = "~/xy.sas7bdat")
+```
+
+I will describe dataframes more later in the chapter.
+
+R also has packages for reading/writing such data formats as JSON, ESRI
+Shapefiles, Excel spreadsheets, Google Spreadsheets, DBF files, in
+addition to tools for connecting to SQL databases, and for interfacing
+with other statistics packages, such as Mplus, OpenBUGS, WinBUGS and
+various Geographic Information Systems.
+
+## Dataframes
+
+Traditionally, R organizes variables into data frames, these are like a
+spreadsheet. The columns can have names, and the *dataframe* itself can
+have data of different types.
+
+Here we make a short data frame with three columns, two numeric and one
+factor:
+
+```{r}
+mydat = data.frame(
+  x = c(1,2,3,4,5, 6, 7, 8),
+  y = c(10, 20, 35, 57, 37, 21, 23, 25),
+  group = factor(c("A", "A" ,"A", "B", "B", "C","C","C"))
+)
+
+#See the size of the dataframe
+dim(mydat)
+
+
+#Open the dataframe in a viewer and just print it
+print(mydat)
+```
+
+### Accessing variables in dataframes
+
+R has a few different ways to get a variable from a data set. One way is
+the `$` notation, used like `dataset$variable`, and another is to
+provide the column index or name of the variable. These three methods
+are illustrated below. The first tells R to get the variable named
+`group` from the data. The second tells R to get the column named
+`group` from the data, and the third tells R to get the third column
+from the data.
+
+```{r}
+mydat$group
+mydat['group'] 
+mydat[,3]
+```
+
+The `names()` function is very useful for seeing all the column names of
+a dataset, without having to print any of the data.
+
+```{r}
+names(mydat)
+```
+
+R has several useful function for previewing the contents of a dataframe
+or variable. The `head()` function shows the first 6 observations of a
+dataframe or variable, and `tail()` shows the last 6 observations. You
+can also show a custom number of observations by using the `n=` argument
+in either function. These are illustrated below:
+
+```{r}
+head(mydat)
+head(mydat, n = 2)
+```
+
+```{r}
+head(mydat$group)
+```
+
+```{r}
+tail(mydat)
+tail(mydat, n = 2)
+tail(mydat$group)
+```
+
+## Common/Useful packages
+
+R uses packages to store functions that do different types of analysis,
+so we will need to install lots of different packages to do different
+things. There are over 20,000 different packages currently for R. These
+are hosted on one of a number of *repositories*, such as the
+Comprehensive R Archive Network, or CRAN, which is the official
+repository for R packages. Other locations where authors store packages
+include [R-Forge](%22https://r-forge.r-project.org/%22) and
+[BioconductoR](%22https://www.bioconductor.org/%22). Many authors host
+packages in [Github](%22https://github.com%22) repositories, especially
+for development purposes.
+
+Packages are often organized into *Task Views*, which CRAN uses to
+organize packages into thematic areas. You can find a list of these Task
+Views [here](%22https://cran.r-project.org/web/views/%22). There is not
+a task view for Demography, but there are ones for the [Social
+Sciences](%22https://cran.r-project.org/web/views/SocialSciences.html%22),
+[Econometrics](%22https://cran.r-project.org/web/views/Econometrics.html%22),
+and [Spatial
+Data](%22https://cran.r-project.org/web/views/Spatial.html%22) to name a
+few. Task views allow users to download a lot of thematically linked
+packages in a single command, through the package `ctv`, or Cran Task
+Views. You can install this package by typing:
+
+`install.packages("ctv")`
+
+into Rstudio. Then you have to load the package by using the `library()`
+command:
+
+`library(ctv)`
+
+which gives you access to the functions in that package. You don't need
+to install the package again, unless you update your R software, but
+each time you start a new session (i.e. open Rstudio), you will have to
+load the library again. If you want to install all of the packages in
+the Social Science task view, you would type:
+
+`install.views("SocialSciences")`
+
+into R and it will install all of the packages under that task view, as
+of the writing of this sentence, include over 80 packages.
+
+I strongly recommend you install several packages prior to us beginning
+to use R, so you will not be distracted by this later. I've written a
+short script on my Github repository and you can use it by running:
 
 ```{r, eval = FALSE}
-haven::read_sas()
+source("https://raw.githubusercontent.com/coreysparks/Rcode/master/install_first_short.R")
 ```
 
-You can also read data directly from the internet, if it exists as a linkable file. For instance, if I wanted to read a data set that is a csv from a website, you can do:
+This will install a few dozen R packages that are commonly used for
+social science analysis and some other packages I find of use.
 
-```{r}
-prb = readr::read_csv(url("https://raw.githubusercontent.com/coreysparks/r_courses/master/2018_WPDS_Data_Table_FINAL.csv"))
-```
-
-Which uses the `url()` function to tell R that you are providing a web link.
-
-## Summarizing data 
-
-One of the key elements of analyzing data is the initial descriptive analysis of it. In subsequent chapters, I will go into more depth about this process, but for now, I want to illustrate some simple but effective commands for summarizing data. R’s basic way of storing data is as a structure called a data frame, which you can think of as a table, much like a spreadsheet. Data frames can store any type of data but usually store numeric or character variable types. Depending on what kind of data are in a dataframe, R will summarize it differently. There are a  few different ways to access a particular variable in a dataframe. The customary method is to use the $ operator. Here’s an example:
-
-### Dataframe summaries
-The `summary()` function is very useful both in terms of producing numerical summaries of individual variables, but also shows summaries of entire dataframes. Its output differs based on the type of variable you give it, for character variables it does not return any summary. For factor variables, it returns a frequency table, and for numeric variables, it returns the five number summary plus the mean.
-
-```{r, message=FALSE}
-summary(prb$region)
-```
-
-```{r}
-summary(as.factor(prb$continent))
-```
-
-```{r}
-summary(prb$tfr)
-```
-
-I find this function to be very useful when I’m initially exploring a data set, so I can easily see the min/max values of a variable. There are many alternatives to this base function, including `psych::describe()`, `Hmisc::describe()`, and `skimr::skim()`, all of which produce summaries of dataframes or variables.
-
-```{r}
-desc1 <- psych::describe(prb, fast = F)
-print(desc1, short = T)
-```
-
-
-```{r}
-desc3<-skimr::skim(prb)
-desc3
-```
-
-The `summary()` function, as well as the other three functions in other packages can be used on a single variable within a dataframe as well, or on a simple vector.
-
-### Frequency tables
-
-A basic exploration of data, especially if your data have categorical or nominal variables, includes the extensive use of frequency tables. If you’re simply looking at the number of observations in each level of a categorical variable, or using frequency tables to aggregate data, they are some of the most useful basic statistical summaries around. The basic function for constructing simple tables is `table()` in base R. More sophisticated table construction is allowed in `xtabs()`.
-
-Let’s have a look at some descriptive information about the data:
-
-### Frequency Table of # of Countries by Continent
-```{r}
-table(prb$continent)
-```
-
-
-### Measures of central tendency
-We can use graphical methods to describe what data ‘look like’ in a visual sense, but graphical methods are rarely useful for comparative purposes. In order to make comparisons, you need to rely on a numerical summary of data vs. a graphical one.
-
-Numerical measures tell us a lot about the form of a distribution without resorting to graphical methods. The first kind of summary statistics we will see are those related to the measure of central tendency. Measures of central tendency tell us about the central part of the distribution.
-
-### Mean and median
-
-Here is an example from the PRB data.
-```{r}
-mean(prb$tfr)
-```
-
-Whoops! What happened? This means that R can’t calculate the mean because there’s a missing value, which we saw before. We can tell R to automatically remove missing values by:
-
-```{r}
-mean(prb$tfr, na.rm = T)
-```
-
-Which works without an error. Many R functions will fail, or do listwise deletion of observations when NAs are present, so it’s best to look at the documentation for the function you’re wanting to use to see what it’s default na action is. The mean() function defaults to na.rm=FALSE, which indicates that it does not remove missing values by default.
-
-We can also calculate the median TFR
-```{r}
-median(prb$tfr, na.rm = T)
-```
-
-### Measures of variation
-One typical set of descriptive statistics that is very frequently used is the so-called five number summary and it consists of : the Minimum, lower quartile, median, upper quartile and maximum values. This is often useful if the data are not symmetric or skewed. This is what you get when you use the `fivenum()` function, or we can include the mean if we use the `summary()` function.
-```{r}
-fivenum(prb$tfr)
-```
-
-```{r}
-summary(prb$tfr)
-
-```
-
-The above sections have shown some basic ways to summarize data in R, along with many handy functions that are pervasive in my own general work flow. Is this everything R will do, **No!** Are these the only way to do things in R? **Never!** I’m constantly marveled at how many new functions I see my students using in their own work and this reminds me how much of the R ecosystem I have yet to explore, even after twenty-plus years of using it.
+You only have to install a package once, but each time you start a R
+session, you must load the package to use its functions. You should also
+routinely update your installed packages using
+`update.packages(ask = FALSE)`. This will update any packages that have
+new versions on CRAN. These often will contain bug fixes and new
+features. On CRAN, each package will have a README file that tells what
+has changed in the various versions. Here is one for one of my favorite
+packages
+[`tidycensus`](https://cran.r-project.org/web/packages/tidycensus/readme/README.html).

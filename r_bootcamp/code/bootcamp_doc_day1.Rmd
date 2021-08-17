@@ -14,8 +14,9 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
+<center>
 ![](../images/dem.png)
+</center>
 
 ## R Bootcamp for Incoming Graduate Students
 When: August 17, 6pm to 8pm
@@ -72,12 +73,14 @@ If you already have an R version installed on your computer, it’s best to inst
   3. If you are a Windows user, install Rtools, which provides other tools for R to use on Windows systems.
 
 ### Links:
-[R installers](https://cran.r-project.org/)
-[R studio download](https://www.rstudio.com/products/rstudio/download/#download)
-[Rtools download (windows only)](https://cran.r-project.org/bin/windows/Rtools/rtools40v2-x86_64.exe) 
+ - [R installers](https://cran.r-project.org/)
+ 
+ - [R studio download](https://www.rstudio.com/products/rstudio/download/#download)
+ 
+ - [Rtools download (windows only)](https://cran.r-project.org/bin/windows/Rtools/rtools40v2-x86_64.exe) 
 
 
-##Introduction to Rstudio
+## Introduction to Rstudio
 Rstudio is an open source Integrated Development Environment (IDE) for R. It is a much better interface for using R because it allows you to write code in multiple languages, navigate your computer’s files, and see your output in a very nice single place. The Rstudio IDE has several components that we will explore.
 
 ![](../images/rstudio.png)
