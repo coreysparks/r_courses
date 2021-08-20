@@ -56,6 +56,7 @@ knitr::kable(t1, caption = "Agenda", align = "c", format="html")
 # Day 1
 
 ## What is R?
+
 R was first implemented in the early 1990’s by Robert Gentleman and Ross Ihaka, both faculty members at the University of Auckland. It is an open source software system that specializes in statistical analysis and graphics. R is its own programming language and the R ecosystem includes over 18,000 user-contributed additions to the software, known as packages.
 
 I’ve used R for twenty years. I was also trained in SPSS and SAS along the way, by various mentors. Some tried to get me to learn more general purpose languages like Delphi (of all things) or Perl, or Basic, and I’ve been chastised for not knowing the depths of Python, but R presents a nimble and rigorous platform to do demography. My top three reasons for teaching and using R are:
