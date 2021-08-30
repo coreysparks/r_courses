@@ -164,8 +164,14 @@ library(ggplot2)
 ggplot(data=prb,
        mapping=aes(x = gnigdp))+
   geom_histogram()+
-  ggtitle(label = "Distribution of the Per Capita GDP, 2018")+
-  xlab(label = "GDP Per Capita")
+  labs(title ="Distribution of the Per Capita GDP, 2018",
+       caption = "Data from PRB\n Calculations by Corey Sparks",
+       subtitle = "PRB 2018 Data")+
+       xlab(label = "GDP Per Capita")+
+  ylab(label = "Frequency")
+  
+  
+ 
 
 ```
 
@@ -406,6 +412,17 @@ prb %>%
                            yes =  "high",
                            no =  "low") )%>%
   group_by(high_tfr) %>%
+  summarise(mean_e0 = mean(e0male, na.rm = TRUE))
+  
+```
+
+
+```{r}
+prb %>%
+  mutate(high_tfr = ifelse(test = tfr > 3,
+                           yes =  "high",
+                           no =  "low") )%>%
+  group_by(high_tfr) %>%
   summarise(n = n(),
             across(.cols = c(e0male, e0female, gnigdp, imr),
                    .fns = mean,
@@ -461,8 +478,8 @@ prb %>%
   mutate(high_tfr = ifelse(test = tfr > 3,
                            yes =  "high",
                            no =  "low") )%>%
-  filter(continent == "ASIA")%>%
-  group_by(high_tfr) %>%
+  filter(continent %in% c("ASIA", "AFRICA"))%>%
+  group_by(high_tfr, continent) %>%
   summarise(n = n(),
             across(.cols = c(e0male, e0female, gnigdp, imr),
                    .fns = mean,
@@ -541,7 +558,7 @@ names(prb) = tolower(names(prb))
 ```{r}
 library(broom)
 library(pander)
-fit = lm(imr~tfr+pcturban+pctlt15_2018+pctwomcontra_all, 
+fit = lm(imr~tfr+pcturban, 
           data = prb)
 pander(broom::tidy(fit))
 
