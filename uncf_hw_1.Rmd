@@ -1,0 +1,162 @@
+---
+title: "R Notebook - Module 1 Homework 1"
+output:
+  html_document:
+    df_print: paged
+---
+
+Please follow the instructions "to install R"  THEN "to install R studio" .  You need them both on the following website.  You do not need to install the SDSFoundations Package
+
+There are instructions for both Mac and Windows users
+
+[Instructions](https://courses.edx.org/courses/UTAustinX/UT.7.01x/3T2014/56c5437b88fa43cf828bff5371c6a924/)
+
+When you are done, open R studio and you can start your homework.
+
+# Module 1 Unit 1 Homework
+
+ Note, since you are running this on your personal computer and NOT the ADRF, 
+ you will need to install packages beforehand.  This is the case for module #1.
+ 
+```{r, eval=FALSE}
+install.packages(c("tidyverse", "car"))
+```
+
+
+When promoted with the following question, answer `"Yes" `
+
+`Do you want to install from sources the package which needs compilation? (Yes/no/cancel) : Yes`
+
+```{r}
+library(tidyverse)
+library(car)
+
+```
+
+In this workbook, we will be using 2019 American Community Survey Public Use Microdata (PUMS). These are public-use data sets containing information about responses to the Census Bureau American Community Survey. 
+
+These are public-use data sets containing information about responses to the Census Bureau American Community Survey. Information about the ACS project can be found at [https://www.census.gov/programs-surveys/acs](https://www.census.gov/programs-surveys/acs). 
+
+We will be using the ACS PUMS dataset for Texas and California in our examples in this workbook.
+
+You can find more information about the ACS datasets [here](https://www.census.gov/programs-surveys/acs/microdata/access.2019.html) and the Codebook for the data [here](https://raw.githubusercontent.com/coreysparks/data/master/pums_vars.csv).
+
+
+## Import census data
+
+```{r}
+census <- read_csv(url("https://github.com/coreysparks/r_courses/blob/master/data/pums_tx_ca_2019.csv?raw=true"), show_col_types = F)
+
+```
+
+
+Please review the website with [videos on module 1](https://ada.coleridgeinitiative.org/r-1 )
+
+In the R Unit 1: Introduction to R and Data Frames the functions "glimpse" "head" and "spec" are used to characterize features and the dimensions of the dataframe. 
+
+Use the "glimpse" "head" and "spec" functions to answer the following questions about the census dataframe we generated above:
+
+
+##  Module 1 Checkpoint 1 Questions
+### QUESTION 1
+  
+ Use the "glimpse" function to determine the number of columns and rows in the census dataframe
+ 
+```{r}
+
+
+```
+
+### QUESTION 2
+
+Use the "spec" function to identify 3 character and 3 numeric variables in the census dataframe:  col_character = character, col_double = numeric
+
+```{r}
+
+```
+
+
+
+### QUESTION 3
+
+Use the "head" function to visualize the top 6 rows of the census dataframe.
+You will likely use this feature the most as you proceed with the analysis of your own data.
+
+```{r}
+
+```
+
+##  Module 1, Checkpoint 2 Questions  -- SUBSETTING DATA
+
+Subsetting a dataset is very important.  As it pertains to your project, this would help you create a dataset that contained only HBCU graduates, rather than graduates from all types of institutions.  This is useful as it takes less time to analyze smaller datasets, and the dataset you will be working with are VERY large.
+
+### QUESTION 4
+
+Indicate the line of code you would use to visualize ONLY the first three (3) variables, and ten (10) rows of the census dataframe
+
+```{r}
+
+```
+
+
+### QUESTION 5
+
+Indicate the line of code you would use to create a dataframe that contains only females (variable = SEX_label:  Female = 2 and Male = 1) under the age (variable = AGEP) of 25. 
+
+How many rows and columns are in this dataframe?
+
+```{r}
+
+```
+
+
+### QUESTION 6
+
+Show the line of code you would use to create a dataframe that contains people between 18 AND and 65 years old.
+
+
+```{r}
+
+```
+
+##  Module 1, Checkpoint 3A Questions  
+## DESCRIBING DATA - SUMMARY STATISTICS
+
+### QUESTION 7
+
+Use the summary function to determine the mean age of people in the census dataset
+
+```{r}
+
+```
+
+
+### QUESTION 8
+
+
+Use the group by and summarize function to determine the number of individuals in the census dataframe by race.  How many people in the census dataframe were two (2) or more races?
+
+```{r}
+
+```
+
+
+##  Module 1, Checkpoint 3B Questions  -- Binning & Grouping Data
+
+### QUESTION 9
+
+Create a table that groups individuals in census dataframe by age group: young <=29, middle= 30-60 and old >60.
+
+How many individuals are in the young age group?
+
+```{r}
+
+```
+
+
+### Create a HTML file of your output and answers to the questions above using the Rstudio Knit function
+
+![](C:/Users/ozd504/OneDrive - University of Texas at San Antonio/Pictures/Screenshot 2022-01-17 100514.png)
+
+And choose Knit to HTML. R will create a html document with you answers to the questions above.
+
