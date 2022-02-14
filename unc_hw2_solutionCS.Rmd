@@ -1,0 +1,115 @@
+---
+title: "R Notebook - Module 1 Homework 2 - Answers"
+author: "Corey S. Sparks, PhD - UTSA"
+output: html_document
+---
+
+# R Homework Example 1
+
+In this example, you will first read in the American Community Survey Public-Use Microdata to examine income distributions among workers with a Ph.D. degree. This example uses a survey data source similar to what you will use in the ADRF.
+
+**<span style = "color:green">If you have not yet watched the "Introduction to Jupyter Notebooks" video, watch it before you proceed!</span>**
+
+**NOTE: When you open a notebook, make sure you run each cell containing code from the beginning. Since the code we're writing builds on everything written before, if you don't make sure to run everything from the beginning, some things may not work.**
+
+**Note, if you're running this on your personal computer, you will need to install packages beforehand, but if you're on the ADRF, the packages are installed already**
+
+_install.packages(c("tidyverse", "car"))_
+
+```{r}
+library(tidyverse)
+library(car)
+```
+
+### Read in Census American Community Survey Microdata
+
+In this workbook, we will be using 2019 American Community Survey Public Use Microdata (PUMS). 
+These are public-use data sets containing information about responses to the Census Bureau American Community Survey. Information about the ACS project can be found at [https://www.census.gov/programs-surveys/acs](https://www.census.gov/programs-surveys/acs). 
+
+We will be using the ACS PUMS dataset for Texas and California in our examples in this workbook.
+
+You can find more information about the ACS datasets [here](https://www.census.gov/programs-surveys/acs/microdata/access.2019.html) and the Codebook for the data [here](https://raw.githubusercontent.com/coreysparks/data/master/pums_vars.csv).
+
+```{r}
+census <- read_csv(url("https://github.com/coreysparks/r_courses/blob/master/data/pums_tx_ca_2019.csv?raw=true"), show_col_types = F)
+```
+
+```{r}
+head(census)
+```
+
+## Variables we will use in this example
+In this example and homework we will work with a few of the variables in this data. 
+
+#### WAGP = Annual Wages
+#### SEX = Respondent's self idenfied sex
+#### SCHL = Respondent's self idenfied educational attainment
+#### ESR = Respondent's self idenfied employment status
+#### HISP = Respondent's self idenfied Hispanic ethnicity
+#### RAC1P = Respondent's self idenfied race
+#### ST = Respondent's state of residence
+
+Specific codes and response options can be found in the codebook
+
+# Basic visualization using ggplot and dplyr
+
+```{r}
+library(car)
+census_sub <- census %>%
+    filter(ESR %in% c(1,2),  #select people who are employed
+          WAGP !=0 & is.na(WAGP)!=T, #select people with recorded wages
+          SCHL == 24)%>% # select only doctoral recipients
+    mutate(sex2 = Recode (SEX, recodes = "1='Male'; 2='Female' "), 
+              as.factor=TRUE) #create new sex variable with labels instead of numbers
+
+census_sub%>%
+    select(sex2, WAGP)%>%
+    head()
+```
+
+### <span style="color:red">Homework Assignment Answers</span>
+
+
+
+1) Calculate the **average wage** for both states and report it
+
+```{r}
+census_sub%>%
+    group_by(ST)%>%
+    summarize(mean_inc  = mean(WAGP, na.rm=T), 
+             n_obs = n())
+```
+
+
+2) Make a bar chart of the **average wage** in both states
+
+```{r}
+census_sub%>%
+    group_by(ST)%>%
+    summarize(mean_inc  = mean(WAGP, na.rm=T), 
+             n_obs = n())%>%
+  ggplot(aes(x=ST, y=mean_inc))+
+  geom_col()+
+    theme(axis.text.x=element_text(angle =-45))
+```
+
+3) Make a histogram of the wage distributions in both states
+
+```{r}
+census_sub%>%
+    ggplot(mapping = aes(fill=ST_label, group=ST_label, x=WAGP))+
+    geom_histogram(position="dodge", bins=20) #position="dodge" plots the lines next to each 
+```
+
+4) Make a box and whisker plot for wage distributions in both states
+
+```{r}
+census_sub%>%
+    ggplot(mapping = aes(fill=ST_label, group=ST_label, x=WAGP))+
+    geom_boxplot(alpha=.5)
+
+```
+
+In general, think about what the differences are between the two states. What do you think this might represent? 
+
+
