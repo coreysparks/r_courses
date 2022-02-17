@@ -1,0 +1,59 @@
+---
+title: "R+ SQL"
+author: "Corey Sparks PhD"
+date: "7/7/2021"
+output: html_document
+---
+
+Go to this site and Download the database:
+<https://github.com/coreysparks/r_courses/blob/master/data/PUMS_data>
+
+![](C:/Users/ozd504/Github/r_courses/github_db.png)
+
+and save it to your local computer. I recommend putting the file *PUMS_data* in your User folder on your computer.
+
+```{r}
+library(tidyverse)
+library(DBI)
+library(RSQLite)
+```
+
+```{r}
+
+con <-dbConnect(SQLite(),
+                dbname = "~/PUMS_data")+
+con
+dbListTables(con)
+```
+
+
+```{r}
+
+
+test.table<- dbGetQuery(con, 
+                        
+                        'select * from pums_tx_ca limit 10;')
+test.table
+```
+
+
+
+```{r}
+#dbfile <- tempfile(".sqlite") # not created yet, just a place holder
+download.file("https://github.com/coreysparks/r_courses/blob/master/data/PUMS_data?raw=true",destfile = "~/Downloads/PUMS_data")
+
+library(RSQLite)
+DB <- dbConnect(SQLite(), dbname="~/Downloads/PUMS_data")
+
+dbListTables(DB)
+```
+
+
+```{r}
+query<-"
+select  *
+from ds_nsf_ncses.dbo.nsf_sed
+where phdfy >= 2015
+"
+```
+
