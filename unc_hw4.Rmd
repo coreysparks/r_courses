@@ -1,0 +1,197 @@
+---
+title: "R Notebook - Module 1 Homework 4 - R+SQL"
+output: html_document
+---
+
+Go to this site and Download the database:
+<https://github.com/coreysparks/r_courses/blob/master/data/PUMS_data>
+
+![](C:/Users/ozd504/Github/r_courses/github_db.png)
+
+and save it to your local computer. I recommend putting the file *PUMS_data* in your User folder on your computer.
+
+The two packages we need here are `DBI` and `RSQLite` to connect to this database. 
+
+```{r}
+library(tidyverse)
+library(DBI)
+library(RSQLite)
+```
+
+```{r}
+
+con <-dbConnect(drv = SQLite(),
+                dbname = "data/PUMS_data")
+con
+```
+
+We can list all of the tables in the database by using `dbListTables()`
+
+```{r}
+dbListTables(con)
+```
+
+The table `pums_tx_ca` is what you used in homework 1 and 2, while the `pums_tx_ca_hh` is different data on the households that each of the people in the `pums_tx_ca` live in. 
+
+
+### Using SQL queries in R
+
+One way to perform a SQL query is to write the query as a text string, then submit it to `dbGetQuery()`
+:
+
+```{r}
+myquery<- 'select AGEP, SEX, ST_LABEL from pums_tx_ca limit 10;'
+
+```
+
+You can store the data from the query in a R object:
+
+```{r}
+mydata <- dbGetQuery(conn = con, statement = myquery)
+mydata
+
+```
+
+Or we can put the query directly into the `dbGetQuery()` function:
+
+```{r}
+mydata<- dbGetQuery(conn = con, 
+                        statement = 'select AGEP, SEX, ST_LABEL
+                    from pums_tx_ca limit 10;')
+mydata
+```
+
+*Same result*
+
+### Select columns from table
+
+```{r}
+query<-"
+SELECT  AGEP, SEX, ST, WAGP
+FROM pums_tx_ca limit 10;
+"
+mydata<- dbGetQuery(conn = con, 
+                        statement = query)
+mydata
+
+```
+
+### Filter cases
+Select cases of adults over age 25 with a doctorate and who earned a wage.
+
+```{r}
+query<-"
+SELECT  AGEP, SEX, ST, WAGP, SCHL
+FROM pums_tx_ca 
+WHERE AGEP >=25 AND SCHL = 24 AND WAGP > 0
+limit 10;
+"
+mydata<- dbGetQuery(conn = con, 
+                        statement = query)
+mydata
+```
+
+### Aggregation
+
+Find the average wage for PhD's in Texas and California
+```{r}
+query<-"
+SELECT ST_LABEL, AVG(WAGP)
+FROM pums_tx_ca 
+WHERE AGEP >=25 AND SCHL = 24 AND WAGP > 0
+GROUP BY ST
+"
+mydata<- dbGetQuery(conn = con, 
+                        statement = query)
+mydata
+```
+Find the average wage for PhD's in Texas and California by Gender
+```{r}
+query<-"
+SELECT ST_LABEL, SEX_LABEL, AVG(WAGP)
+FROM pums_tx_ca 
+WHERE AGEP >=25 AND SCHL = 24 AND WAGP > 0
+GROUP BY ST, SEX
+"
+mydata<- dbGetQuery(conn = con, 
+                        statement = query)
+mydata
+```
+
+### Left Joins
+
+We can join data from the household table to the individual table using a left join. The two tables have the `SERIALNO` field in common. 
+
+To select fields from both tables, use the syntax `table1.column`, `table2.column`
+
+Here, I select a few coluns from the person table (`pums_tx_ca`) and the home value column `VALP` from the housing table `pums_tx_ca_hh`, and join them. 
+
+I also select cases like above for people over age 25 with a PhD. 
+
+```{r}
+
+query<-"
+SELECT 
+pums_tx_ca.SERIALNO, pums_tx_ca.AGEP, pums_tx_ca.SCHL, pums_tx_ca.ST, pums_tx_ca.SEX, pums_tx_ca.WAGP ,
+pums_tx_ca_hh.SERIALNO, pums_tx_ca_hh.VALP 
+FROM pums_tx_ca
+LEFT JOIN pums_tx_ca_hh ON pums_tx_ca.SERIALNO = pums_tx_ca_hh.SERIALNO
+WHERE pums_tx_ca.AGEP >=25 AND pums_tx_ca.SCHL = 24 AND pums_tx_ca.WAGP > 0 AND pums_tx_ca_hh.VALP>0
+LIMIT 10;
+"
+mydata<- dbGetQuery(conn = con, 
+                        statement = query)
+mydata
+```
+
+
+### Aggregate from joined tables 
+
+Here I calculate the average home value in Texas and California for those persons with a PhD
+
+```{r}
+query<-"
+SELECT 
+pums_tx_ca.SERIALNO, pums_tx_ca.ST_LABEL, 
+AVG(pums_tx_ca_hh.VALP) AS mean_home_value 
+
+FROM pums_tx_ca
+LEFT JOIN pums_tx_ca_hh ON pums_tx_ca.SERIALNO = pums_tx_ca_hh.SERIALNO
+WHERE pums_tx_ca.AGEP >=25 AND pums_tx_ca.SCHL = 24 AND pums_tx_ca.WAGP > 0 AND pums_tx_ca_hh.VALP>0
+GROUP BY pums_tx_ca.ST_LABEL
+LIMIT 10;
+"
+mydata<- dbGetQuery(conn = con, 
+                        statement = query)
+mydata
+```
+
+### Creat a merged table for further analysis
+
+```{r}
+query<-"
+SELECT 
+pums_tx_ca.SERIALNO, pums_tx_ca.AGEP, pums_tx_ca.SCHL, pums_tx_ca.ST_LABEL, pums_tx_ca.SEX, pums_tx_ca.WAGP ,
+pums_tx_ca_hh.SERIALNO, pums_tx_ca_hh.VALP
+
+FROM pums_tx_ca
+LEFT JOIN pums_tx_ca_hh ON pums_tx_ca.SERIALNO = pums_tx_ca_hh.SERIALNO
+WHERE pums_tx_ca.AGEP >=25 AND pums_tx_ca.SCHL = 24 AND pums_tx_ca.WAGP > 0 AND pums_tx_ca_hh.VALP>0
+"
+mydata<- dbGetQuery(conn = con, 
+                        statement = query)
+head(mydata)
+dim(mydata)
+```
+
+
+### <span style="color:red">Homework Assignment</span>
+
+Using the ACS tables from above perform the following
+
+1) How many households in Texas had values over $500,000?
+
+2) Create a table of persons in California with less than a High School degree. How many people are in this table?
+
+3) Create a merged table with the columns ST_LABEL, AGEP, RAC1P, WAGP, ACCESS and TENURE for persons in California with less than a bachelor's degree.
+
