@@ -132,7 +132,7 @@ I also select cases like above for people over age 25 with a PhD.
 
 query<-"
 SELECT 
-pums_tx_ca.SERIALNO, pums_tx_ca.AGEP, pums_tx_ca.SCHL, pums_tx_ca.ST, pums_tx_ca.SEX, pums_tx_ca.WAGP ,
+pums_tx_ca.SERIALNO, pums_tx_ca.AGEP, pums_tx_ca.SCHL, pums_tx_ca.ST, pums_tx_ca.SEX, pums_tx_ca.WAGP , pums_tx_ca_hh.TEN,
 pums_tx_ca_hh.SERIALNO, pums_tx_ca_hh.VALP 
 FROM pums_tx_ca
 LEFT JOIN pums_tx_ca_hh ON pums_tx_ca.SERIALNO = pums_tx_ca_hh.SERIALNO
