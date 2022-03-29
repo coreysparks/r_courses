@@ -1,8 +1,15 @@
 ---
-title: "Webinar for Census Bureau - Using Tidycensus"
-author: "Corey Sparks"
-date: "3/29/2022"
-output: html_document
+title: "Webinar for Census Bureau - Using Tidycensus in R"
+author: "Corey Sparks, PhD"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+   html_document:
+    df_print: paged
+    fig_height: 7
+    fig_width: 7
+    toc: yes
+    toc_float: yes
+    code_download: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -22,6 +29,10 @@ I am an associate professor at the Univerity of Texas at San Antonio in the [UTS
 
 Research interests include data science, Bayesian methods, education demography and health disparities.
 
+You can find me on [Twitter](https://twitter.com/CoreySparks1) and [Github ](https://github.com/coreysparks) and my [emailmailto:corey.sparks@utsa.edu>.
+
+## Open source software
+![](opensource.png)
 
 ## Using the tidycensus package - Setup
 
