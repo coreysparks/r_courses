@@ -31,8 +31,6 @@ Research interests include data science, Bayesian methods, education demography 
 
 You can find me on [Twitter](https://twitter.com/CoreySparks1) and [Github ](https://github.com/coreysparks) and my [emailmailto:corey.sparks@utsa.edu>.
 
-## Open source software
-![](opensource.png)
 
 ## Using the tidycensus package - Setup
 
@@ -68,7 +66,7 @@ Obtain one at <http://api.census.gov/data/key_signup.html>
 ### Save your API key to your working directory  in your R session
 I recommend you install your API key in your Rprofile, just so you don't have to keep pasting it into your code. To do this, type `tidycensus::census_api_key(key =  "yourkeyhere", install = T)` one time to install your key for use in `tidycensus`.
 
-###Look at available ACS variables
+### Look at available ACS variables
 As I mentioned above, finding the right table can be a challenge, especially for new data users. `tidycensus` has the `load_variables()` function that will load all of the available tables for a specific table type. 
 
  For example, if we are interested in variables from the ACS [data profile](https://www.census.gov/acs/www/data/data-tables-and-tools/data-profiles/2016/) tables, we can load all available variables then use R to search for what we need.
