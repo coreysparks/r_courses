@@ -225,12 +225,12 @@ sa_acs2 %>%
   mutate(cv =(DP03_0062M/1.645)/DP03_0062E)%>%
   mutate(cv_map=cut(cv,
                     breaks = quantile(cv, na.rm=T, p=seq(0,1,length.out = 9)),include.lowest = T))%>%
-  ggplot( aes(fill =cv_map, color = cv_map)) + 
+  ggplot( aes(fill =cv, color = cv)) + 
   geom_sf() + 
   ggtitle("Coefficient of Variation in Median Household Income", 
           subtitle = "Bexar County Texas, 2015 - Quantile Breaks")+
-  scale_fill_viridis_d(option="B")+ 
-  scale_color_viridis_d(option="B")
+  scale_fill_viridis_c(option="B")+ 
+  scale_color_viridis_c(option="B")
 ```
 
 
@@ -279,7 +279,7 @@ met_join<-met_join%>%
 ##Create our map
 
 map1<-met_join%>%
-  st_transform(crs = 102740)%>%
+  #st_transform(crs = 102740)%>%
   ggplot( aes(fill = med_income, color = med_income)) + 
   geom_sf() + 
   ggtitle("Median Household Income", 
