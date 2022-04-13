@@ -63,14 +63,16 @@ and vice versa.
 
 ```{r, warning=TRUE}
 library(readr)
-prb<-read_csv(file = "https://raw.githubusercontent.com/coreysparks/data/master/PRB2008_All.csv", col_types = read_rds(url("https://raw.githubusercontent.com/coreysparks/r_courses/master/prbspec.rds")))
+prb<-read_csv(file = url("https://github.com/coreysparks/data/blob/master/PRB2008_All.csv?raw=true"))
 names(prb)<-tolower(names(prb))
 
 library(dplyr)
 prb<-prb%>%
  # mutate(africa=ifelse(continent=="Africa", 1, 0))%>%
-  filter(complete.cases(imr, tfr, percpoplt15, e0total, percurban, percmarwomcontramodern))%>%
-  select(imr, tfr, percpoplt15, e0total, percurban, percmarwomcontramodern)
+  mutate(lngdp=log(gnippppercapitausdollars))%>%
+  select(continent, country, lngdp, tfr, percpoplt15, e0total, percurban)%>%
+  filter(complete.cases(.))
+  
 
 ```
 
@@ -85,7 +87,7 @@ Here we use 80% of the data to train our simple model
 ```{r}
 library(caret)
 set.seed(1115)
-train<- createDataPartition(y = prb$imr , p = .80, list=F)
+train<- createDataPartition(y = prb$lngdp, p = .80, list=F)
 
 prbtrain<-prb[train,]
 prbtest<-prb[-train,]
@@ -107,13 +109,13 @@ Once this is done, this pair is merged into a cluster, their distance is then co
 The original way to plot these analyses is by a **dendrogram**, or tree plot. 
 
 ```{r}
-hc1<-hclust(d= dmat, method="single")
-plot(hc1, hang=-1, main="Single linkage cluster analysis of PRB data")
 
 library(scorecard)
 library(factoextra)
 library(class)
 library(RColorBrewer)
+
+hc1<-hclust(d= dmat, method="single")
 
 fviz_dend(hc1, k=5, k_colors =brewer.pal(n=5, name="Accent"),
           color_labels_by_k = TRUE, ggtheme = theme_minimal())
@@ -125,23 +127,25 @@ table(groups)
 So this is silly becuase the method round 3 cluster that only had one observation. This is a weakness of the single linkage method, instead we use another method. Ward's method is typically seen as a better alternative because it tends to find clusters of similar size.
 
 ```{r}
-hc2<-hclust(d= dmat, method="ward.D")
-plot(hc2, hang=-1, main="Ward's cluster analysis of PRB data")
+hc2<-hclust(d= dmat,
+            method="ward.D")
 
+fviz_dend(hc2, k=4,
+          k_colors = brewer.pal(n=5, name="Accent"),
+          color_labels_by_k = TRUE,
+          ggtheme = theme_minimal())
 
-
-fviz_dend(hc2, k=5, k_colors = brewer.pal(n=5, name="Accent"),
-          color_labels_by_k = TRUE, ggtheme = theme_minimal())
 groups<-cutree(hc2, k=5)
 table(groups)
 
 ```
 
 ```{r}
-prbtrain$group1<-factor(cutree(hc2, k=5))
+prbtrain$group1<-factor(cutree(hc2, k=4))
 
 prbtrain%>%
-  ggplot(aes(x=imr, y=tfr, pch=group1,color=group1, cex=3))+geom_point()
+  ggplot(aes(x=lngdp, y=tfr, pch=group1, color=group1))+
+  geom_point()
 
 ```
 
@@ -154,17 +158,20 @@ prbtrain%>%
 ```{r}
 prbtrain<-prb[train,]
 
-km<-kmeans(x = prbtrain, center = 3, nstart = 10)
+km<-kmeans(x = prbtrain[, c(-1:-2)],
+           center = 3,
+           nstart = 20)
 km
 
 library(ClusterR)
-km2<-KMeans_rcpp(data=prbtrain, cluster=3, num_init = 10)
+km2<-KMeans_rcpp(data=prbtrain[, c(-1:-2)], cluster=4, num_init = 10)
 
 prbtrain$cluster<-as.factor(km2$cluster)
 
 
 prbtrain%>%
-  ggplot(aes(x=imr, y=tfr, group=cluster, color=cluster, cex=3))+geom_point()
+  ggplot(aes(x=lngdp, y=tfr, group=cluster, color=cluster))+
+  geom_point( cex=2)
 
 ```
 
@@ -175,66 +182,61 @@ Here I loop over 1 to 10 clusters and store the between group variances, then pl
 ```{r}
 ss<-NULL
 for(i in 1:10){
-  km<-kmeans(x=prbtrain, nstart = 10, centers = i)
-  ss[i]<-km$betweenss / km$totss
+  km<-kmeans(x=prbtrain[, c(-1:-2)],
+             nstart = 10,
+             centers = i)
+  ss[i]<-km$withinss
   
 }
 
-plot(x=2:10, y=diff(ss))
+plot(x=1:10, y=ss, type = "l")
 
-
+fviz_nbclust(scale(prbtrain[, c(-1:-2)]), kmeans, nstart=20, method="wss")
 ```
 
-Looks like the difference in variances stops declining dramatically at k=3 clusters. 
-
-
-Here are the test cases plotted as X's
 
 ```{r}
 
-prbtest$cluster<-as.factor(predict_KMeans(data=prbtest, CENTROIDS = km2$centroids))
+kmeans_fancy <- kmeans(scale(prbtrain[, c(-1:-2)]), 5, nstart = 100)
+
+fviz_cluster(kmeans_fancy,
+             data = scale(prbtrain[, c(-1:-2)]),
+             geom = c("point"),
+             ellipse.type = "convex")
+```
+
+
+```{r}
+library(cluster)
+gap_stat <- clusGap(scale(prbtrain[, c(-1:-2)]),
+                    FUN = kmeans,
+                    nstart = 30,
+                    K.max = 10, B = 100)
+
+fviz_gap_stat(gap_stat) + 
+  theme_minimal() + 
+  ggtitle("fviz_gap_stat: Gap Statistic")
+```
+
+```{r}
+fviz_nbclust(scale(prbtrain[, c(-1:-2)]), kmeans,
+             method = "silhouette", k.max = 10) +
+  theme_minimal() + 
+  ggtitle("The Silhouette Plot")
+```
+
+
+```{r}
+
+prbtest$cluster<-as.factor(predict_KMeans(data=prbtest[, c(-1:-2)],
+                                          CENTROIDS = km2$centroids))
 
 prbtest%>%
-  ggplot(aes(x=imr, y=tfr, group=cluster, color=cluster,cex=1.5))+geom_point(aes(cex=2.5) ,pch="x")+geom_point(data=prbtrain, aes(x=imr, y=tfr, group=cluster, color=cluster))
+  ggplot(aes(x=lngdp, y=tfr, group=cluster, color=cluster))+
+  geom_point(cex=4, pch="x")+
+geom_point(data=prbtrain,
+           aes(x=lngdp, y=tfr, group=cluster, color=cluster))
 
-
-```
-
-## Gaussian mixtures
-- These are a type of clustering method that is based on finding a finite mixture of Gaussian distributions within data. 
-- Only useful for continuous variables in data
-
-
-```{r}
-
-prbtrain<-prb[train,]
-prbtest<-prb[-train,]
-
-prbtrain<-center_scale(prb[train,])
-prbtest<-center_scale(prb[-train,])
-
-plot(Optimal_Clusters_GMM(data = prbtrain, max_clusters = 10,seed_mode = "random_subset", km_iter = 20, em_iter = 20))
-
-gmprb<-GMM(data = prbtrain, gaussian_comps = 3,seed_mode = "random_subset", km_iter = 10, em_iter = 10)
-
-#gmprb
-```
-
-```{r}
-prbtrain<-data.frame(prbtrain)
-names(prbtrain)<-names(prb)
-prbtrain$cls<-as.factor(apply(gmprb$Log_likelihood, 1, which.max))
-
-
-pred<-predict_GMM(data=prbtest, CENTROIDS = gmprb$centroids, COVARIANCE = gmprb$covariance_matrices, WEIGHTS = gmprb$weights)
-
-prbtest<-data.frame(prbtest)
-names(prbtest)<-names(prb)
-
-prbtest$cls<-as.factor(pred$cluster_labels+1)
-
-prbtest%>%
-  ggplot(aes(x=imr, y=tfr, group=cls, color=cls))+geom_point(pch="x", aes(cex=2.5) )+geom_point(data=prbtrain, aes(x=imr, y=tfr, group=cls, color=cls))
 
 ```
 
@@ -242,10 +244,13 @@ prbtest%>%
 ```{r}
 library(factoextra)
 
-km.res <- eclust(prbtrain[, -7], "kmeans", k = 3,
-                 nstart = 25, graph = FALSE)
+km.res <- eclust(prbtrain[, -7],
+                 FUNcluster =  "kmeans",
+                 k = 3,
+                 nstart = 25,
+                 graph = FALSE)
 
-fviz_cluster(km.res,  frame.type = "norm", frame.level = 0.68)
+fviz_cluster(km.res,  ellipse.type = "norm", ellipse.level = 0.68)
 ```
 
 ```{r}
