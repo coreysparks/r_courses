@@ -87,7 +87,7 @@ Here we use 80% of the data to train our simple model
 ```{r}
 library(caret)
 set.seed(1115)
-train<- createDataPartition(y = prb$lngdp, p = .80, list=F)
+train<- createDataPartition(y = prb$e0total, p = .80, list=F)
 
 prbtrain<-prb[train,]
 prbtest<-prb[-train,]
@@ -98,7 +98,7 @@ prbtest<-prb[-train,]
 
 First we form our matrix of distances between all the countries on our observed variables:
 ```{r}
-dmat<-dist(prbtrain, method="euclidean")
+dmat<-dist(scale(prbtrain[, 3:7]), method="euclidean")
 
 ```
 
@@ -144,7 +144,7 @@ table(groups)
 prbtrain$group1<-factor(cutree(hc2, k=4))
 
 prbtrain%>%
-  ggplot(aes(x=lngdp, y=tfr, pch=group1, color=group1))+
+  ggplot(aes(x=e0total, y=tfr, pch=group1, color=group1))+
   geom_point()
 
 ```
@@ -158,13 +158,13 @@ prbtrain%>%
 ```{r}
 prbtrain<-prb[train,]
 
-km<-kmeans(x = prbtrain[, c(-1:-2)],
+km<-kmeans(x = scale(prbtrain[, 3:7]),
            center = 3,
            nstart = 20)
 km
 
 library(ClusterR)
-km2<-KMeans_rcpp(data=prbtrain[, c(-1:-2)], cluster=4, num_init = 10)
+km2<-KMeans_rcpp(data=scale(prbtrain[, 3:7]), cluster=4, num_init = 10)
 
 prbtrain$cluster<-as.factor(km2$cluster)
 
@@ -182,7 +182,7 @@ Here I loop over 1 to 10 clusters and store the between group variances, then pl
 ```{r}
 ss<-NULL
 for(i in 1:10){
-  km<-kmeans(x=prbtrain[, c(-1:-2)],
+  km<-kmeans(x=scale(prbtrain[, 3:7]),
              nstart = 10,
              centers = i)
   ss[i]<-km$withinss
@@ -191,16 +191,16 @@ for(i in 1:10){
 
 plot(x=1:10, y=ss, type = "l")
 
-fviz_nbclust(scale(prbtrain[, c(-1:-2)]), kmeans, nstart=20, method="wss")
+fviz_nbclust(scale(prbtrain[, 3:7]), kmeans, nstart=20, method="wss")
 ```
 
 
 ```{r}
 
-kmeans_fancy <- kmeans(scale(prbtrain[, c(-1:-2)]), 5, nstart = 100)
+kmeans_fancy <- kmeans(scale(prbtrain[, 3:7]),3, nstart = 100)
 
 fviz_cluster(kmeans_fancy,
-             data = scale(prbtrain[, c(-1:-2)]),
+             data = scale(prbtrain[, 3:7]),
              geom = c("point"),
              ellipse.type = "convex")
 ```
@@ -208,7 +208,7 @@ fviz_cluster(kmeans_fancy,
 
 ```{r}
 library(cluster)
-gap_stat <- clusGap(scale(prbtrain[, c(-1:-2)]),
+gap_stat <- clusGap(scale(prbtrain[, 3:7]),
                     FUN = kmeans,
                     nstart = 30,
                     K.max = 10, B = 100)
@@ -219,23 +219,31 @@ fviz_gap_stat(gap_stat) +
 ```
 
 ```{r}
-fviz_nbclust(scale(prbtrain[, c(-1:-2)]), kmeans,
+fviz_nbclust(scale(prbtrain[, 3:7]),FUNcluster =  kmeans,
              method = "silhouette", k.max = 10) +
   theme_minimal() + 
   ggtitle("The Silhouette Plot")
 ```
 
+```{r}
+prbtrain%>%
+  group_by(cluster)%>%
+  summarise_at(vars(lngdp, e0total, percpoplt15, tfr),mean, na.rm=T)
+```
+
+
+## Prediction in Test set
 
 ```{r}
 
-prbtest$cluster<-as.factor(predict_KMeans(data=prbtest[, c(-1:-2)],
+prbtest$cluster<-as.factor(predict_KMeans(data=scale(prbtest[, 3:7]),
                                           CENTROIDS = km2$centroids))
 
 prbtest%>%
-  ggplot(aes(x=lngdp, y=tfr, group=cluster, color=cluster))+
+  ggplot(aes(x=e0total, y=tfr, group=cluster, color=cluster))+
   geom_point(cex=4, pch="x")+
 geom_point(data=prbtrain,
-           aes(x=lngdp, y=tfr, group=cluster, color=cluster))
+           aes(x=e0total, y=tfr, group=cluster, color=cluster))
 
 
 ```
@@ -244,7 +252,7 @@ geom_point(data=prbtrain,
 ```{r}
 library(factoextra)
 
-km.res <- eclust(prbtrain[, -7],
+km.res <- eclust(scale(prbtrain[, 3:7]),
                  FUNcluster =  "kmeans",
                  k = 3,
                  nstart = 25,
@@ -258,7 +266,7 @@ fviz_silhouette(km.res)
 ```
 
 ```{r}
-res.hc <- eclust(prbtrain, "hclust", k = 4,
+res.hc <- eclust(scale(prbtrain[, 3:7]), "hclust", k = 4,
                 method = "ward.D2", graph = FALSE) 
 head(res.hc$cluster, 15)
 
@@ -266,7 +274,7 @@ fviz_dend(res.hc, rect = TRUE, show_labels = TRUE, cex = 0.5)
 ```
 
 ```{r}
-res.hc <- eclust(prbtrain[, -7], "hclust", k = 4,
+res.hc <- eclust(scale(prbtrain[, 3:7]), "hclust", k = 4,
                 method = "ward.D2", graph = FALSE) 
 grp <- res.hc$cluster
 
@@ -274,17 +282,5 @@ clus.centers <- aggregate(prbtrain, list(grp), mean)
 clus.centers
 ```
 
-## Hybrid K-means and Hierarchical clustering
 
-```{r}
-# Compute hierarchical k-means clustering
-res.hk <-hkmeans(prbtrain[, -7], 3)
-# Elements returned by hkmeans()
-names(res.hk)
-res.hk
-
-fviz_dend(res.hk, cex = 0.6, rect = TRUE)
-fviz_cluster(res.hk, palette = "jco", repel = TRUE,
-             ggtheme = theme_classic())
-```
 
