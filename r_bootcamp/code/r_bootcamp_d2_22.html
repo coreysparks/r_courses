@@ -133,18 +133,23 @@ div.csl-indent {
   <ul class="collapse">
   <li><a href="#packages-for-today" id="toc-packages-for-today" class="nav-link" data-scroll-target="#packages-for-today">Packages for today</a></li>
   <li><a href="#our-data-for-today" id="toc-our-data-for-today" class="nav-link" data-scroll-target="#our-data-for-today">Our data for today</a></li>
-  <li><a href="#the-tidyverse" id="toc-the-tidyverse" class="nav-link" data-scroll-target="#the-tidyverse">The tidyverse</a></li>
+  </ul></li>
+  <li><a href="#the-tidyverse" id="toc-the-tidyverse" class="nav-link" data-scroll-target="#the-tidyverse">The tidyverse</a>
+  <ul class="collapse">
   <li><a href="#basic-ggplot" id="toc-basic-ggplot" class="nav-link" data-scroll-target="#basic-ggplot">Basic ggplot</a>
   <ul class="collapse">
   <li><a href="#stem-and-leaf-plotsbox-and-whisker-plots" id="toc-stem-and-leaf-plotsbox-and-whisker-plots" class="nav-link" data-scroll-target="#stem-and-leaf-plotsbox-and-whisker-plots">Stem and leaf plots/Box and Whisker plots</a></li>
   <li><a href="#x-y-scatter-plots" id="toc-x-y-scatter-plots" class="nav-link" data-scroll-target="#x-y-scatter-plots">X-Y Scatter plots</a></li>
   <li><a href="#facet-plots" id="toc-facet-plots" class="nav-link" data-scroll-target="#facet-plots">Facet plots</a></li>
-  <li><a href="#break" id="toc-break" class="nav-link" data-scroll-target="#break">Break</a></li>
   </ul></li>
-  <li><a href="#basic-dplyr" id="toc-basic-dplyr" class="nav-link" data-scroll-target="#basic-dplyr">Basic dplyr</a></li>
+  </ul></li>
+  <li><a href="#break" id="toc-break" class="nav-link" data-scroll-target="#break">Break</a></li>
+  <li><a href="#basic-dplyr" id="toc-basic-dplyr" class="nav-link" data-scroll-target="#basic-dplyr">Basic dplyr</a>
+  <ul class="collapse">
   <li><a href="#other-dplyr-functions" id="toc-other-dplyr-functions" class="nav-link" data-scroll-target="#other-dplyr-functions">Other dplyr functions</a>
   <ul class="collapse">
   <li><a href="#more-dplyr-summaries" id="toc-more-dplyr-summaries" class="nav-link" data-scroll-target="#more-dplyr-summaries">More dplyr summaries</a></li>
+  </ul></li>
   </ul></li>
   <li><a href="#r-file-types" id="toc-r-file-types" class="nav-link" data-scroll-target="#r-file-types">R file types</a>
   <ul class="collapse">
@@ -152,7 +157,6 @@ div.csl-indent {
   <li><a href="#r-data-files" id="toc-r-data-files" class="nav-link" data-scroll-target="#r-data-files">R data files</a></li>
   </ul></li>
   <li><a href="#commonuseful-packages" id="toc-commonuseful-packages" class="nav-link" data-scroll-target="#commonuseful-packages">Common/Useful packages</a></li>
-  </ul></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
   </ul>
 </nav>
@@ -192,21 +196,21 @@ div.csl-indent {
 <p><img src="images/dem-01.png" class="img-fluid figure-img"></p>
 </figure>
 </div>
-<section id="r-bootcamp-for-incoming-graduate-students" class="level2">
-<h2 class="anchored" data-anchor-id="r-bootcamp-for-incoming-graduate-students">R Bootcamp for Incoming Graduate Students</h2>
+<section id="r-bootcamp-for-incoming-graduate-students" class="level1">
+<h1>R Bootcamp for Incoming Graduate Students</h1>
 <p>When: August 16, 6pm to 8pm</p>
 <p>Where: <a href="https://utsa.zoom.us/j/3610228956">Zoom Link Here</a></p>
 </section>
-<section id="what-well-do" class="level2">
-<h2 class="anchored" data-anchor-id="what-well-do">What we’ll do:</h2>
+<section id="what-well-do" class="level1">
+<h1>What we’ll do:</h1>
 <p>This will be a short introduction to the R statistical programming language. This is intended to ease the anxiety over using R for your statistics courses. We realize that many incoming students have not used R or any programming language.</p>
 </section>
-<section id="what-youll-get-from-this" class="level2">
-<h2 class="anchored" data-anchor-id="what-youll-get-from-this">What you’ll get from this:</h2>
+<section id="what-youll-get-from-this" class="level1">
+<h1>What you’ll get from this:</h1>
 <p>This bootcamp will get you set up on your personal computer using R. This includes installing R, Rstudio and any other associated software, and getting you oriented with where things are.</p>
 </section>
-<section id="agenda" class="level2">
-<h2 class="anchored" data-anchor-id="agenda">Agenda</h2>
+<section id="agenda" class="level1">
+<h1>Agenda</h1>
 <div class="cell-output-display">
 
 <table>
@@ -272,8 +276,9 @@ div.csl-indent {
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(prb) <span class="ot">=</span> <span class="fu">tolower</span>(<span class="fu">names</span>(prb))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="the-tidyverse" class="level2">
-<h2 class="anchored" data-anchor-id="the-tidyverse">The tidyverse</h2>
+</section>
+<section id="the-tidyverse" class="level1">
+<h1>The tidyverse</h1>
 <p>So far, most of the functions I have discussed have been from the base R ecosystem, with some specific functions from other downloadable packages. One of the biggest changes to R in recent years has been the explosion in popularity of the <strong>tidyverse</strong> <span class="citation" data-cites="tidyverse">Wickham et al. (<a href="#ref-tidyverse" role="doc-biblioref">2019</a>)</span>. The tidyverse is a large collection of related packages that share a common philosophy of how data and programming relate to one another and work together to produce a more streamlined, literate way of programming with data.</p>
 <p>To get the core parts of the tidyverse, install it using <code>install.packages("tidyverse")</code> in your R session. This will install the core components of the tidyverse that can then be used throughout the rest of the course <a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>.</p>
 <p>Two of the workhorses in the tidyverse are the packages <code>dplyr</code> <span class="citation" data-cites="dplyr">Wickham et al. (<a href="#ref-dplyr" role="doc-biblioref">2020</a>)</span> and <code>ggplot2</code> <span class="citation" data-cites="ggplot2">Wickham (<a href="#ref-ggplot2" role="doc-biblioref">2016</a>)</span>.</p>
@@ -292,7 +297,6 @@ div.csl-indent {
 ✖ dplyr::lag()    masks stats::lag()</code></pre>
 </div>
 </div>
-</section>
 <section id="basic-ggplot" class="level2">
 <h2 class="anchored" data-anchor-id="basic-ggplot">Basic ggplot</h2>
 <p>Let’s say that we want to compare the distributions of GDP from the PRB data graphically. Since the <code>ggplot2</code> library is part of the tidyverse, it integrates directly with dplyr and we can do plots within pipes too.</p>
@@ -539,12 +543,13 @@ Attaching package: 'scales'</code></pre>
 </div>
 </div>
 </section>
-<section id="break" class="level3">
-<h3 class="anchored" data-anchor-id="break">Break</h3>
 </section>
 </section>
-<section id="basic-dplyr" class="level2">
-<h2 class="anchored" data-anchor-id="basic-dplyr">Basic dplyr</h2>
+<section id="break" class="level1">
+<h1>Break</h1>
+</section>
+<section id="basic-dplyr" class="level1">
+<h1>Basic dplyr</h1>
 <p>The <code>dplyr</code> package has many functions that work together to produce succinct, readable and highly functional code. I often say about base R packages in comparison to things like SAS, that I can do something in R in about 10 lines of code compared to 50 in SAS. Using dplyr, you can do even more, faster.</p>
 <p>The package consists of core “verbs” that are used to clean, reshape, and summarize data. Using “pipes”, the user can chain these verbs together so that you only have to name the data being used once, which makes for more efficient code, since you’re not constantly having to name the dataframe. The pipes also allow for all variables within a dataframe to be accessed, without using the <code>$</code> notation described yesterday.</p>
 <p>Perhaps a short tour of using dplyr would be good at this point, and we will see it used throughout the book. In the following code, I will use the <code>prb</code> data from earlier, and I will do a series of tasks. First, I will create a new variable using the <code>mutate()</code> function, then group the data into groups (similar to SAS’s ‘by’ processing) by using the <code>group_by()</code> function, then do some statistical summaries of other variables using the <code>summarise()</code> function.</p>
@@ -593,7 +598,6 @@ Attaching package: 'scales'</code></pre>
 <p>Finally, we <code>ungroup()</code> the dataframe to remove the grouping, this is customary whenever using the <code>group_by()</code> verb.</p>
 <p>We see then the estimates of the four other indicators for countries that have TFR over 3, versus countries with a TFR under 3.</p>
 <p>This is a basic <code>dplyr</code> use, but it is far from what the package can do. Throughout the rest of the book, this process will be used to do calculations, aggregate data, present model results and produce graphics. This example was trying to show a simple workflow in dplyr, and introduce the pipe concept.</p>
-</section>
 <section id="other-dplyr-functions" class="level2">
 <h2 class="anchored" data-anchor-id="other-dplyr-functions">Other dplyr functions</h2>
 <p><code>dplyr</code> has a lot of functions for data processing and management. The <code>filter()</code> function subsets a dataframe to only contain certain cases. Here is an example using it with the PRB data where I only select cases from Asia.</p>
@@ -691,8 +695,9 @@ Attaching package: 'scales'</code></pre>
 </div>
 </section>
 </section>
-<section id="r-file-types" class="level2">
-<h2 class="anchored" data-anchor-id="r-file-types">R file types</h2>
+</section>
+<section id="r-file-types" class="level1">
+<h1>R file types</h1>
 <p><em>.R files</em> R uses a basic text file with the .R extension. This type of file is useful if you’re going to write a function or do some analysis and don’t want to have formatted output or text. You can use these files for everything, but they are limited in their ability to produce reports and formatted output, so I recommend people work with R Markdown files instead.</p>
 <p><em>.Rmd files</em> Rstudio uses a form of the markdown formatting language, called R Markdown, for creating formatted documents that include code, tables, figures and statistical output. <strong>This lesson is written in R Markdown!</strong></p>
 <p>R Markdown is nice for lots of reasons, such as the ability to insert latex equations into documents.</p>
@@ -803,18 +808,17 @@ Attaching package: 'scales'</code></pre>
 <p>R also has packages for reading/writing such data formats as JSON, ESRI Shapefiles, Excel spreadsheets, Google Spreadsheets, DBF files, in addition to tools for connecting to SQL databases, and for interfacing with other statistics packages, such as Mplus, OpenBUGS, WinBUGS and various Geographic Information Systems.</p>
 </section>
 </section>
-<section id="commonuseful-packages" class="level2">
-<h2 class="anchored" data-anchor-id="commonuseful-packages">Common/Useful packages</h2>
+<section id="commonuseful-packages" class="level1">
+<h1>Common/Useful packages</h1>
 <p>R uses packages to store functions that do different types of analysis, so we will need to install lots of different packages to do different things. There are over 20,000 different packages currently for R. These are hosted on one of a number of <em>repositories</em>, such as the Comprehensive R Archive Network, or CRAN, which is the official repository for R packages. Other locations where authors store packages include <a href="%22https://r-forge.r-project.org/%22">R-Forge</a> and <a href="%22https://www.bioconductor.org/%22">BioconductoR</a>. Many authors host packages in <a href="%22https://github.com%22">Github</a> repositories, especially for development purposes.</p>
 <p>Packages are often organized into <em>Task Views</em>, which CRAN uses to organize packages into thematic areas. You can find a list of these Task Views <a href="%22https://cran.r-project.org/web/views/%22">here</a>. There is not a task view for Demography, but there are ones for the <a href="%22https://cran.r-project.org/web/views/SocialSciences.html%22">Social Sciences</a>, <a href="%22https://cran.r-project.org/web/views/Econometrics.html%22">Econometrics</a>, and <a href="%22https://cran.r-project.org/web/views/Spatial.html%22">Spatial Data</a> to name a few. Task views allow users to download a lot of thematically linked packages in a single command, through the package <code>ctv</code>, or Cran Task Views. You can install this package by typing:</p>
 <p><code>install.packages("ctv")</code></p>
 <p>into Rstudio. Then you have to load the package by using the <code>library()</code> command:</p>
 <p><code>library(ctv)</code></p>
-<p>which gives you access to the functions in that package. You don’t need to install the package again, unless you update your R software, but each time you start a new session (i.e.&nbsp;open Rstudio), you will have to load the library again. If you want to install all of the packages in the Social Science task view, you would type:</p>
-<p><code>install.views("SocialSciences")</code></p>
-<p>into R and it will install all of the packages under that task view, as of the writing of this sentence, include over 80 packages.</p>
+<p>which gives you access to the functions in that package. You don’t need to install the package again, unless you update your R software, but each time you start a new session (i.e.&nbsp;open Rstudio), you will have to load the library again. If you want to install all of the packages in the Econometrics task view, you would type:</p>
+<p><code>install.views("Econometrics")</code></p>
+<p>into R and it will install all of the packages under that task view.</p>
 <p>You only have to install a package once, but each time you start a R session, you must load the package to use its functions. You should also routinely update your installed packages using <code>update.packages(ask = FALSE)</code>. This will update any packages that have new versions on CRAN. These often will contain bug fixes and new features. On CRAN, each package will have a README file that tells what has changed in the various versions. Here is one for one of my favorite packages <a href="https://cran.r-project.org/web/packages/tidycensus/readme/README.html"><code>tidycensus</code></a>.</p>
-</section>
 </section>
 <section id="references" class="level1 unnumbered">
 

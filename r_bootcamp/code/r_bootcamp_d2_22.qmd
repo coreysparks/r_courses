@@ -11,21 +11,21 @@ bibliography: book.bib
 
 ![](images/dem-01.png){fig-align="center"}
 
-## R Bootcamp for Incoming Graduate Students
+# R Bootcamp for Incoming Graduate Students
 
 When: August 16, 6pm to 8pm
 
 Where: [Zoom Link Here](https://utsa.zoom.us/j/3610228956)
 
-## What we'll do:
+# What we'll do:
 
 This will be a short introduction to the R statistical programming language. This is intended to ease the anxiety over using R for your statistics courses. We realize that many incoming students have not used R or any programming language.
 
-## What you'll get from this:
+# What you'll get from this:
 
 This bootcamp will get you set up on your personal computer using R. This includes installing R, Rstudio and any other associated software, and getting you oriented with where things are.
 
-## Agenda
+# Agenda
 
 ```{r, echo=FALSE, results='asis'}
 
@@ -70,7 +70,7 @@ prb = read_csv(file = "https://raw.githubusercontent.com/coreysparks/r_courses/m
 names(prb) = tolower(names(prb))
 ```
 
-## The tidyverse
+# The tidyverse
 
 So far, most of the functions I have discussed have been from the base R ecosystem, with some specific functions from other downloadable packages. One of the biggest changes to R in recent years has been the explosion in popularity of the **tidyverse** @tidyverse. The tidyverse is a large collection of related packages that share a common philosophy of how data and programming relate to one another and work together to produce a more streamlined, literate way of programming with data.
 
@@ -306,9 +306,9 @@ ggplot(data = prb,mapping = aes(x = tfr, y = pctlt15_2018))+
   ylab(label = "IMR")
 ```
 
-### Break
+# Break
 
-## Basic dplyr
+# Basic dplyr
 
 The `dplyr` package has many functions that work together to produce succinct, readable and highly functional code. I often say about base R packages in comparison to things like SAS, that I can do something in R in about 10 lines of code compared to 50 in SAS. Using dplyr, you can do even more, faster.
 
@@ -415,7 +415,7 @@ prb %>%
 
 ```
 
-## R file types
+# R file types
 
 *.R files* R uses a basic text file with the .R extension. This type of file is useful if you're going to write a function or do some analysis and don't want to have formatted output or text. You can use these files for everything, but they are limited in their ability to produce reports and formatted output, so I recommend people work with R Markdown files instead.
 
@@ -498,7 +498,7 @@ I will describe dataframes more later in the chapter.
 
 R also has packages for reading/writing such data formats as JSON, ESRI Shapefiles, Excel spreadsheets, Google Spreadsheets, DBF files, in addition to tools for connecting to SQL databases, and for interfacing with other statistics packages, such as Mplus, OpenBUGS, WinBUGS and various Geographic Information Systems.
 
-## Common/Useful packages
+# Common/Useful packages
 
 R uses packages to store functions that do different types of analysis, so we will need to install lots of different packages to do different things. There are over 20,000 different packages currently for R. These are hosted on one of a number of *repositories*, such as the Comprehensive R Archive Network, or CRAN, which is the official repository for R packages. Other locations where authors store packages include [R-Forge](%22https://r-forge.r-project.org/%22) and [BioconductoR](%22https://www.bioconductor.org/%22). Many authors host packages in [Github](%22https://github.com%22) repositories, especially for development purposes.
 
@@ -510,11 +510,11 @@ into Rstudio. Then you have to load the package by using the `library()` command
 
 `library(ctv)`
 
-which gives you access to the functions in that package. You don't need to install the package again, unless you update your R software, but each time you start a new session (i.e. open Rstudio), you will have to load the library again. If you want to install all of the packages in the Social Science task view, you would type:
+which gives you access to the functions in that package. You don't need to install the package again, unless you update your R software, but each time you start a new session (i.e. open Rstudio), you will have to load the library again. If you want to install all of the packages in the Econometrics task view, you would type:
 
-`install.views("SocialSciences")`
+`install.views("Econometrics")`
 
-into R and it will install all of the packages under that task view, as of the writing of this sentence, include over 80 packages.
+into R and it will install all of the packages under that task view.
 
 You only have to install a package once, but each time you start a R session, you must load the package to use its functions. You should also routinely update your installed packages using `update.packages(ask = FALSE)`. This will update any packages that have new versions on CRAN. These often will contain bug fixes and new features. On CRAN, each package will have a README file that tells what has changed in the various versions. Here is one for one of my favorite packages [`tidycensus`](https://cran.r-project.org/web/packages/tidycensus/readme/README.html).
 

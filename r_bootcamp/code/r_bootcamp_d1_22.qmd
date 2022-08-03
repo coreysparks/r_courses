@@ -1,20 +1,20 @@
 ---
-title: "R Bootcamp for Graduate Students - Day 1"
+title: "R boot camp for Graduate Students - Day 1"
 author: "Corey S. Sparks, Ph.D."
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-format:
-  html:
-    toc: true
+format: 
+    html:
+      toc: true
+      code-fold: false
+      code-tools: true
+      code-link: true
+      df-print: paged
 editor: visual
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
 ![](images/dem.png){fig-align="center"}
 
-## R Bootcamp for Incoming Graduate Students
+# R boot camp for Graduate Students
 
 When: August 16, 6pm to 8pm
 
@@ -24,15 +24,20 @@ Where: [Zoom Link Here](https://utsa.zoom.us/j/3610228956)
 
 This will be a short introduction to the R statistical programming language. This is intended to ease the anxiety over using R for your statistics courses. We realize that many incoming students have not used R or any programming language.
 
-## What you'll get from this:
+# What you'll get from this:
 
-This bootcamp will get you set up on your personal computer using R. This includes installing R, Rstudio and any other associated software, and getting you oriented with where things are.
+This boot camp will get you set up on your personal computer using R. This includes installing R, Rstudio and any other associated software, and getting you oriented with where things are.
 
-## Agenda
+We will also cover fundamentals of reading in external data, data summaries, data visualization and the use of the tidyverse for literate programming.
+
+# Agenda
 
 ```{r, echo=FALSE, results='asis'}
+#| label: tbl-agenda1
+#| echo: false
+#| tbl-cap: "Agenda for boot camp"
 
-t1<-data.frame(Day = c(rep("Tuesday", 7), rep("Wednesday", 7)),
+t1<-data.frame(Day = c(rep("Day 1", 7),"---", rep("Day 2", 7)),
                topic = c("Introduction/What is R?",
 "Installing R and Rstudio on your computer",
 "Introduction to Rstudio",
@@ -40,7 +45,8 @@ t1<-data.frame(Day = c(rep("Tuesday", 7), rep("Wednesday", 7)),
 "Reading common files into R",
 "Using R to summarize data",
 "Q&A",
-"Q&A",
+"   ",
+"Welcome/Questions",
 "Basic ggplot",
 "Break",
 "Basic dplyr",
@@ -48,7 +54,7 @@ t1<-data.frame(Day = c(rep("Tuesday", 7), rep("Wednesday", 7)),
 "Common packages",
 "Q&A"))
 
-knitr::kable(t1, caption = "Agenda", align = "c", format="html")
+knitr::kable(t1, align = "c")
 
 ```
 
@@ -64,7 +70,7 @@ I've used R for twenty years. I was also trained in SPSS and SAS along the way, 
 2.  It's the hotbed of methodological development. The R ecosystem has thousands of packages that represent the bleeding edge of data analysis, visualization and data science. This makes R attractive because it can pivot quickly to adopt new methods, which often lag in their development in other environments.
 3.  It has a supportive community of users. While there are some debates over how friendly some R users are to new users, overall, after spending 20 years in the R community, I've personally assisted hundreds of users, and been personally helped by many others. The open source nature of R lends itself to sharing of ideas and collaboration between users.
 
-## Installing R and Rstudio on your computer
+## Installing R and Rstudio on your computer {#sec-installing-r-and-rstudio-on-your-computer}
 
 Steps:
 
@@ -80,7 +86,7 @@ Steps:
 
 -   [Rtools download (windows only)](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/rtools42-5253-5107-signed.exe)
 
-## Introduction to Rstudio
+## Introduction to Rstudio {#sec-introduction-to-rstudio}
 
 Rstudio is an open source Integrated Development Environment (IDE) for R. It is a much better interface for using R because it allows you to write code in multiple languages, navigate your computer's files, and see your output in a very nice single place. The Rstudio IDE has several components that we will explore.
 
@@ -112,7 +118,7 @@ Rstudio is an open source Integrated Development Environment (IDE) for R. It is 
 
 -   Depending on the type of object something is, you may be able to click on the object in the environment and see more about it.
 
--   For instance if the object is a data frame, R will open it in a viewer where you can explore it like a spreadsheet, and sort and filter it as well.
+-   For instance if the object is a dataframe, R will open it in a viewer where you can explore it like a spreadsheet, and sort and filter it as well.
 
 -   Other objects may not do anything when you click on them.
 
@@ -128,7 +134,7 @@ Rstudio is an open source Integrated Development Environment (IDE) for R. It is 
 
 # Break
 
-## Reading common file types into R
+## Reading common file types into R {#sec-reading-common-file-types-into-r}
 
 Many of you have data or maybe R code you've written before that you want to open in R. Depending on the type of file there are many ways to do this. Using the Files pane is an easy way to get R to open existing files for you. This will use an appropriate R function to read in the file and load it into R's workspace/environment.
 
@@ -136,27 +142,69 @@ Excel spreadsheets and their text equivalent Comma Separated Value (`csv`) files
 
 Some files, particularly data files produced by SAS require special functions to read into R. To read a SAS dataset (`.sas7bdat`) into R, use:
 
-```{r, eval = FALSE}
-haven::read_sas()
+```{r, eval=FALSE}
+haven::read_sas("/path_to_file/filename.sas7bdat")
 ```
 
-You can also read data directly from the internet, if it exists as a linkable file. For instance, if I wanted to read a data set that is a csv from a website, you can do:
+Or to read in a SPSS dataset use:
+
+```{r, eval=FALSE}
+haven::read_spss("/path_to_file/filename.sav")
+```
+
+You can also read data directly from the internet, if it exists as a link-able file. For instance, if I wanted to read a data set that is a csv from a website, you can use the `url()` function, and provide it the link address:
 
 ```{r}
+#| message: false
 prb = readr::read_csv(url("https://raw.githubusercontent.com/coreysparks/r_courses/master/2018_WPDS_Data_Table_FINAL.csv"))
 ```
 
-Which uses the `url()` function to tell R that you are providing a web link.
+We can view the first few lines of the data using the `head()` function:
 
-## Summarizing data
+```{r}
+#| eval: false
+head(prb)
+```
 
-One of the key elements of analyzing data is the initial descriptive analysis of it. In subsequent chapters, I will go into more depth about this process, but for now, I want to illustrate some simple but effective commands for summarizing data. R's basic way of storing data is as a structure called a data frame, which you can think of as a table, much like a spreadsheet. Data frames can store any type of data but usually store numeric or character variable types. Depending on what kind of data are in a dataframe, R will summarize it differently. There are a few different ways to access a particular variable in a dataframe. The customary method is to use the \$ operator. Here's an example:
+```{r}
+#| echo: false
+#| label: tbl-rawdata
+#| tbl-cap: "Penguin measurement data"
 
-### Dataframe summaries
+knitr::kable(head(prb))
+```
+
+## Summarizing data {#sec-summarizing-data}
+
+One of the key elements of analyzing data is the initial descriptive analysis of it. For now, I want to illustrate some simple but effective commands for summarizing data.
+
+R's basic way of storing data is as a structure called a **dataframe**, which you can think of as a table, much like a spreadsheet.
+
+Dataframes can store any type of data but usually store numeric or character variable types. Depending on what kind of data are in a dataframe, R will summarize it differently.
+
+To show all of the columns in a dataframe use the `names()` function
+
+```{r}
+names(prb)
+```
+
+There are a few different ways to access a particular variable in a dataframe. The customary method is to use the `$` operator. Here's an example:
+
+```{r}
+head(prb$country)
+```
+
+There are other ways to view a variable within a dataframe, such as using the **subset** operators `[`
+
+```{r}
+head(prb[, "country"])
+```
+
+## Dataframe summaries {#sec-dataframe-summaries}
 
 The `summary()` function is very useful both in terms of producing numerical summaries of individual variables, but also shows summaries of entire dataframes. Its output differs based on the type of variable you give it, for character variables it does not return any summary.
 
-For factor variables, it returns a frequency table, and for numeric variables, it returns the five number summary plus the mean.
+For factor variables, it returns a frequency table,
 
 ```{r, message=FALSE}
 summary(prb$region)
@@ -166,25 +214,24 @@ summary(prb$region)
 summary(as.factor(prb$continent))
 ```
 
-```{r}
-summary(prb$tfr)
-```
-
-I find this function to be very useful when I'm initially exploring a data set, so I can easily see the min/max values of a variable.
-
-There are many alternatives to this base function, including `psych::describe()`, `Hmisc::describe()`, and `skimr::skim()`, all of which produce summaries of dataframes or variables.
+and for numeric variables, it returns the five number summary plus the mean.
 
 ```{r}
-desc1 <- psych::describe(prb, fast = F)
-print(desc1, short = T)
+summary(prb$pctwomcontra_mod)
+```
+
+I find this function to be very useful when I'm initially exploring a data set, so I can easily see the min/max values of a variable, as well as the number of missing values, reported as `NA` in R output. The `summary()` function can be used on a single variable within a dataframe, the entire dataframe, or on a simple vector.
+
+There are many alternatives to this base summary function, including `psych::describe()`, `Hmisc::describe()`, and `skimr::skim()`, all of which produce summaries of dataframes or variables.
+
+```{r}
+psych::describe(prb, fast = F )
+
 ```
 
 ```{r}
-desc3<-skimr::skim(prb)
-desc3
+skimr::skim(prb)
 ```
-
-The `summary()` function, as well as the other three functions in other packages can be used on a single variable within a dataframe as well, or on a simple vector.
 
 ### Frequency tables
 
@@ -222,9 +269,9 @@ mean(prb$tfr, na.rm = T)
 
 Which works without an error.
 
-Many R functions will fail, or do listwise deletion of observations when NAs are present, so it's best to look at the documentation for the function you're wanting to use to see what it's default na action is.
+Many R functions will fail, or do listwise deletion of observations when NAs are present, so it's best to look at the documentation for the function you're wanting to use to see what it's default `na` action is.
 
-The mean() function defaults to na.rm=FALSE, which indicates that it does not remove missing values by default.
+The `mean()` function defaults to `na.rm=FALSE`, which indicates that it does not remove missing values by default.
 
 We can also calculate the median TFR
 
@@ -234,7 +281,7 @@ median(prb$tfr, na.rm = T)
 
 ### Measures of variation
 
-One typical set of descriptive statistics that is very frequently used is the so-called five number summary and it consists of : the Minimum, lower quartile, median, upper quartile and maximum values.
+One typical set of descriptive statistics that is very frequently used is the so-called **five number summary** and it consists of : the Minimum, lower quartile, median, upper quartile and maximum values.
 
 This is often useful if the data are not symmetric or skewed. This is what you get when you use the `fivenum()` function, or we can include the mean if we use the `summary()` function.
 
@@ -254,3 +301,9 @@ Is this everything R will do, **No!**
 Are these the only way to do things in R? **Never!**
 
 I'm constantly marveled at how many new functions I see my students using in their own work and this reminds me how much of the R ecosystem I have yet to explore, even after twenty-plus years of using it.
+
+# Summary {#sec-summary}
+
+In today's boot camp, we covered some very basic concepts, but these are things that you will use daily once you begin using R in your own work and for courses.
+
+All materials from tonight are available on [Github](https://github.com/coreysparks/r_courses/tree/master/r_bootcamp)
