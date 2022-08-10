@@ -45,7 +45,7 @@ You can find more information about the ACS datasets [here](https://www.census.g
 ## Import census data
 
 ```{r}
-census <- read_csv(url("https://github.com/coreysparks/r_courses/blob/master/data/pums_tx_ca_2019.csv?raw=true"), show_col_types = F)
+census <- read_csv(url("https://raw.githubusercontent.com/coreysparks/r_courses/master/pums_tx_ca_2019.csv"), show_col_types = F)
 
 ```
 

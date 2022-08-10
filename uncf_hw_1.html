@@ -1547,6 +1547,9 @@ button.code-folding-btn:focus {
 summary {
   display: list-item;
 }
+details > summary > p:only-child {
+  display: inline;
+}
 pre code {
   padding: 0;
 }
@@ -1648,25 +1651,26 @@ for module #1.</p>
 <pre class="r"><code>install.packages(c(&quot;tidyverse&quot;, &quot;car&quot;))</code></pre>
 <p>When promoted with the following question, answer
 <code>&quot;Yes&quot;</code></p>
-<p><code>Do you want to install from sources the package which needs
-compilation? (Yes/no/cancel) : Yes</code></p>
+<p><code>Do you want to install from sources the package which needs compilation? (Yes/no/cancel) : Yes</code></p>
 <pre class="r"><code>library(tidyverse)</code></pre>
-<pre><code>## -- Attaching packages --------------------------------------- tidyverse 1.3.1 --</code></pre>
-<pre><code>## v ggplot2 3.3.5     v purrr   0.3.4
-## v tibble  3.1.6     v dplyr   1.0.7
-## v tidyr   1.1.4     v stringr 1.4.0
-## v readr   2.1.1     v forcats 0.5.1</code></pre>
-<pre><code>## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
-## x dplyr::filter() masks stats::filter()
-## x dplyr::lag()    masks stats::lag()</code></pre>
+<pre><code>## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.2 ──
+## ✔ ggplot2 3.3.6     ✔ purrr   0.3.4
+## ✔ tibble  3.1.8     ✔ dplyr   1.0.9
+## ✔ tidyr   1.2.0     ✔ stringr 1.4.0
+## ✔ readr   2.1.2     ✔ forcats 0.5.1
+## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+## ✖ dplyr::filter() masks stats::filter()
+## ✖ dplyr::lag()    masks stats::lag()</code></pre>
 <pre class="r"><code>library(car)</code></pre>
-<pre><code>## Loading required package: carData</code></pre>
-<pre><code>## 
-## Attaching package: &#39;car&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:dplyr&#39;:
+<pre><code>## Loading required package: carData
 ## 
-##     recode</code></pre>
-<pre><code>## The following object is masked from &#39;package:purrr&#39;:
+## Attaching package: &#39;car&#39;
+## 
+## The following object is masked from &#39;package:dplyr&#39;:
+## 
+##     recode
+## 
+## The following object is masked from &#39;package:purrr&#39;:
 ## 
 ##     some</code></pre>
 <p>In this workbook, we will be using 2019 American Community Survey
@@ -1682,7 +1686,7 @@ examples in this workbook.</p>
 and the Codebook for the data <a href="https://raw.githubusercontent.com/coreysparks/data/master/pums_vars.csv">here</a>.</p>
 <div id="import-census-data" class="section level2">
 <h2>Import census data</h2>
-<pre class="r"><code>census &lt;- read_csv(url(&quot;https://github.com/coreysparks/r_courses/blob/master/data/pums_tx_ca_2019.csv?raw=true&quot;), show_col_types = F)</code></pre>
+<pre class="r"><code>census &lt;- read_csv(url(&quot;https://raw.githubusercontent.com/coreysparks/r_courses/master/pums_tx_ca_2019.csv&quot;), show_col_types = F)</code></pre>
 <p>Please review the website with <a href="https://ada.coleridgeinitiative.org/r-1">videos on module
 1</a></p>
 <p>In the R Unit 1: Introduction to R and Data Frames the functions
