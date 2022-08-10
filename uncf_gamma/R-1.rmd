@@ -1,0 +1,607 @@
+---
+title: "R Workbook 1: What are the characteristics in the number of jobs by census block?"
+output: html_document
+date: "2022-08-02"
+---
+
+
+
+In these workbooks, we will start with a motivating question, then walk through the process we need to go through in order to answer the motivating question. Along the way, we will walk through various R commands and develop skills as we work towards answering the question.
+
+As you work, there will be headers that are in **<span style="color:green">GREEN</span>**. These indicate locations where there is an accompanying video. This video may walk through the steps or expand on the topics discussed in that section. Though it isn't absolutely necessary to watch the video while working through this notebook, we highly recommend watching them at least once on your first time through.
+
+**<span style = "color:green">If you have not yet watched the "Introduction to Jupyter Notebooks" video, watch it before you proceed!</span>**
+
+You will also run into some headers that are in **<span style="color:red">RED</span>**. These headers indicate a checkpoint to practice writing the code yourself. You should stop at these checkpoints and try doing the exercises and answering the questions posed in these sections.
+
+**NOTE: When you open a notebook, make sure you run each cell containing code from the beginning. Since the code we're writing builds on everything written before, if you don't make sure to run everything from the beginning, some things may not work.**
+
+In each of the workbooks, we will start out with a motivating question. Here, we'll introduce the data that we'll work with, which will lead into our motivating question for this workbook.
+
+## Longitudinal Employer-Household Dynamics (LEHD) Data
+
+In these workbooks, we will be using LEHD data. These are public-use data sets containing information about employers and employees. Information about the LEHD Data can be found at [https://lehd.ces.census.gov/](https://lehd.ces.census.gov/). 
+
+We will be using the LEHD Origin-Destination Employment Statistics (LODES) datasets in our applications in this workbook. Each state has three main types of files: Origin-Destination data, in which job totals are associated with a home and work Census block pair, Residence Area Characteristic data, in which job totals are by home Census block, and Workplace Area Characteristic data, in which job totals are by workplace Census block. In addition to these three, there is a "geographic crosswalk" file with descriptions of the Census Blocks as they appear the in the LODES datasets.
+
+You can find more information about the LODES datasets [here](https://lehd.ces.census.gov/data/lodes/LODES7/LODESTechDoc7.3.pdf).
+
+## <span style = "color:green">Motivating Question (VIDEO)</span>
+
+The dataset we'll be working with in this workbook is the Workplace Area Characteristics data, which aggregates job totals by workplace census block. We want to explore this dataset and get a better idea of the distribution of jobs. That is, we want to answer the following questions:
+
+**How can we characterize the number of jobs in the state? What can we say about the distribution of the number of jobs by census block? What are distributions of jobs by different categories, such as age group or industry?**
+
+As you work through this notebook, we'll work towards answering these questions, so try to keep in mind what we're working toward.
+
+## Starting Out: Introduction to R
+
+In order to try to answer these questions, we'll write code to bring in datasets, manipulate these datasets, and summarize datasets using R. R is a popular programming language that has seen a rise in use for data analysis. As of 2017, R is near or at the top in terms of popularity in programming languages for data analysis (see [the kdnuggets post](https://www.kdnuggets.com/2017/05/poll-analytics-data-science-machine-learning-software-leaders.html) or [a look at multiple surveys](http://makemeanalyst.com/most-popular-languages-for-data-science-and-analytics-2017/)).
+
+In addition, unlike other tools like Excel or Stata, R can be used in a more general-purpose fashion. This means that we aren't limited to only doing certain statistical analyses and gives us much more flexibility in what we can do.
+
+## Loading Libraries
+
+We first load a few libraries. These libraries are essentially bundles of useful tools that can help us do specific tasks. In this case, we're going to be bringing in a suite of packages called `tidyverse`, which are specifically useful for computing and data analysis. Don't worry too much about the specifics of libraries for now, just that we need to include the first few lines of code below if we want to use many of the tools described in this workbook. 
+
+
+```{r}
+sessionInfo()
+```
+
+
+  
+```{r}
+# Bring in the tidyverse suite of packages.
+# This contains many useful packages.
+# We will use dplyr and readr here, as well as ggplot2, dbplyr, tidyr in other notebooks.
+library(tidyverse)
+```
+    
+
+## <span style = "color:green">Reading in the Data Set</span>
+We'll start by reading in a data set from a csv, or comma-separated value, file. For many of our examples in this notebook, we'll use the Workplace Area Characteristic (WAC) data from California. 
+
+We use the `read_csv` function to read in the csv file.
+
+
+```{r}
+
+getwd()
+df <- read_csv( "../data/ca_wac_S000_JT00_2015.csv")
+
+```
+
+
+
+
+
+Let's break the code down. In the first line, we assign `'ca_wac_S000_JT00_2015.csv'` to the variable `data_file`. Note that any text inside quotation marks, such as `'ca_wac_S000_JT00_2015.csv'`, is a string, which makes `data_file` a string variable. Note that this by itself doesn't really do anything fancy. We are just setting up a string variable with the text, `'ca_wac_S000_JT00_2015.csv'`, not telling R to look for a file with that name or anything like that yet.
+
+To look at what we've stored inside `data_file`, try using the `print` function with `data_file` as the argument. What do you think the output will be?
+
+
+```{r}
+print(df)
+```
+
+ 
+
+In the second line, we're using the `read_csv` function. The function `read_csv` outputs a Data Frame, which is then assigned to the variable `df`. Notice that there is a less than sign, followed by a dash, combined to look like an arrow. This assigns the output on the right hand side to a name, which is specified on the left hand side. This means that our data is now in a data frame called `df`.
+
+> #### Side Note: File Location
+> We only used the file name for `data_file`. This is because we included the CSV file in the same folder as this notebook. If it were somewhere else, we'd have to include the file path (e.g. `"/Documents/R/ca_wac_S000_JT00_2015.csv"`). If you don't know much about how file paths work, don't worry: you just need to make sure that the file is in the same folder as the notebook.
+
+Lastly, we've included a line of code that can load the csv file into `df` in one line. This does the exact same thing as the first two lines of code, with the exception of not assigning `'ca_wac_S000_JT00_2015.csv'` to `data_file`. Notice that all we did was replace `data_file` with the string that we assigned to `data_file`. It is **commented out** by using a `#` symbol, which means R will ignore anything on that line that comes afterwards. You can feel free to try running it by itself (commenting out the first two lines) to check that it does the same thing.
+
+> Note that the commented code actually uses a slightly different function, `read.csv`. This is almost the same as the `read_csv` function, except it has a few different functionalities. As we'll see below, we use `read_csv` because we need it to read compressed files.
+
+For the LODES data, we can actually also read it in using a URL. If we want to do this, we'll have to account for the file being compressed, but that's ok because the `read_csv` function also allows for reading compressed files. 
+
+
+```{r}
+data_file = 'https://lehd.ces.census.gov/data/lodes/LODES7/ca/wac/ca_wac_S000_JT00_2015.csv.gz'
+df <- read_csv(data_file)
+```
+
+
+
+```{r}
+# Can check the column specifications
+# This shows that most of the column types are numbers (double)
+spec(df)
+```
+
+
+ 
+
+
+## A Note on Data Types
+
+We've mentioned that `data_file` is a string variable and that `df` is a Data Frame. These are different variable types, and it's important to keep this in mind because the type of variable dictates what you can do with it. 
+
+
+```{r}
+class(data_file)
+```
+
+
+'character'
+
+
+Since `data_file` is a string, the `class` function returns `character`, which essentially denotes that it is text. Let's look at `df`. What do you think the output will be?
+
+
+```{r}
+class(df)
+```
+
+
+
+
+It tells us that `df` is an R data.frame object. Note that there's some extra information there, like `tbl`. This is basically the same thing as a data.frame, but tweaked in the `tidyverse` environment. We'll discuss the `tidyverse` a bit more later, but for now, you can just treat it as a data.frame.
+
+### Other Important Data Types
+
+We've looked at data frames and strings so far. There's also vectors and numbers of various sorts. We'll introduce more as we go on, but keep in mind that the type of an object is very important. Functions that work for one type of object may not necessarily work for others, and many errors result from simply having the wrong type of object.
+
+
+```{r}
+class(1) # this is a number
+```
+
+
+'numeric'
+
+
+
+```{r}
+class(read_csv) # this is a function
+```
+
+Let's look at an example of something that doesn't work if we were to use the wrong type of object. **The code below will give an error.**
+
+
+```{r, error=TRUE}
+'1' + 2
+```
+
+We can't add the `character` 1 to the `numeric` 2, so we get an error. We can use `as.numeric` or `as.character` to change the type of objects, as long as it makes sense to do so.
+
+
+```{r}
+as.numeric('1') + 2
+```
+
+
+3
+
+
+## <span style="color:red">Checkpoint 1: Read in Other Data</span>
+
+You can access LODES data from other states by using the link below: 
+
+[LODES Data](https://lehd.ces.census.gov/data/lodes/LODES7)
+
+and navigating to the state you want. Check out the [LODES documentation](https://lehd.ces.census.gov/data/lodes/LODES7/LODESTechDoc7.3.pdf) for more information.
+
+If you download any data, it will go to your local computer. However, since this notebook is running from a server in the cloud, you'll have to upload it to this server to access it. You can do so by navigating to the **Home** folder by clicking on the **Jupyter** icon at the top left of this page, and clicking the Upload button in right-hand corner.
+
+If you have problems with that, don't worry. We've included several other LODES data in this environment too. They are named:
+- Kentucky: `ky_wac_S000_JT00_2015.csv`
+- Illinois: `il_wac_S000_JT00_2015.csv`
+- Maryland: `md_wac_S000_JT00_2015.csv`
+
+See if you can load one similarly to how you loaded the California data above. You can also try to load in another state's data using the URL as shown above
+
+Make sure you assign it to a variable other than `df` so that you don't overwrite the data we loaded earlier (for example, if you choose Illinois, you might use `df_il`). Play around with the few functions you've learned. 
+
+
+```{r}
+df_tx <- readr::read_csv('https://lehd.ces.census.gov/data/lodes/LODES7/tx/wac/tx_wac_S000_JT00_2015.csv.gz')
+```
+
+
+## <font color = 'green'>Accessing the Data Frame</font>
+
+Now that we've loaded in the data set as a Data Frame, let's check the number of rows and columns. We can do this by using the `dim` function with a data frame.
+
+
+```{r}
+dim(df_tx)
+```
+
+
+The first number refers to the number of rows in the data frame, while the second number refers to the number of columns. You can also get a more comprehensive look at the details of the data frame by using the base R function `str`, which stands for structure, or `glimpse` from the tidyverse suite of packages. The `glimpse` function will generally have the same information, but tries to be smarter about how it displays the information to make it easier to read. In this case, it's essentially the same. 
+
+
+```{r}
+# str(df)
+glimpse(df_tx)
+```
+
+To look at the first few rows of a data frame, we can use the `head` function.
+
+
+```{r}
+head(df_tx)
+```
+
+
+
+This gives us a good way of taking a quick look at part of the data. To get a list of all of the column names, we can use `names`.
+
+
+```{r}
+names(df_tx)
+```
+
+
+
+
+### Accessing Columns and Rows
+
+What if we want to only look at certain cells, or certain columns? We can use a variety of commands to do just that.
+
+To access individual columns, we can use square brackets or we can simply use a `$` sign. Brackets work by specifying the rows and columns in the format
+
+    df[rows,columns]
+
+with a blank space indicating that you want everything. Both examples are shown below.
+
+
+```{r}
+df_tx$w_geocode
+# df[,'w_geocode']
+# These do the same thing
+```
+
+
+
+
+To get rows, you can use bracket notation. The first element inside the brackets refers to rows, while the second element refers to columns. If we want all columns or all rows, we would simply omit that element. So, to get just the first row, you would use the following.
+
+
+```{r}
+df_tx[1,]
+```
+
+To get just the first column, we can use the same type of notation, or explicitly use the column name.
+
+
+```{r}
+df_tx[,1]
+# df[,'w_geocode']
+# These do the same thing
+```
+
+To get multiple rows, you can use a colon to denote which rows you want. The colon between two numbers creates a **vector** of numbers, and is very useful for indicating a range of numbers for various applications in R, such as indicating which rows you want to access.
+
+
+```{r}
+# This is a vector of numbers from 1 to 10
+print(1:10)
+```
+   
+
+
+```{r}
+df_tx[1:10,]
+```
+
+
+
+Using column indices works as well.
+
+
+```{r}
+df_tx[1:10,1:5]
+```
+
+
+
+
+Note that you can also use the `c` notation to create vectors that are more flexible.
+
+
+```{r}
+# Vector with 1, 3, 6, 9, and 11
+c(1,3,6,9,11)
+```
+
+
+
+```{r}
+# Accessing just rows 1, 3, 6, 9, 11
+df_tx[c(1,3,6,9,11),]
+```
+
+
+
+
+### Subsetting Data
+
+Many times, we want to work with just part of the dataset instead of everything. To make this process easier, we can create additional data frames that contain subsets of our data. 
+
+Let's look at an example of doing this with our California WAC data. We'll subset the data to extract only the census blocks that contained more than 100 jobs. To do this, we'll access only the rows of the dataset that want using a conditional statement.
+
+
+```{r}
+over_100 <- df_tx[df_tx$C000 > 100,]
+head(over_100)
+```
+
+
+
+To see how exactly this works, let's see what happens when we run only what's inside the brackets.
+
+
+```{r}
+df_tx$C000 > 100
+```
+
+The above code evaluates whether the value in `C000` is above 100 for each row in the data frame, creating a vector with length equal to the number of rows with `TRUE` or `FALSE` depending on whether that row had a value above 100 in `C000`. By putting this conditional statement into the brackets, we are telling R which rows we want to include in our subsetted data frame using `TRUE` and `FALSE`.
+
+We can also use more complicated subsets. For example, let's say we wanted to look at the census blocks with between 50 and 100 jobs.
+
+
+```{r}
+between_50_100 <- df_tx[(df_tx$C000 > 50) & (df_tx$C000 < 100),]
+head(between_50_100)
+```
+
+
+
+
+Notice that we replaced our conditional statement from before with `(df['C000'] > 50) & (df['C000'] < 100)`. This says that we want each row that meets both conditions, `(df['C000'] > 50)` and `(df['C000'] < 100)`. 
+
+What about the rest? Well, we can find the rows with less than or equal to 50 jobs OR greater than or equal to 100 jobs. 
+
+
+```{r}
+between_50_100 <- df_tx[(df_tx$C000 <= 50) | (df_tx$C000 >= 100),]
+head(between_50_100)
+```
+
+
+
+
+We can also use the `filter` function from `dplyr` in the `tidyverse` suite of packages to do this. Let's look an example of doing something similar to what we did above. 
+
+
+```{r}
+over_100 <- filter(df_tx, C000 > 100)
+head(over_100)
+```
+
+
+
+The `filter` function takes in the data frame as the first argument, and additional conditional statements you want to use to subset as arguments after that. It then outputs a data frame. Note that when using `filter`, we don't need to put the column names in quotation marks.
+
+One big benefit of using `filter` is that you can add multiple conditional statements instead of worrying about complicated `&` statements. For example, we can use the following to get all census blocks between 50 and 100 jobs.
+
+
+```{r}
+between_50_100 <- filter(df_tx, C000 > 50, C000 < 100)
+head(between_50_100)
+```
+
+
+
+### <font color = 'green'>Using `dplyr` for Manipulating and Transforming Data</font>
+
+In the `R` programming world, there is a suite of packages called `tidyverse` that is widely used. We've already used a few functions from it already: `read_csv` and `filter`. Though it isn't the default way to work with data, `tidyverse` is extremely popular because of the easy-to-read syntax and logic behind how it works.  
+
+One key tool that the `tidyverse` gives us is the "pipe" operator from the `magrittr` package. This offers a way to write compact code that is much more readable. The operator is `%>%` and is used to take the output of the lefthand side and pass it as the first argument of the function on the righthand side. Let's see an example to demonstrate how this works.
+
+
+```{r}
+df_tx %>% head()
+```
+
+
+
+
+This example probably won't be used much because it's actually a bit more complicated than the normal of writing it, but it shows how the `%>%` operator works. The output of the left side if just `df`, because that's all there is. The function on the righthand side is `head`, which takes in a data frame as an argument. The output of the lefthand side (`df`) is passed as that first argument, and the output shown is the result of doing `head(df)`.
+
+Let's take a look another example. Here, we will do two steps. First, we will filter the dataset to only contain census blocks with more than 100 jobs, then look at the top few rows using `head`. 
+
+
+```{r}
+df_tx %>% 
+    filter(C000 > 100) %>% 
+    head()
+```
+
+
+Notice how you're able to read the actions (you can think of them as *verbs*, while the `df` dataframe is the *noun* that represents the *subject*) that are being taken on the dataset from left to right. If we did not using the piping syntax, we would have to use the following to include all of the code in one line.
+
+
+```{r}
+# This does the same as the previous cell
+head(filter(df_tx, C000 > 100))
+```
+
+
+
+This is much harder to read and parse, because you need to work from the inside out, and figure out how all the parentheses match. 
+
+This becomes much more apparent with more functions that you want to chain together. Try looking at the example below and figuring out what it does. Run the cell to verify.  
+
+
+```{r}
+df_tx %>% filter(C000 > 100) %>%
+    select(w_geocode, C000) %>%
+    head()
+```
+
+
+
+## <span style="color:red">Checkpoint 2: Explore Your Data
+
+Now look at the data frame from a different state you loaded earlier using the tools we've just covered. How many rows and columns are there? Try subsetting the data set. How does it compare to the results from California? Does it make sense?
+
+
+```{r}
+df_tx <- readr::read_csv('https://lehd.ces.census.gov/data/lodes/LODES7/tx/wac/tx_wac_S000_JT00_2015.csv.gz')
+
+
+```
+
+## Describing Data
+
+We now know how to access different values of the dataset and create subsets. We can also use R to create various statistical summaries of the data, and to create new variables based on the data that we have.
+
+First, let's start with some basics. Using the `summary` function will give you some rough summaries of all the variables in the data frame.
+
+
+```{r}
+summary(df_tx)
+```
+
+You can also use functions such as `mean`, `median`, `min`,`max`, and `std` to get various statistical summaries of vectors.
+
+
+```{r}
+# Mean number of jobs per census blocks
+mean(df_tx$C000)
+```
+
+
+
+
+
+
+```{r}
+# Median number of jobs per census blocks
+median(df_tx$C000)
+```
+
+
+
+
+
+```{r}
+# Minimum number of jobs in a census blocks
+min(df_tx$C000)
+```
+
+
+
+
+
+```{r}
+# Maximum number of jobs in a census blocks
+max(df_tx$C000)
+```
+
+
+
+
+
+```{r}
+# Standard Deviation
+sd(df_tx$C000)
+```
+
+
+
+
+The `summarize` function can be used to get specific values for multiple columns, such as the mean of a variable and the median of another variable, as well as the count of the number of rows, as we show here.
+
+
+```{r}
+# Find the mean of C000 and the number of rows.
+df_tx %>%
+    summarize(mean_c000 = mean(C000),
+              median_ca01 = median(CA01),
+              n = n())
+```
+
+
+
+
+### <font color = 'green'>Summaries with `group_by`</font>
+
+We can use summarize with `group_by` to get summaries within each category of a categorical variable. Since the original WAC data does not have any categorical variables, we'll show an example using the California crosswalk data, which contains information about each census block in California.
+
+
+```{r}
+ca_xwalk <- read.csv('../data/ca_xwalk.csv')
+```
+
+
+```{r}
+ca_xwalk %>%
+    head()
+```
+
+To use the `group_by` function, we specify which variable we want to group by, then use `summarize` after it in order to get descriptions of the data within each group.
+
+In the example below, we group by county (using the county name variable), then find the count within each group in order to find the number of census blocks within each county.
+
+
+```{r}
+count_by_county <- ca_xwalk %>%
+    group_by(ctyname) %>%
+    summarize(n = n())
+
+head(count_by_county)
+```
+
+It might be easier to see the distribution of census blocks among counties if we put them in order. We can do this using the `arrange` function. All we need to do is specify which variable we should order by inside `arrange`. If we want it in decreasing order, we simply use a `desc` around the variable we want to order by.
+
+
+```{r}
+ca_xwalk %>% group_by(ctyname) %>% summarize(n = n()) %>% arrange(desc(n)) %>% head(10)
+```
+
+## <font color = 'green'>Checking for Inconsistencies</font>
+
+If you check the data documentation, you'll see that `C000` is the total number of jobs. Therefore, it would make sense for the other groups to columns to add up to the values in `C000`. For example, you'd expect `CA01`, `CA02`, and `CA03` to add up to `C000` for each row. Let's check to see if this is true.
+
+We'll first take the sum of `CA01`, `CA02`, and `CA03` in each row and put that in a new column called `CA_sum`. Then, we'll compare our new `CA_sum` column to the existing `C000` column to see if they match. We'll first show all the code, then explain each section.
+
+### Creating a new column with `mutate`
+
+The `mutate` function allows us to create a new column or alter existing columns 
+
+
+```{r}
+with_CA_sum <- df %>% mutate(CA_sum = CA01 + CA02 + CA03)
+head(with_CA_sum)
+```
+
+Next, we can check if this matches up.
+
+
+```{r}
+check_CA_sum <- with_CA_sum$C000 != with_CA_sum$CA_sum
+sum(check_CA_sum)
+```
+
+Looks like we're all set!
+
+## <span style="color:red">Checkpoint 3: Descriptive Statistics on Your Data</span>
+
+Using the tools described above, look at the data you loaded in earlier. Make sure you know the answers to each of the following questions:
+- What is the median number of jobs in the census blocks within the state of your choice?
+- What is the mean of each variable?
+- Are there any missing values?  Are there missing values that may not have been coded as missing? (For example, since all of these numbers are counts, a value of `-1` might indicate a missing value.)
+- Are there any interesting outliers?
+
+In addition, try to think about the distribution of jobs by different characteristics like age group and industry. Which age group had the most jobs in the state? Which industry?
+
+
+# Documentation
+
+If you forget what a function does, you can always check the documentation by using a question mark in front of it.
+
+
+```{r}
+?mean
+```
+
+### Useful Cheatsheets
+
+- [Using `dplyr` for data transformation](https://github.com/rstudio/cheatsheets/blob/master/data-transformation.pdf)
