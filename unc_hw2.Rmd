@@ -30,7 +30,8 @@ We will be using the ACS PUMS dataset for Texas and California in our examples i
 You can find more information about the ACS datasets [here](https://www.census.gov/programs-surveys/acs/microdata/access.2019.html) and the Codebook for the data [here](https://raw.githubusercontent.com/coreysparks/data/master/pums_vars.csv).
 
 ```{r}
-census <- read_csv(url("https://github.com/coreysparks/r_courses/blob/master/data/pums_tx_ca_2019.csv?raw=true"), show_col_types = F)
+census <- read_csv(url("https://raw.githubusercontent.com/coreysparks/r_courses/master/pums_tx_ca_2019.csv"))
+
 ```
 
 ```{r}
