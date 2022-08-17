@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Corey S. Sparks, Ph.D.">
-<meta name="dcterms.date" content="2022-08-03">
+<meta name="dcterms.date" content="2022-08-17">
 
 <title>R Bootcamp for Graduate Students - Day 2</title>
 <style>
@@ -153,6 +153,7 @@ div.csl-indent {
   </ul></li>
   <li><a href="#r-file-types" id="toc-r-file-types" class="nav-link" data-scroll-target="#r-file-types">R file types</a>
   <ul class="collapse">
+  <li><a href="#quarto" id="toc-quarto" class="nav-link" data-scroll-target="#quarto"><strong>Quarto</strong></a></li>
   <li><a href="#r-projects" id="toc-r-projects" class="nav-link" data-scroll-target="#r-projects">R projects</a></li>
   <li><a href="#r-data-files" id="toc-r-data-files" class="nav-link" data-scroll-target="#r-data-files">R data files</a></li>
   </ul></li>
@@ -182,7 +183,7 @@ div.csl-indent {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">August 3, 2022</p>
+      <p class="date">August 17, 2022</p>
     </div>
   </div>
     
@@ -550,9 +551,9 @@ Attaching package: 'scales'</code></pre>
 </section>
 <section id="basic-dplyr" class="level1">
 <h1>Basic dplyr</h1>
-<p>The <code>dplyr</code> package has many functions that work together to produce succinct, readable and highly functional code. I often say about base R packages in comparison to things like SAS, that I can do something in R in about 10 lines of code compared to 50 in SAS. Using dplyr, you can do even more, faster.</p>
+<p>The <code>dplyr</code> package has many functions that work together to produce succinct, readable and highly functional code. I often say about base R packages in comparison to things like SAS, that I can do something in R in about 10 lines of code compared to 50 in SAS. Using <strong>dplyr</strong>, you can do even more, faster.</p>
 <p>The package consists of core “verbs” that are used to clean, reshape, and summarize data. Using “pipes”, the user can chain these verbs together so that you only have to name the data being used once, which makes for more efficient code, since you’re not constantly having to name the dataframe. The pipes also allow for all variables within a dataframe to be accessed, without using the <code>$</code> notation described yesterday.</p>
-<p>Perhaps a short tour of using dplyr would be good at this point, and we will see it used throughout the book. In the following code, I will use the <code>prb</code> data from earlier, and I will do a series of tasks. First, I will create a new variable using the <code>mutate()</code> function, then group the data into groups (similar to SAS’s ‘by’ processing) by using the <code>group_by()</code> function, then do some statistical summaries of other variables using the <code>summarise()</code> function.</p>
+<p>Perhaps a short tour of using dplyr would be good at this point, and we will see it used throughout the book. In the following code, I will use the <code>prb</code> data from earlier, and I will do a series of tasks. First, I will create a new variable using the <strong><code>mutate()</code></strong> verb, then group the data into groups (similar to SAS’s ‘by’ processing) by using the <strong><code>group_by()</code></strong> verb, then do some statistical summaries of other variables using the <strong><code>summarise()</code></strong> verb.</p>
 <p>This is a very typical workflow when using dplyr.</p>
 <p>Here we go:</p>
 <div class="cell">
@@ -572,6 +573,10 @@ Attaching package: 'scales'</code></pre>
 2 low         73.6</code></pre>
 </div>
 </div>
+<p>The <code>prb%&gt;%</code> line says, take the prb data and feed it into the next verb using the pipe.</p>
+<p>The next line <code>mutate(high_tfr = ifelse(test = tfr &gt; 3,yes =  "high", no =  "low") )%&gt;%</code> tells R to create a new variable called <code>high_tfr</code>, the value of the variable will be created based on conditional logic. If the value of the tfr is over 3, the value will be <code>"high"</code> and if the value of the tfr is less than 3, the value of the variable will be <code>"low"</code>.</p>
+<p>The <code>group_by(high_tfr)%&gt;%</code> line tells R to form a “grouped data frame”, basically this is how <code>dplyr</code> segments data into discrete groups, based off a variable, and then performs operations on those groups. This is the same thing as stratification of data. You can use multiple variables in this function, to group your data by multiple attributes.</p>
+<p>Or we can take the means of several columns using the <code>across()</code> verb:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>prb <span class="sc">%&gt;%</span></span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">high_tfr =</span> <span class="fu">ifelse</span>(<span class="at">test =</span> tfr <span class="sc">&gt;</span> <span class="dv">3</span>,</span>
@@ -591,9 +596,6 @@ Attaching package: 'scales'</code></pre>
 2 low        142   73.6     78.9 27216.  11.9</code></pre>
 </div>
 </div>
-<p>The <code>prb%&gt;%</code> line says, take the prb data and feed it into the next verb using the pipe.</p>
-<p>The next line <code>mutate(high_tfr = ifelse(test = tfr &gt; 3,yes =  "high", no =  "low") )%&gt;%</code> tells R to create a new variable called <code>high_tfr</code>, the value of the variable will be created based on conditional logic. If the value of the tfr is over 3, the value will be <code>"high"</code> and if the value of the tfr is less than 3, the value of the variable will be <code>"low"</code>.</p>
-<p>The <code>group_by(high_tfr)%&gt;%</code> line tells R to form a “grouped data frame”, basically this is how <code>dplyr</code> segments data into discrete groups, based off a variable, and then performs operations on those groups. This is the same thing as stratification of data. You can use multiple variables in this function, to group your data by multiple attributes.</p>
 <p>The last line <code>summarise(n=n() , across(.cols = c(e0male, e0female, gnigdp, imr), .fns = mean, na.rm = TRUE))</code> tells R to first count the number of cases in each group <code>n = n()</code>, then summarize multiple variables, in this case male and female life expectancy at birth, GDP, and the infant mortality rate, by each of the levels of the <code>high_tfr</code> variable. The summary I want to do is the mean of each variable, being sure to remove missing values before calculating the mean.</p>
 <p>Finally, we <code>ungroup()</code> the dataframe to remove the grouping, this is customary whenever using the <code>group_by()</code> verb.</p>
 <p>We see then the estimates of the four other indicators for countries that have TFR over 3, versus countries with a TFR under 3.</p>
@@ -627,12 +629,47 @@ Attaching package: 'scales'</code></pre>
 4 low      ASIA         40   72.8     77.5 31770.  13.0</code></pre>
 </div>
 </div>
+<p>The <code>select()</code> verb allows you to keep only certain columns in a dataframe:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>prb <span class="sc">%&gt;%</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a> <span class="fu">select</span>(country, continent, e0male, e0female)<span class="sc">%&gt;%</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 4
+  country             continent        e0male e0female
+  &lt;chr&gt;               &lt;chr&gt;             &lt;dbl&gt;    &lt;dbl&gt;
+1 Afghanistan         ASIA                 62       65
+2 Albania             EUROPE               77       80
+3 Algeria             AFRICA               77       78
+4 Andorra             EUROPE               NA       NA
+5 Angola              AFRICA               58       62
+6 Antigua and Barbuda NORTHERN AMERICA     74       79</code></pre>
+</div>
+</div>
+<p>The <code>arrange()</code> verb allows you to sort based on one or more columns:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>prb <span class="sc">%&gt;%</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a> <span class="fu">select</span>(country, continent, e0male, e0female)<span class="sc">%&gt;%</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(e0male, e0female)<span class="sc">%&gt;%</span></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 4
+  country                    continent e0male e0female
+  &lt;chr&gt;                      &lt;chr&gt;      &lt;dbl&gt;    &lt;dbl&gt;
+1 "Central African Republic" AFRICA        50       54
+2 "Sierra Leone"             AFRICA        51       52
+3 "Chad"                     AFRICA        52       54
+4 "C\xf4te d'Ivoire"         AFRICA        52       55
+5 "Lesotho"                  AFRICA        52       56
+6 "Nigeria"                  AFRICA        53       54</code></pre>
+</div>
+</div>
 <section id="more-dplyr-summaries" class="level3">
 <h3 class="anchored" data-anchor-id="more-dplyr-summaries">More dplyr summaries</h3>
 <p>If you want to get a list of distinct items, the <code>distinct()</code> function is your friend.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>prb <span class="sc">%&gt;%</span></span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(region)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>prb <span class="sc">%&gt;%</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(region)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 19 × 1
    region          
@@ -660,16 +697,16 @@ Attaching package: 'scales'</code></pre>
 </div>
 <p><code>n_distinct()</code> gives you the number of unique items.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">n_distinct</span>(prb<span class="sc">$</span>continent)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">n_distinct</span>(prb<span class="sc">$</span>continent)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 6</code></pre>
 </div>
 </div>
 <p>Counting is a demographer’s best friend, the <code>tally()</code> function does this very well.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>prb <span class="sc">%&gt;%</span></span>
-<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(continent)<span class="sc">%&gt;%</span></span>
-<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tally</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>prb <span class="sc">%&gt;%</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(continent)<span class="sc">%&gt;%</span></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tally</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 2
   continent            n
@@ -683,14 +720,14 @@ Attaching package: 'scales'</code></pre>
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>prb <span class="sc">%&gt;%</span></span>
-<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(continent)<span class="sc">%&gt;%</span></span>
-<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tally</span>()<span class="sc">%&gt;%</span></span>
-<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>()<span class="sc">+</span></span>
-<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="fu">aes</span>(<span class="at">y =</span> n, <span class="at">x =</span> continent, <span class="at">fill =</span> continent), </span>
-<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>           <span class="at">stat =</span> <span class="st">"identity"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>prb <span class="sc">%&gt;%</span></span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(continent)<span class="sc">%&gt;%</span></span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tally</span>()<span class="sc">%&gt;%</span></span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>()<span class="sc">+</span></span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="fu">aes</span>(<span class="at">y =</span> n, <span class="at">x =</span> continent, <span class="at">fill =</span> continent), </span>
+<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a>           <span class="at">stat =</span> <span class="st">"identity"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="r_bootcamp_d2_22_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid" width="672"></p>
+<p><img src="r_bootcamp_d2_22_files/figure-html/unnamed-chunk-24-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </section>
@@ -699,7 +736,7 @@ Attaching package: 'scales'</code></pre>
 <section id="r-file-types" class="level1">
 <h1>R file types</h1>
 <p><em>.R files</em> R uses a basic text file with the .R extension. This type of file is useful if you’re going to write a function or do some analysis and don’t want to have formatted output or text. You can use these files for everything, but they are limited in their ability to produce reports and formatted output, so I recommend people work with R Markdown files instead.</p>
-<p><em>.Rmd files</em> Rstudio uses a form of the markdown formatting language, called R Markdown, for creating formatted documents that include code, tables, figures and statistical output. <strong>This lesson is written in R Markdown!</strong></p>
+<p><em>.Rmd files</em> Rstudio uses a form of the markdown formatting language, called R Markdown, for creating formatted documents that include code, tables, figures and statistical output.</p>
 <p>R Markdown is nice for lots of reasons, such as the ability to insert latex equations into documents.</p>
 <p><span class="math display">\[
 {y_i \sim Normal (x'\beta, \sigma_2)}
@@ -709,11 +746,11 @@ Attaching package: 'scales'</code></pre>
 
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(broom)</span>
-<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pander)</span>
-<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">=</span> <span class="fu">lm</span>(imr<span class="sc">~</span>tfr<span class="sc">+</span>pcturban, </span>
-<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">data =</span> prb)</span>
-<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a><span class="fu">pander</span>(broom<span class="sc">::</span><span class="fu">tidy</span>(fit))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(broom)</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pander)</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">=</span> <span class="fu">lm</span>(imr<span class="sc">~</span>tfr<span class="sc">+</span>pcturban, </span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">data =</span> prb)</span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a><span class="fu">pander</span>(broom<span class="sc">::</span><span class="fu">tidy</span>(fit))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped">
 <colgroup>
@@ -759,6 +796,11 @@ Attaching package: 'scales'</code></pre>
 </div>
 </div>
 <p>This allows you to make tables in Rmarkdown without having to do non-repeatable tasks in Word or some other program. You can basically do your entire analysis, or a sideshow for a presentation, or an entire paper, including bibliography, in Rstudio.</p>
+<section id="quarto" class="level3">
+<h3 class="anchored" data-anchor-id="quarto"><strong>Quarto</strong></h3>
+<p><a href="https://quarto.org/">Quarto</a> is a relatively new publishing system built around the Pandoc engine. This allows you to create dynamic documents using R, Python or other languages, as well as reports, websites and books in various publishing formats (HTML, PDF, Word, etc) <strong>This lesson is written in Quarto!</strong></p>
+<p>Quarto documents are stored as <code>.qmd</code> files</p>
+</section>
 <section id="r-projects" class="level3">
 <h3 class="anchored" data-anchor-id="r-projects">R projects</h3>
 <p>Rstudio allows you to create a R project, which basically sets up a specific location to store R code for a given project you may be doing. For instance, this book is a single R project, which helps me organize all the chapters, bibliographies, figures, etc.</p>
@@ -769,40 +811,40 @@ Attaching package: 'scales'</code></pre>
 <p>R allows you to read and write its own <em>native</em> data formats, as well as read and write text formatted files and data files from other statistical software packages. Two native R data formats are <code>.rds</code> and <code>.rdata</code> formats. <code>.rds</code> files allow you to save a single R object to an external files, while <code>.rdata</code> files allow you to save one or more objects to a file.</p>
 <p>Here is a short example of doing this, where I create 2 vectors, <code>x</code> and <code>y</code> and save them.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>x <span class="ot">=</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>,<span class="dv">3</span>)</span>
-<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>y <span class="ot">=</span> <span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>)</span>
-<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(x, </span>
-<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">file=</span><span class="st">"~/x.rds"</span>)</span>
-<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a><span class="fu">save</span>(<span class="at">list=</span><span class="fu">c</span>(<span class="st">"x"</span>,<span class="st">"y"</span>),</span>
-<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a>     <span class="at">file=</span><span class="st">"xy.rdata"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>x <span class="ot">=</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>,<span class="dv">3</span>)</span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>y <span class="ot">=</span> <span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>)</span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(x, </span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">file=</span><span class="st">"~/x.rds"</span>)</span>
+<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a><span class="fu">save</span>(<span class="at">list=</span><span class="fu">c</span>(<span class="st">"x"</span>,<span class="st">"y"</span>),</span>
+<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a>     <span class="at">file=</span><span class="st">"xy.rdata"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>I can also load these into R again:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">readRDS</span>(<span class="at">file =</span> <span class="st">"~/x.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">readRDS</span>(<span class="at">file =</span> <span class="st">"~/x.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 1 2 3</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(<span class="st">"xy.rdata"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(<span class="st">"xy.rdata"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Standard methods for importing text data such as comma separated value or tab delimited files can be read into R using <code>read.csv()</code> or <code>read.table()</code> and similar writing functions are available.</p>
 <p>To read in a dataset from another statistical package, I recommend using the <code>haven</code> package. It allows you to read and write SAS (both sas7bdat and xpt files), Stata, SPSS (both .por and .sav files).</p>
 <p>For example, here I write out a dataframe containing <code>x</code> and <code>y</code> from above to a SAS version 7 file:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>xy <span class="ot">=</span> <span class="fu">data.frame</span>(<span class="at">x =</span> x, <span class="at">y =</span> y)</span>
-<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>xy</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>xy <span class="ot">=</span> <span class="fu">data.frame</span>(<span class="at">x =</span> x, <span class="at">y =</span> y)</span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>xy</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  x y
 1 1 4
 2 2 5
 3 3 6</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(haven)</span>
-<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a><span class="fu">write_sas</span>(<span class="at">data =</span> xy,</span>
-<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">path =</span> <span class="st">"~/xy.sas7bdat"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(haven)</span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a><span class="fu">write_sas</span>(<span class="at">data =</span> xy,</span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">path =</span> <span class="st">"~/xy.sas7bdat"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>I will describe dataframes more later in the chapter.</p>
 <p>R also has packages for reading/writing such data formats as JSON, ESRI Shapefiles, Excel spreadsheets, Google Spreadsheets, DBF files, in addition to tools for connecting to SQL databases, and for interfacing with other statistics packages, such as Mplus, OpenBUGS, WinBUGS and various Geographic Information Systems.</p>
@@ -810,8 +852,8 @@ Attaching package: 'scales'</code></pre>
 </section>
 <section id="commonuseful-packages" class="level1">
 <h1>Common/Useful packages</h1>
-<p>R uses packages to store functions that do different types of analysis, so we will need to install lots of different packages to do different things. There are over 20,000 different packages currently for R. These are hosted on one of a number of <em>repositories</em>, such as the Comprehensive R Archive Network, or CRAN, which is the official repository for R packages. Other locations where authors store packages include <a href="%22https://r-forge.r-project.org/%22">R-Forge</a> and <a href="%22https://www.bioconductor.org/%22">BioconductoR</a>. Many authors host packages in <a href="%22https://github.com%22">Github</a> repositories, especially for development purposes.</p>
-<p>Packages are often organized into <em>Task Views</em>, which CRAN uses to organize packages into thematic areas. You can find a list of these Task Views <a href="%22https://cran.r-project.org/web/views/%22">here</a>. There is not a task view for Demography, but there are ones for the <a href="%22https://cran.r-project.org/web/views/SocialSciences.html%22">Social Sciences</a>, <a href="%22https://cran.r-project.org/web/views/Econometrics.html%22">Econometrics</a>, and <a href="%22https://cran.r-project.org/web/views/Spatial.html%22">Spatial Data</a> to name a few. Task views allow users to download a lot of thematically linked packages in a single command, through the package <code>ctv</code>, or Cran Task Views. You can install this package by typing:</p>
+<p>R uses packages to store functions that do different types of analysis, so we will need to install lots of different packages to do different things. There are over 20,000 different packages currently for R. These are hosted on one of a number of <em>repositories</em>, such as the Comprehensive R Archive Network, or CRAN, which is the official repository for R packages. Other locations where authors store packages include <a href="https://r-forge.r-project.org/">R-Forge</a> and <a href="https://www.bioconductor.org/">BioconductoR</a>. Many authors host packages in <a href="https://github.com">Github</a> repositories, especially for development purposes.</p>
+<p>Packages are often organized into <em>Task Views</em>, which CRAN uses to organize packages into thematic areas. You can find a list of these Task Views <a href="https://cran.r-project.org/web/views/">here</a>. There is not a task view for Demography, but there are ones for <a href="https://cran.r-project.org/web/views/Econometrics.html">Econometrics</a> and <a href="https://cran.r-project.org/web/views/Spatial.html">Spatial Data</a> to name a few. Task views allow users to download a lot of thematically linked packages in a single command, through the package <code>ctv</code>, or Cran Task Views. You can install this package by typing:</p>
 <p><code>install.packages("ctv")</code></p>
 <p>into Rstudio. Then you have to load the package by using the <code>library()</code> command:</p>
 <p><code>library(ctv)</code></p>

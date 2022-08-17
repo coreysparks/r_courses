@@ -163,7 +163,7 @@ We can view the first few lines of the data using the `head()` function:
 
 ```{r}
 #| eval: false
-head(prb)
+head(prb, n=20)
 ```
 
 ```{r}

@@ -310,11 +310,11 @@ ggplot(data = prb,mapping = aes(x = tfr, y = pctlt15_2018))+
 
 # Basic dplyr
 
-The `dplyr` package has many functions that work together to produce succinct, readable and highly functional code. I often say about base R packages in comparison to things like SAS, that I can do something in R in about 10 lines of code compared to 50 in SAS. Using dplyr, you can do even more, faster.
+The `dplyr` package has many functions that work together to produce succinct, readable and highly functional code. I often say about base R packages in comparison to things like SAS, that I can do something in R in about 10 lines of code compared to 50 in SAS. Using **dplyr**, you can do even more, faster.
 
 The package consists of core "verbs" that are used to clean, reshape, and summarize data. Using "pipes", the user can chain these verbs together so that you only have to name the data being used once, which makes for more efficient code, since you're not constantly having to name the dataframe. The pipes also allow for all variables within a dataframe to be accessed, without using the `$` notation described yesterday.
 
-Perhaps a short tour of using dplyr would be good at this point, and we will see it used throughout the book. In the following code, I will use the `prb` data from earlier, and I will do a series of tasks. First, I will create a new variable using the `mutate()` function, then group the data into groups (similar to SAS's 'by' processing) by using the `group_by()` function, then do some statistical summaries of other variables using the `summarise()` function.
+Perhaps a short tour of using dplyr would be good at this point, and we will see it used throughout the book. In the following code, I will use the `prb` data from earlier, and I will do a series of tasks. First, I will create a new variable using the **`mutate()`** verb, then group the data into groups (similar to SAS's 'by' processing) by using the **`group_by()`** verb, then do some statistical summaries of other variables using the **`summarise()`** verb.
 
 This is a very typical workflow when using dplyr.
 
@@ -332,6 +332,14 @@ prb %>%
   
 ```
 
+The `prb%>%` line says, take the prb data and feed it into the next verb using the pipe.
+
+The next line `mutate(high_tfr = ifelse(test = tfr > 3,yes =  "high", no =  "low") )%>%` tells R to create a new variable called `high_tfr`, the value of the variable will be created based on conditional logic. If the value of the tfr is over 3, the value will be `"high"` and if the value of the tfr is less than 3, the value of the variable will be `"low"`.
+
+The `group_by(high_tfr)%>%` line tells R to form a "grouped data frame", basically this is how `dplyr` segments data into discrete groups, based off a variable, and then performs operations on those groups. This is the same thing as stratification of data. You can use multiple variables in this function, to group your data by multiple attributes.
+
+Or we can take the means of several columns using the `across()` verb:
+
 ```{r}
 prb %>%
   mutate(high_tfr = ifelse(test = tfr > 3,
@@ -346,12 +354,6 @@ prb %>%
   
 
 ```
-
-The `prb%>%` line says, take the prb data and feed it into the next verb using the pipe.
-
-The next line `mutate(high_tfr = ifelse(test = tfr > 3,yes =  "high", no =  "low") )%>%` tells R to create a new variable called `high_tfr`, the value of the variable will be created based on conditional logic. If the value of the tfr is over 3, the value will be `"high"` and if the value of the tfr is less than 3, the value of the variable will be `"low"`.
-
-The `group_by(high_tfr)%>%` line tells R to form a "grouped data frame", basically this is how `dplyr` segments data into discrete groups, based off a variable, and then performs operations on those groups. This is the same thing as stratification of data. You can use multiple variables in this function, to group your data by multiple attributes.
 
 The last line `summarise(n=n() , across(.cols = c(e0male, e0female, gnigdp, imr), .fns = mean, na.rm = TRUE))` tells R to first count the number of cases in each group `n = n()`, then summarize multiple variables, in this case male and female life expectancy at birth, GDP, and the infant mortality rate, by each of the levels of the `high_tfr` variable. The summary I want to do is the mean of each variable, being sure to remove missing values before calculating the mean.
 
@@ -378,6 +380,23 @@ prb %>%
                    na.rm = TRUE))%>%
   ungroup()
 
+```
+
+The `select()` verb allows you to keep only certain columns in a dataframe:
+
+```{r}
+prb %>%
+ select(country, continent, e0male, e0female)%>%
+  head()
+```
+
+The `arrange()` verb allows you to sort based on one or more columns:
+
+```{r}
+prb %>%
+ select(country, continent, e0male, e0female)%>%
+  arrange(e0male, e0female)%>%
+  head()
 ```
 
 ### More dplyr summaries
@@ -419,7 +438,7 @@ prb %>%
 
 *.R files* R uses a basic text file with the .R extension. This type of file is useful if you're going to write a function or do some analysis and don't want to have formatted output or text. You can use these files for everything, but they are limited in their ability to produce reports and formatted output, so I recommend people work with R Markdown files instead.
 
-*.Rmd files* Rstudio uses a form of the markdown formatting language, called R Markdown, for creating formatted documents that include code, tables, figures and statistical output. **This lesson is written in R Markdown!**
+*.Rmd files* Rstudio uses a form of the markdown formatting language, called R Markdown, for creating formatted documents that include code, tables, figures and statistical output.
 
 R Markdown is nice for lots of reasons, such as the ability to insert latex equations into documents.
 
@@ -445,6 +464,12 @@ pander(broom::tidy(fit))
 ```
 
 This allows you to make tables in Rmarkdown without having to do non-repeatable tasks in Word or some other program. You can basically do your entire analysis, or a sideshow for a presentation, or an entire paper, including bibliography, in Rstudio.
+
+### **Quarto**
+
+[Quarto](https://quarto.org/) is a relatively new publishing system built around the Pandoc engine. This allows you to create dynamic documents using R, Python or other languages, as well as reports, websites and books in various publishing formats (HTML, PDF, Word, etc) **This lesson is written in Quarto!**
+
+Quarto documents are stored as `.qmd` files
 
 ### R projects
 
@@ -500,9 +525,9 @@ R also has packages for reading/writing such data formats as JSON, ESRI Shapefil
 
 # Common/Useful packages
 
-R uses packages to store functions that do different types of analysis, so we will need to install lots of different packages to do different things. There are over 20,000 different packages currently for R. These are hosted on one of a number of *repositories*, such as the Comprehensive R Archive Network, or CRAN, which is the official repository for R packages. Other locations where authors store packages include [R-Forge](%22https://r-forge.r-project.org/%22) and [BioconductoR](%22https://www.bioconductor.org/%22). Many authors host packages in [Github](%22https://github.com%22) repositories, especially for development purposes.
+R uses packages to store functions that do different types of analysis, so we will need to install lots of different packages to do different things. There are over 20,000 different packages currently for R. These are hosted on one of a number of *repositories*, such as the Comprehensive R Archive Network, or CRAN, which is the official repository for R packages. Other locations where authors store packages include [R-Forge](https://r-forge.r-project.org/) and [BioconductoR](https://www.bioconductor.org/). Many authors host packages in [Github](https://github.com) repositories, especially for development purposes.
 
-Packages are often organized into *Task Views*, which CRAN uses to organize packages into thematic areas. You can find a list of these Task Views [here](%22https://cran.r-project.org/web/views/%22). There is not a task view for Demography, but there are ones for the [Social Sciences](%22https://cran.r-project.org/web/views/SocialSciences.html%22), [Econometrics](%22https://cran.r-project.org/web/views/Econometrics.html%22), and [Spatial Data](%22https://cran.r-project.org/web/views/Spatial.html%22) to name a few. Task views allow users to download a lot of thematically linked packages in a single command, through the package `ctv`, or Cran Task Views. You can install this package by typing:
+Packages are often organized into *Task Views*, which CRAN uses to organize packages into thematic areas. You can find a list of these Task Views [here](https://cran.r-project.org/web/views/). There is not a task view for Demography, but there are ones for [Econometrics](https://cran.r-project.org/web/views/Econometrics.html) and [Spatial Data](https://cran.r-project.org/web/views/Spatial.html) to name a few. Task views allow users to download a lot of thematically linked packages in a single command, through the package `ctv`, or Cran Task Views. You can install this package by typing:
 
 `install.packages("ctv")`
 
