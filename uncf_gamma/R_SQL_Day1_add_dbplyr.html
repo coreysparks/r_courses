@@ -841,47 +841,64 @@ This warning is displayed once every 8 hours.</code></pre>
 4    48      1  50531. 28000</code></pre>
 </div>
 </div>
+<section id="see-the-query" class="level3">
+<h3 class="anchored" data-anchor-id="see-the-query">See the query!</h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a>pums <span class="sc">%&gt;%</span> <span class="fu">select</span>(SERIALNO, AGEP, ST,SEX, WAGP)<span class="sc">%&gt;%</span></span>
-<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(AGEP <span class="sc">&gt;</span> <span class="dv">18</span>, WAGP <span class="sc">!=</span><span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb61-4"><a href="#cb61-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">over65  =</span> <span class="fu">ifelse</span>(AGEP <span class="sc">&gt;</span><span class="dv">65</span>, <span class="dv">1</span>, <span class="dv">0</span>))<span class="sc">%&gt;%</span></span>
-<span id="cb61-5"><a href="#cb61-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ST, over65, SEX)<span class="sc">%&gt;%</span></span>
-<span id="cb61-6"><a href="#cb61-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">avgwage =</span> <span class="fu">mean</span>(WAGP),</span>
-<span id="cb61-7"><a href="#cb61-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">medwg =</span> <span class="fu">median</span>(WAGP),</span>
-<span id="cb61-8"><a href="#cb61-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">samp =</span> <span class="fu">n</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>pums <span class="sc">%&gt;%</span> <span class="fu">select</span>(SERIALNO, AGEP, ST, WAGP)<span class="sc">%&gt;%</span></span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(AGEP <span class="sc">&gt;</span> <span class="dv">18</span>, WAGP <span class="sc">!=</span><span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">over65  =</span> <span class="fu">ifelse</span>(AGEP <span class="sc">&gt;</span><span class="dv">65</span>, <span class="dv">1</span>, <span class="dv">0</span>))<span class="sc">%&gt;%</span></span>
+<span id="cb61-4"><a href="#cb61-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ST, over65)<span class="sc">%&gt;%</span></span>
+<span id="cb61-5"><a href="#cb61-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">avgwage =</span> <span class="fu">mean</span>(WAGP),</span>
+<span id="cb61-6"><a href="#cb61-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">medwg =</span> <span class="fu">median</span>(WAGP),</span>
+<span id="cb61-7"><a href="#cb61-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">samp =</span> <span class="fu">n</span>())<span class="sc">%&gt;%</span></span>
+<span id="cb61-8"><a href="#cb61-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">show_query</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>`summarise()` has grouped output by "ST" and "over65". You can override using
-the `.groups` argument.</code></pre>
+<pre><code>`summarise()` has grouped output by "ST". You can override using the `.groups`
+argument.</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code># Source:   SQL [8 x 6]
-# Database: sqlite 3.39.2 [C:\Users\ozd504\OneDrive - University of Texas at San Antonio\PUMS_data]
-# Groups:   ST, over65
-     ST over65   SEX avgwage medwg  samp
-  &lt;int&gt;  &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;int&gt;
-1     6      0     1  77911. 50000 86426
-2     6      0     2  54789. 38000 78675
-3     6      1     1  76114. 41250  5766
-4     6      1     2  43820. 24400  4809
-5    48      0     1  69530. 50000 60058
-6    48      0     2  43916. 32000 54917
-7    48      1     1  65104. 36000  4595
-8    48      1     2  33790. 20400  4000</code></pre>
+<pre><code>&lt;SQL&gt;
+SELECT
+  `ST`,
+  `over65`,
+  AVG(`WAGP`) AS `avgwage`,
+  MEDIAN(`WAGP`) AS `medwg`,
+  COUNT(*) AS `samp`
+FROM (
+  SELECT
+    *,
+    CASE WHEN (`AGEP` &gt; 65.0) THEN 1.0 WHEN NOT (`AGEP` &gt; 65.0) THEN 0.0 END AS `over65`
+  FROM (
+    SELECT `SERIALNO`, `AGEP`, `ST`, `WAGP`
+    FROM `pums_tx_ca`
+  )
+  WHERE (`AGEP` &gt; 18.0) AND (`WAGP` != 0.0)
+)
+GROUP BY `ST`, `over65`</code></pre>
 </div>
 </div>
+</section>
+<section id="use-the-output-of-the-query-in-graph" class="level3">
+<h3 class="anchored" data-anchor-id="use-the-output-of-the-query-in-graph">Use the output of the query in graph</h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>pums <span class="sc">%&gt;%</span> <span class="fu">select</span>(SERIALNO, AGEP, ST,SEX, WAGP)<span class="sc">%&gt;%</span></span>
-<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(AGEP <span class="sc">&gt;</span> <span class="dv">18</span>, WAGP <span class="sc">!=</span><span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">over65  =</span> <span class="fu">ifelse</span>(AGEP <span class="sc">&gt;</span><span class="dv">65</span>, <span class="dv">1</span>, <span class="dv">0</span>))<span class="sc">%&gt;%</span></span>
-<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ST, over65, SEX)<span class="sc">%&gt;%</span></span>
-<span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">avgwage =</span> <span class="fu">mean</span>(WAGP),</span>
-<span id="cb64-6"><a href="#cb64-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">medwg =</span> <span class="fu">median</span>(WAGP),</span>
-<span id="cb64-7"><a href="#cb64-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">samp =</span> <span class="fu">n</span>()) <span class="sc">%&gt;%</span></span>
-<span id="cb64-8"><a href="#cb64-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>()<span class="sc">+</span></span>
-<span id="cb64-9"><a href="#cb64-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">aes</span>(<span class="at">x =</span> ST, <span class="at">y =</span> avgwage, <span class="at">fill=</span><span class="fu">factor</span>(ST))<span class="sc">+</span></span>
-<span id="cb64-10"><a href="#cb64-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat=</span><span class="st">"identity"</span>)<span class="sc">+</span></span>
-<span id="cb64-11"><a href="#cb64-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>SEX)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a>pums <span class="sc">%&gt;%</span></span>
+<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SERIALNO, AGEP, ST,SEX, WAGP)<span class="sc">%&gt;%</span></span>
+<span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(AGEP <span class="sc">&gt;</span> <span class="dv">18</span>, WAGP <span class="sc">!=</span><span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb64-6"><a href="#cb64-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">over65  =</span> <span class="fu">ifelse</span>(AGEP <span class="sc">&gt;</span><span class="dv">65</span>, <span class="dv">1</span>, <span class="dv">0</span>),</span>
+<span id="cb64-7"><a href="#cb64-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">gender =</span> <span class="fu">ifelse</span>(SEX <span class="sc">==</span><span class="dv">1</span> , <span class="st">"Male"</span>, <span class="st">"Female"</span>))<span class="sc">%&gt;%</span></span>
+<span id="cb64-8"><a href="#cb64-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ST, over65, gender)<span class="sc">%&gt;%</span></span>
+<span id="cb64-9"><a href="#cb64-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">avgwage =</span> <span class="fu">mean</span>(WAGP),</span>
+<span id="cb64-10"><a href="#cb64-10" aria-hidden="true" tabindex="-1"></a>            <span class="at">medwg =</span> <span class="fu">median</span>(WAGP),</span>
+<span id="cb64-11"><a href="#cb64-11" aria-hidden="true" tabindex="-1"></a>            <span class="at">samp =</span> <span class="fu">n</span>()) <span class="sc">%&gt;%</span></span>
+<span id="cb64-12"><a href="#cb64-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>()<span class="sc">+</span></span>
+<span id="cb64-13"><a href="#cb64-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">aes</span>(<span class="at">x =</span> ST,</span>
+<span id="cb64-14"><a href="#cb64-14" aria-hidden="true" tabindex="-1"></a>      <span class="at">y =</span> avgwage,</span>
+<span id="cb64-15"><a href="#cb64-15" aria-hidden="true" tabindex="-1"></a>      <span class="at">fill=</span><span class="fu">factor</span>(ST))<span class="sc">+</span></span>
+<span id="cb64-16"><a href="#cb64-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat=</span><span class="st">"identity"</span>)<span class="sc">+</span></span>
+<span id="cb64-17"><a href="#cb64-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>gender) <span class="sc">+</span></span>
+<span id="cb64-18"><a href="#cb64-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">label_dollar</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>`summarise()` has grouped output by "ST" and "over65". You can override using
 the `.groups` argument.</code></pre>
@@ -890,7 +907,7 @@ the `.groups` argument.</code></pre>
 <p><img src="R_SQL_Day1_add_dbplyr_files/figure-html/unnamed-chunk-26-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
-<p>```</p>
+</section>
 </section>
 
 </main>

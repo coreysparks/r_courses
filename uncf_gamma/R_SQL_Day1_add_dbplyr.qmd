@@ -354,31 +354,42 @@ pums %>% select(SERIALNO, AGEP, ST, WAGP)%>%
   group_by(ST, over65)%>%
   summarise(avgwage = mean(WAGP), medwg = median(WAGP))
 
+
 ```
+
+### See the query!
+
+```{r}
+pums %>% select(SERIALNO, AGEP, ST, WAGP)%>%
+  filter(AGEP > 18, WAGP !=0) %>%
+  mutate(over65  = ifelse(AGEP >65, 1, 0))%>%
+  group_by(ST, over65)%>%
+  summarise(avgwage = mean(WAGP),
+            medwg = median(WAGP),
+            samp = n())%>%
+  show_query()
+
+```
+
+### Use the output of the query in graph
 
 ```{r}
 library(ggplot2)
-pums %>% select(SERIALNO, AGEP, ST,SEX, WAGP)%>%
-  filter(AGEP > 18, WAGP !=0) %>%
-  mutate(over65  = ifelse(AGEP >65, 1, 0))%>%
-  group_by(ST, over65, SEX)%>%
-  summarise(avgwage = mean(WAGP),
-            medwg = median(WAGP),
-            samp = n())
-```
 
-```{r}
-pums %>% select(SERIALNO, AGEP, ST,SEX, WAGP)%>%
+pums %>%
+  select(SERIALNO, AGEP, ST,SEX, WAGP)%>%
   filter(AGEP > 18, WAGP !=0) %>%
-  mutate(over65  = ifelse(AGEP >65, 1, 0))%>%
-  group_by(ST, over65, SEX)%>%
+  mutate(over65  = ifelse(AGEP >65, 1, 0),
+         gender = ifelse(SEX ==1 , "Male", "Female"))%>%
+  group_by(ST, over65, gender)%>%
   summarise(avgwage = mean(WAGP),
             medwg = median(WAGP),
             samp = n()) %>%
   ggplot()+
-  aes(x = ST, y = avgwage, fill=factor(ST))+
+  aes(x = ST,
+      y = avgwage,
+      fill=factor(ST))+
   geom_bar(stat="identity")+
-  facet_wrap(~SEX)
+  facet_wrap(~gender) +
+  scale_y_continuous(labels = scales::label_dollar())
 ```
-
-\`\`\`
