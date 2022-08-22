@@ -1,0 +1,384 @@
+---
+title: "R and SQL"
+author: "Corey Sparks"
+format: html
+editor: visual
+---
+
+## Starting Out: Introduction to SQL and Relational Databases
+
+SQL is a language designed for a very specific purpose: to interact with relational databases.
+
+-   **Database**: A database is a structured collection of data. There are various different ways of structuring the database, and there may or may not be information about the relationship between entities in the database.
+-   **Query**: A query is a request for data from the database.
+-   **Database Management System (DBMS)**: A DBMS is a system of storing and managing databases, including querying the database.
+-   **Relational Database Management System (RDBMS)**: In an RDBMS, data records are stored in *tables*, each of which has a predefined set of *columns*, the pieces of information captured for each record in a table, and *rows* in the table, where each row has a place to store a value for every column in the table.
+
+Tables, including their columns, column types and relationships with other tables, are defined in a database **schema**. Many times, tables will contain a **primary key**, one or more columns that uniquely define a row. You can think of the primary key as a kind of ID, in which each row is given a unique ID. Tables can also contain **foreign keys**, which are column(s) that comprise the primary key in another table and, thus, provides a way of matching between multiple tables.
+
+In this workbook, we will be using 2019 American Community Survey Public Use Microdata (PUMS). These are public-use data sets containing information about responses to the Census Bureau American Community Survey.
+
+These are public-use data sets containing information about responses to the Census Bureau American Community Survey. Information about the ACS project can be found [here](https://www.census.gov/programs-surveys/acs).
+
+We will be using the ACS PUMS dataset for Texas and California in our examples in this workbook.
+
+You can find more information about the ACS datasets [here](https://www.census.gov/programs-surveys/acs/microdata/access.2019.html) and the codebook for the data [here](https://github.com/coreysparks/data/blob/master/pums_vars.xlsx?raw=true). The codebook will show you the names of the variables in the data and a description of them.
+
+Go to this site and download the database: <https://drive.google.com/file/d/14Kwex8x3IPEGOLIP_lS3CXeU5iDB1cK1/view?usp=sharing>
+
+![](images/paste-FCAC2628.png)
+
+and save it to your local computer. I recommend putting the file *PUMS_data* in the User folder on your computer.
+
+## [Writing a Basic Query]{style="color:green"}
+
+In order to analyze the data in a database, we need to query it, or request specific information about the data. Before we do that, run the following cell to establish a connection to the database.
+
+In R we use a couple of libraries to do this. You will need to install the `DBI` and `RSQLite` packages first.
+
+```{r}
+library(tidyverse)
+library(DBI)
+library(RSQLite)
+```
+
+Next we establish the connection to our database. You will need to change the path of the file to the location on your computer where you downloaded the data.
+
+```{r}
+
+con <-dbConnect(SQLite(),
+                dbname = "C:/Users/ozd504/OneDrive - University of Texas at San Antonio/PUMS_data")
+con
+```
+
+To see the tables in the connected database, use the `dbListTables()` function.
+
+```{r}
+
+dbListTables(con)
+```
+
+We see there are 4 tables present in the database.
+
+Now we are ready to do our first query from the data. We want to query the first 10 rows of the `pums_tx_ca` table.
+
+```{r}
+dbGetQuery(con,
+  'SELECT * FROM pums_tx_ca
+   LIMIT 10;')
+```
+
+**SELECT:** We start out with the `SELECT` statement. The `SELECT` statement specifies which variables (columns) you want. - Here, we used `SELECT *`. The "`*`" just says that we want all the variables. - If we wanted a few columns, we would use the column names separated by commas instead of "`*`" (for example, `AGEP, SEX, ST`).
+
+-   **FROM:** Now, let's look at the next part of the query, `FROM pums_tx_ca`. This part of the query specifies the table, `pums_tx_ca`, from which we want to retrieve the data. Most of your queries will begin in this fashion, describing which columns you want and from which table.
+
+-   **LIMIT:** We typically include a `LIMIT` statement at the end of our query so that we don't get overloaded with rows being output. Here, `LIMIT 10` means that we just want the first ten rows. Many times, the `LIMIT` that you want will be higher than 10 -- you might generally prefer to use 1000 or so. Having a `LIMIT` for all queries is highly recommended even if you know only a few rows will be shown, since it acts as a safety precaution against (for example) displaying millions of rows of data.
+
+In this case, we've put everything in one line, but that's not necessary. We could have split the code up into multiple lines, like so:
+
+    SELECT * 
+    FROM pums_tx_ca
+    LIMIT 10;
+
+This gives the same output as our original query. Generally, once queries start getting longer, breaking up the code into multiple lines can be very helpful in organizing your code and making it easier to read.
+
+Along those lines, note that we used a semi-colon at the end of the query to mark the end of the query. That isn't absolutely necessary here, but it does help mark the end of a query and is required in other applications of SQL, so it's good practice to use it.
+
+> ### Side note about capitalization
+>
+> If you notice, we've been using all caps for SQL commands and all lowercase for data table and schema names. This is simply a convention, as SQL is not case sensitive. For example, we could have run `select * from pums_tx_ca limit 10;` and it would have given us the exact same output as the first query.
+
+> This does mean you need to be careful when using column names. If your column name has capital letters in it, you need use double quotes (e.g. `"AGEP"`) to preserve the capitalization. For this reason, you might find that using all lowercase letters in column names is preferable, which is what we've done here.
+
+Now, consider the following query. What do you think it will do?
+
+    SELECT AGEP, ST 
+    FROM pums_tx_ca
+    LIMIT 10;
+
+We've changed the original query by using `AGEP, ST` instead of `*`, so we'll only get the values from two columns, `AGEP` and `ST`. In addition, we've changed the value after `LIMIT` to be 100 instead of 10, so we'll get the first 100 rows instead of the first 10 rows.
+
+```{r}
+dbGetQuery(con,
+  'SELECT AGEP, ST FROM pums_tx_ca
+   LIMIT 10;')
+```
+
+## [Checkpoint 1: Running Basic Queries]{style="color:red"}
+
+Consider the following queries. What do you think they will do? Try figuring out what the output will look like, then run the code to see if you're correct.
+
+-   `SELECT * FROM pums_tx_ca LIMIT 25;`
+-   `SELECT SCHL, SEX, HISP, OCCP FROM pums_tx_ca LIMIT 1000;`
+-   `SELECT * FROM pums_tx_ca_hh LIMIT 100;`
+
+Think about the following scenarios. What is the query you would use to answer these questions? Try them out.
+
+-   You want to see the first 100 rows of the variables containing informatoin on respondent's race and wages variables.
+
+## [Checking Number of Rows and Duplicates]{style="color:green"}
+
+Let's say we want to find out how many rows there are. You can do this by using a `COUNT`.
+
+```{r}
+dbGetQuery(con,
+  'SELECT COUNT(*) 
+  FROM pums_tx_ca;')
+```
+
+Here, we used `COUNT(*)`, which does a count of all rows, regardless of `NULL` values. We can instead do a count of all non-`NULL` values of a certain variable by including that variable instead of `*`.
+
+```{r}
+dbGetQuery(con,
+  'SELECT COUNT(ST) 
+  FROM pums_tx_ca;')
+```
+
+But wait; what if there are duplicates in the data? We can check for them by using `DISTINCT`.
+
+```{r}
+dbGetQuery(con,
+  'SELECT DISTINCT(ST) 
+  FROM pums_tx_ca;')
+```
+
+And we see there are 2 states in the data.
+
+This shows us all of the rows with distinct `ST` values; that is, all of the distinct state ids. Let's count how many there are. To count them, all we have to do is put `COUNT()` around the `DISTINCT` part.
+
+```{r}
+dbGetQuery(con,
+  'SELECT COUNT ( DISTINCT ( ST ) )
+  FROM pums_tx_ca;')
+```
+
+> ### Building Up a Query
+>
+> Notice that we wanted to count the number of distinct rows, but we first started from querying the rows with distinct `ST` first before adding in the `COUNT`. Though this is a simple example, this process of building up a query as we go is important, especially when we get to more complicated tasks. When writing a query, try to think about the basic parts first, and feel free to run intermediate steps (making sure to include `LIMIT`) as you go.
+
+## [Using Conditional Statements]{style="color:green"}
+
+Suppose we want to look at a subset of the data. We can use conditional statements to do this.
+
+```{r}
+dbGetQuery(con,
+  'SELECT * 
+  FROM pums_tx_ca
+  WHERE AGEP > 18
+  LIMIT 10;')
+```
+
+Using a query like the one above can be useful for finding if there are any data entry errors or missing values. Since it's not possible to have an age less 0, if there are any rows with negative age, this is likely an error or the method used to code missing values (e.g. `-1`).
+
+We can also use more complicated conditional statements.
+
+```{r}
+dbGetQuery(con,
+  'SELECT * 
+  FROM pums_tx_ca
+  WHERE AGEP > 18 AND AGEP <65
+  LIMIT 10;')
+```
+
+This subsets to rows in which AGEP is greater than 18 and AGEP is less than 65. That is, this subsets to people with ages between 18 and 65. Using OR works in the same way.
+
+```{r}
+dbGetQuery(con,
+  'SELECT * 
+  FROM pums_tx_ca
+  WHERE AGEP > 18  OR AGEP <65
+  LIMIT 10;')
+
+```
+
+This subsets to rows in which `AGEP` is greater than 18 or less than 65.
+
+> ### Common Comparison Operators
+
+> Though there are some more complicated comparison operators (if you're curious, feel free to look up what `LIKE` and `IN` do), these should cover most of what you want to do. - **`=`**: equal to - **`!=`** or "**`<>`**": not equal to - **`<`**: less than - **`<=`**: less-than-or-equal-to - **`>`**: greater than - **`>=`**: greater-than-or-equal-to - **`IS NULL`** and **`IS NOT NULL`**: The signifier of a row in a column not having a value is a special keyword: `NULL`. To check for `NULL`, you use `IS NULL` or `IS NOT NULL`, rather than "=" or "!=". For example, to count the number of rows with `NULL` values for `c000` we might use the following:
+
+>        SELECT count(*) 
+>        FROM pums_tx_ca
+>        WHERE WAGP IS NULL;
+
+## Creating Variables
+
+Suppose we want to create a new column in the table that acts as a "flag" for which rows fit a certain condition, so that you can use them later. We can do this using the `ALTER TABLE` statement.
+
+```{r, error=TRUE}
+dbExecute(con,
+  'ALTER TABLE pums_tx_ca
+  ADD over65 BOOL;')
+
+dbExecute(con,
+  'UPDATE pums_tx_ca SET over65 = 0;')
+
+dbExecute(con,
+  'UPDATE pums_tx_ca SET over65 = 1 WHERE AGEP > 65;')
+
+dbGetQuery(con,
+ 'select over65, AGEP,ST from pums_tx_ca
+ limit 10;')
+```
+
+Let's break this down line by line. First, we use `ALTER TABLE`, then specify the table we want to alter. In this case, we want to alter the `pums_tx_ca` table. Then, we `ADD` a new column, `over65`. We designate this as a `BOOL` for boolean (that is, a TRUE/FALSE value) column.
+
+After we create this new column, we need to fill it with the appropriate values. First, we're going to set everything in the column to be 0 (or False). To do this, we use `UPDATE`, specify the appropriate table, then use `SET over65 = 0`.
+
+Then, we replace the value with 1 (or True) if the value in `AGEP` for that row is above 65. We again use `UPDATE` in a similar manner, except we add a `WHERE` clause, so that it only set the value to TRUE if a certain condition is met -- in this case, that `AGEP > 65`.
+
+## [Using Aggregation Functions]{style="color:green"}
+
+We've created a variable that indicates whether the person's age is over 65 or not. What if we wanted to know how many people were over 65 and how many weren't? We can now use the `GROUP BY` statement.
+
+```{r}
+dbGetQuery(con,
+  'SELECT over65, COUNT(over65)
+  FROM pums_tx_ca
+  GROUP BY over65;')
+```
+
+Here, the `GROUP BY` statement groups it into the categories of the variable. Since we've chosen to display the count, we can see the counts. We can also change the order in which the results are displayed so that it's in increasing order.
+
+```{r}
+dbGetQuery(con,
+  'SELECT over65, COUNT(over65)
+  FROM pums_tx_ca
+  GROUP BY over65
+  ORDER BY COUNT(over65);')
+```
+
+The `ORDER BY` statement orders the rows that it displays according to whatever you put after it. In this case, we chose the count of `over100`.
+
+### Using GROUP BY with Multiple Variables
+
+For the next few queries, let's try using a different table. The `pums_tx_ca_hh` table in the same `PUMS_data` database contains information about households that each person lives in. We can use this to, for example, look at how many households do not have access to the internet by state. *NOTE* ACCESS values of 3 indicate that a house has no access to the internet
+
+```{r}
+dbGetQuery(con,
+  'SELECT ACCESS,ST, COUNT(*)
+  FROM pums_tx_ca_hh
+  GROUP BY ACCESS, ST
+  ORDER BY ACCESS DESC;')
+```
+
+This first groups by ACCESS (`ACCESS`) name, then it groups by state (`ST`), in that order.
+
+Further, notice that we used `DESC` after `ORDER BY`. This orders in descending order instead of ascending order, so that we can see the areas with the highest values of `ACCESS` at the top.
+
+### Conditional Statements After Aggregation
+
+Suppose we wanted to display only certain counts. We can use `HAVING` to do this.
+
+```{r}
+dbGetQuery(con,
+  'SELECT ACCESS,ST, COUNT(*)
+  FROM pums_tx_ca_hh
+  GROUP BY ACCESS, ST
+  HAVING ACCESS = 3
+  ORDER BY ACCESS DESC;')
+
+```
+
+This displays on the numbers of households that don't have internet access.
+
+### Using Different Aggregation Functions
+
+What if we wanted to find the sum within each group, or the minimum or maximum value? We can use the appropriate aggregation function. To show this, let's go back to our `pums_tx_ca` table.
+
+```{r}
+dbGetQuery(con,
+  'SELECT over65, SEX_label, COUNT(over65), AVG(WAGP) AS avg_wage, MIN(WAGP), MAX(WAGP)
+  FROM pums_tx_ca
+  WHERE WAGP > 0
+  GROUP BY over65, SEX_label
+  ORDER BY over65;')
+```
+
+Here, we're finding the counts, average, minimum, and maximum value of the wages within each group, defined by respondent's sex and their age group. These aggregation functions can be very useful.
+
+> ### Side Note: Aliasing
+>
+> You may have noticed that we included a part using "`AS`," followed by a new name, in the first line. When you ran the code, you might have noticed that the column labels were changed to these new names. This is called aliasing, and is done for readability and ease of access. Later on, aliasing will also help us more easily reference tables within the same query.
+
+## Close the data base connection
+
+```{r}
+#| echo: false
+#| message: false
+
+dbExecute(con,
+  'ALTER TABLE pums_tx_ca
+  DROP COLUMN over65;')
+```
+
+```{r}
+dbDisconnect(con)
+```
+
+# Homework
+
+1\) In three sentences or less, describe the steps you would take to connect to a datasource/server in R
+
+2\) Write the lines of code you would use to show the first ten lines of a database named *ds_census_unit3* in R
+
+3\) Write the lines of code you would use to extract the total number of distinct individuals in the *pums_tx_ca* table, using the **SERIALNO** as the unique identifier for each person
+
+4\) Modify question 3 to count the number of distinct persons in the pums_tx_ca table who are over between ages 29 and 40.
+
+# Using `dbplyr` to do queries
+
+```{r}
+library(dbplyr)
+
+con <-dbConnect(SQLite(),
+                dbname = "C:/Users/ozd504/OneDrive - University of Texas at San Antonio/PUMS_data")
+
+pums <- tbl(con, "pums_tx_ca")
+```
+
+```{r}
+pums %>% select(SERIALNO, AGEP, ST, WAGP)
+```
+
+```{r}
+pums %>% select(SERIALNO, AGEP, ST, WAGP)%>%
+  filter(AGEP > 18 & AGEP<65, WAGP !=0) %>%
+  head(n =10)
+```
+
+```{r}
+pums %>% select(SERIALNO, AGEP, ST, WAGP)%>%
+  filter(AGEP > 18, WAGP !=0) %>%
+  mutate(over65  = ifelse(AGEP >65, 1, 0))%>%
+  group_by(ST, over65)%>%
+  summarise(avgwage = mean(WAGP), medwg = median(WAGP))
+
+```
+
+```{r}
+library(ggplot2)
+pums %>% select(SERIALNO, AGEP, ST,SEX, WAGP)%>%
+  filter(AGEP > 18, WAGP !=0) %>%
+  mutate(over65  = ifelse(AGEP >65, 1, 0))%>%
+  group_by(ST, over65, SEX)%>%
+  summarise(avgwage = mean(WAGP),
+            medwg = median(WAGP),
+            samp = n())
+```
+
+```{r}
+pums %>% select(SERIALNO, AGEP, ST,SEX, WAGP)%>%
+  filter(AGEP > 18, WAGP !=0) %>%
+  mutate(over65  = ifelse(AGEP >65, 1, 0))%>%
+  group_by(ST, over65, SEX)%>%
+  summarise(avgwage = mean(WAGP),
+            medwg = median(WAGP),
+            samp = n()) %>%
+  ggplot()+
+  aes(x = ST, y = avgwage, fill=factor(ST))+
+  geom_bar(stat="identity")+
+  facet_wrap(~SEX)
+```
+
+\`\`\`
