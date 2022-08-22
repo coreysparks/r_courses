@@ -151,7 +151,8 @@ prb$Africa <- ifelse( prb$continent == "AFRICA",
                       no = "Not Africa")
 
 ggplot(data= prb,mapping=aes(x = imr))+
-  geom_histogram(aes( fill = Africa))+
+  geom_histogram(aes( fill = Africa))
+
   facet_wrap( ~ Africa)+
   ggtitle(label = "Distribution of the Infant Mortality Rate, 2018",
           subtitle = "African and Non-Africa Countries")+
@@ -181,7 +182,8 @@ Another visualization method is the stem and leaf plot, or box and whisker plot.
 
 ```{r, fig.height=8, fig.width=10}
 prb%>%
-  ggplot( mapping = aes(x = continent, y = tfr))+
+  ggplot( )+
+  aes(x = continent, y = tfr)+
   geom_boxplot()+
   ggtitle(label = "Distribution of the Total Fertility Rate by Continent",
           subtitle = "2018 Estimates")
@@ -205,8 +207,8 @@ You can also color the boxes by a variable, Here, I will make a new variable tha
 ```{r, fig.height=8, fig.width=10}
 
 prb%>%
-  mutate(newname = paste(continent, region, sep = "-"))%>%
-  ggplot(aes(x = newname,
+  #mutate(newname = paste(continent, region, sep = "-"))%>%
+  ggplot(aes(x = region,
              y = tfr,
              fill = continent))+
   geom_boxplot()+
@@ -282,7 +284,7 @@ ggplot(mapping= aes(x = tfr,
   geom_smooth(method = "lm",
               se = FALSE,
               color = "black")+
-  facet_wrap( ~ continent)+
+  facet_wrap( ~ continent, scales = "free")+
   ggtitle(label = "Relationship between Total Fertility and Infant Mortality",
           subtitle = "2018 Estimates")+
   xlab(label = "TFR")+
@@ -349,8 +351,8 @@ prb %>%
   summarise(n = n(),
             across(.cols = c(e0male, e0female, gnigdp, imr),
                    .fns = mean,
-                   na.rm = TRUE))%>%
-  ungroup()
+                   na.rm = TRUE))
+
   
 
 ```
@@ -385,9 +387,9 @@ prb %>%
 The `select()` verb allows you to keep only certain columns in a dataframe:
 
 ```{r}
-prb %>%
- select(country, continent, e0male, e0female)%>%
-  head()
+sub_prb <- prb %>%
+  filter(continent == "AFRICA")%>%
+ select(country, continent, e0male, e0female)
 ```
 
 The `arrange()` verb allows you to sort based on one or more columns:
@@ -419,7 +421,7 @@ Counting is a demographer's best friend, the `tally()` function does this very w
 
 ```{r}
 prb %>%
-  group_by(continent)%>%
+  group_by(continent, region)%>%
   tally()
 
 ```
