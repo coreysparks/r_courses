@@ -335,6 +335,12 @@ con <-dbConnect(SQLite(),
                 dbname = "C:/Users/ozd504/OneDrive - University of Texas at San Antonio/PUMS_data")
 
 pums <- tbl(con, "pums_tx_ca")
+pums_hh <- tbl(con, "pums_tx_ca_hh")
+
+pumshh_head <- pums_hh%>%
+  head(n=50)%>%
+  collect()
+  
 ```
 
 ```{r}
