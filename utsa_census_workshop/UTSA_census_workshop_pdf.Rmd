@@ -1,0 +1,619 @@
+---
+title: "Analyzing Census Data Using R"
+author: "Corey S. Sparks, Ph.D."
+date: "October 30, 2018"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    df_print: tibble
+    fig_caption: yes
+    toc: yes
+    includes:
+      in_header: logo.html
+---
+
+
+##Welcome!
+
+##Structure of workshop
+1) About me
+2) Using Rstudio on shamu
+3) Types of census data
+4) The Census API
+4) Using `tidycensus` and `censusapi` to get data on places
+5) Using the `ipumsr` package to get data on people
+
+##About me
+I am an associate professor in the [UTSA Department of Demography](http://copp.utsa.edu/demography/) and have been at UTSA since 2006. 
+
+Research interests include data science, Bayesian methods, education demography and health disparities.
+ \newpage
+
+##Using Rstudio on shamu
+[Request Shamu account](http://www.utsa.edu/oit/AboutUs/RCSG/HPC.html)
+
+I would recommend [MobaXterm](https://mobaxterm.mobatek.net/) for accessing Shamu.
+
+Shamu [FAQ](http://hpcsupport.utsa.edu/foswiki/bin/view/Main/WebHome), which is **very** helpful.
+
+With your shamu access account, you log into Shamu. When you first login, you're on the login node. This is not where you want to run Rstudio. However, if you want to install packages in Rstudio on your Shamu account, this is the best place to do this, since you have access to all of the build tools and compilers. 
+
+\includegraphics{C:/Users/ozd504/Google Drive/talks/login.PNG}
+
+###Get a compute node
+At the login node, type `qlogin` and you will be on a computation node. 
+
+\includegraphics{C:/Users/ozd504//Google Drive/talks/qlogin.PNG}
+
+###Load modules
+You need to first load the R 3.5.1 module
+
+\includegraphics{C:/Users/ozd504//Google Drive/talks/loadr.PNG}
+
+then the Rstudio 1.1.383
+
+\includegraphics{C:/Users/ozd504//Google Drive/talks/loadrstudio.PNG}
+
+then you run Rstudio!
+
+\includegraphics{C:/Users/ozd504//Google Drive/talks/rstudio.PNG}
+
+And you see your old friend:
+
+\includegraphics{C:/Users/ozd504/Google Drive/talks/rstudiowindow.PNG}
+
+
+##Types of Census Data 
+
+Decennial Census
+
+American Community Survey
+
+County Business Patterns
+
+Population Estimates Program - SAIPE and SAHIE
+\newpage
+
+###Decennial Census Summary File 1 
+The Census Summary File 1(SF 1) contains the data compiled from the questions asked of all people and about every housing unit. 
+
+Population items include sex, age, race, Hispanic or Latino origin, household relationship, household type, household size, family type, family size, and group quarters. Housing items include occupancy status, vacancy status, and tenure (whether a housing unit is owner-occupied or renter-occupied). 
+
+SF 1 includes population and housing characteristics for the total population, population totals for an extensive list of race (American Indian and Alaska Native tribes, Asian, and Native Hawaiian and Other Pacific Islander) and Hispanic or Latino groups, and population and housing characteristics for a limited list of race and Hispanic or Latino groups.  
+
+The decennial Census summary file 1 **_does not_** contain information on education, socioeconomic conditions or other detailed characteristics of the population. 
+
+Up until 2010, the Census bureau surveyed 1 out of every 6 households to measure these characteristics, which was referred to as the Census "long form", which was tabulated into a product called the Summary File 3. The year 2000 was the last year this survey was conducted, and beginning in 2005, the American Community Survey replaced the "long form" as the tool to measure socioeconomic characteristics of the population. (US Census Bureau, 2010)
+
+###American Community Survey Summary File
+The American Community Survey (ACS) is part of the U.S. Census Bureau's Survey
+Program and is designed to provide current demographic, social, economic, and housing
+estimates throughout the decade. 
+
+The ACS provides information on more than 40 topics, including educational attainment, language spoken at home, ability to speak English, the foreign born, marital status, migration, and many more. Each year the survey randomly samples around 3.5 million addresses and produces statistics that cover 1-year and 5-year periods for geographic areas in the United States and Puerto Rico, ranging from neighborhoods to congressional districts to the entire nation. 
+
+The **ACS 1-year** estimates are published for areas that have populations of 65,000 or more. 
+
+The **ACS 5-year** estimates are published for all geographic areas, including Census tracts, block groups, American Indian areas, core-based statistical areas, combined statistical areas, Congressional districts, and state legislative districts. 
+
+The American Community Survey Summary File (ACSSF) is a unique data product that includes all the estimates and margins of error from the detailed tables and geographies that are published for the ACS. Data contained in the ACS Summary File cover demographic, social, economic, and housing subject areas. 
+
+These data represent totals of population counts, along with the measurement errors in those counts for places, not for individuals, which is the subject of the ACS Public Use Microdata.
+ 
+###American Community Survey Public Use Microdata
+The Public Use Microdata Sample **_(PUMS)_** contains a sample of actual responses to the American Community Survey (ACS). The PUMS dataset includes variables for nearly every question on the survey, as well as many new variables that were derived after the fact from multiple survey responses (such as poverty status). 
+
+Each record in the file represents a **_single person, or--in the household-level dataset--a single housing unit_**. In the person-level file, individuals are organized into households, making possible the study of people within the contexts of their families and other household members. 
+
+PUMS files for an individual year, such as 2015, contain data on approximately one percent of the United States population. PUMS files covering a five-year period, such as 2011-2015, contain data on approximately five percent of the United States population. 
+
+The PUMS files are much more flexible than the aggregate data produced in the ACS summary files, though the PUMS also tend to be more complicated to use. Working with PUMS data generally involves downloading large datasets onto a local computer and analyzing the data using statistical software such as R, SPSS, Stata, or SAS. 
+
+Since all ACS responses are strictly confidential, many variables in the PUMS files have been modified in order to protect the confidentiality of survey respondents. For instance, particularly high incomes are "top-coded," uncommon birthplace or ancestry responses are grouped into broader categories, and the PUMS files provide a very limited set of geographic variables, including state, metropolitan area and public use microdata area, or PUMA. 
+
+While PUMS files contain cases from nearly every town and county in the country, towns and counties (and other low-level geography) are not identified by any variables in the PUMS datasets. The most detailed unit of geography contained in the PUMS files is the **_Public Use Microdata Area (PUMA)_**. PUMAs are special non-overlapping areas that partition each state into contiguous geographic units containing no fewer than 100,000 people each. The 2011-2015 5-year ACS PUMS files rely on PUMA boundaries that were drawn by state governments after the 2000 and 2010 Census. 
+
+The PUMS data are most easily accessed from the University of Minnesota's **_Integrated Public Use Microdata Series (IPUMS)_** data archive. This data source processes the data produced by the Census Bureau into more easily comparable and readable data files that are available for all years of the decennial Census and the ACS. (Ruggles et al., 2015)
+
+\newpage
+
+#Using the tidycensus package
+They [tidycensus](https://github.com/walkerke/tidycensus) is part of the `tidyverse`, and was written and maintained by [Dr. Kyle Walker](http://personal.tcu.edu/kylewalker/) at TCU.
+
+It allows you to dynamically download and map data from the decennial Census and ACS for any level of [Census geography](https://www.census.gov/geo/reference/webatlas/), except blocks!
+
+If you want data on places, this is the easiest way to get it.
+
+###Census table names
+The Census publishes data for places in **_summary tables_**. These follow a pattern for their names, you can find a description of this [here](https://www.census.gov/programs-surveys/acs/guidance/which-data-tool/table-ids-explained.html). The biggest problem with finding data from the Census is knowing the table name you want. 
+
+You can find table names for the ACS [here](https://www.census.gov/data/developers/data-sets/acs-5year.html)
+
+
+###What kind of table do you want?
+There are several types of tables the Census publishes. 
+
+The [Detailed tables](https://api.census.gov/data/2016/acs/acs5/variables.html) are very detailed summaries of the data for places, in the 2015 data there were more than 64,000 tables published. These can be a little overwhelming to use, but we'll see an example below
+
+[Subject tables](https://api.census.gov/data/2016/acs/acs5/subject.html) take some of the detailed tables and compute summaries of them around certain demographic, social or economic subjects. Basically this is one way to get more data related to a subject without having to know all of the individual detail tables you need. 
+ 
+[Data Profile tables](https://api.census.gov/data/2016/acs/acs5/profile.html) contain broad social, economic, housing, and demographic information. The data are presented as both counts and percentages. There are over 2,400 variables in this dataset. These are very useful summaries and what I personally rely on for most of my data extracts. 
+
+###Get a Census developer API Key
+Obtain one at http://api.census.gov/data/key_signup.html
+
+###Save your API key to your working directory
+I recommend you install your API key in your Rprofile, just so you don't have to keep pasting it into your code. To do this, type `tidycensus::census_api_key(key =  "yourkeyhere", install = T)` one time to install your key for use in `tidycensus`.
+
+###Let's do some stuff!
+
+```{r, eval=FALSE, include=FALSE}
+#install.packages("censusapi")
+#don't use my key, put yours in here
+#use install=T one time only
+#library(censusapi)
+census_api_key(key =  "yourkeyhere")
+```
+
+\newpage
+
+
+###Look at available ACS variables
+As I mentioned above, finding the right table can be a challenge, especially for new data users. `tidycensus` has the `load_variables()` function that will load all of the available tables for a specific table type. 
+
+ For example, if we are interested in variables from the ACS [data profile](https://www.census.gov/acs/www/data/data-tables-and-tools/data-profiles/2016/) tables, we can load all available variables then use R to search for what we need.
+ 
+One of the best ways to search is to use [`grep()`](https://en.wikipedia.org/wiki/Grep), which is a tool for searching for patterns within text, and is **_SUPER USEFUL!_**
+
+
+```{r, message=FALSE}
+library(tidycensus)
+library(dplyr)
+library(sf)
+library(ggplot2)
+library(censusapi)
+```
+
+```{r}
+?load_variables
+v15_Profile <- load_variables(year = 2015 , dataset = "acs5/profile",
+                              cache = TRUE) #demographic profile tables
+
+#Open the data for examination
+View(v15_Profile)
+
+#Search for variables by keywords in the label
+v15_Profile[grep(x = v15_Profile$label, "Median household"), c("name", "label")]
+```
+
+Also, if you want the names and info for the subject tables, change the `dataset = ` argument to `acs5/subject`
+
+```{r}
+v15_subject <- load_variables(year = 2015 ,dataset= "acs5/subject",
+                              cache = TRUE) #demographic subject tables
+
+```
+
+Finally, to view variables in the detailed tables, change the `dataset = ` argument to `acs5`
+
+```{r}
+v15_detailed <- load_variables(year = 2015 , dataset = "acs5",
+                               cache = TRUE) #demographic detail tables
+```
+
+If you are interested in variables from the decennial census, change the `dataset = ` argument to `sf1` or  `sf3` depending on which decennial summary file you want. 
+
+
+\newpage
+##Extract from ACS summary file data profile variables from 2015 for Bexar County, TX Census Tracts
+Here is a real example
+
+The data profile tables are very useful because they contain lots of pre-calculated variables.
+
+Here is a query where we extract the median household income in census tracts from the 2015 ACS for Bexar County, Texas. We can also get the spatial data by requesting `geometry=TRUE`.  Using `output="wide"` will put each variable in a column of the data set, with each row being a census tract. 
+
+```{r, results='hide'}
+sa_acs<-get_acs(geography = "tract", state="TX", county = c("Bexar"),
+                year = 2015,
+                variables=c( "DP03_0062E") ,
+                geometry = T, output = "wide")
+
+#create a county FIPS code - 5 digit
+sa_acs$county<-substr(sa_acs$GEOID, 1, 5)
+
+#rename variables and filter missing cases
+sa_acs2<-sa_acs%>%
+  mutate( medhhinc=DP03_0062E) %>%
+  na.omit()
+
+#take a peek at the first few lines of data
+head(sa_acs2)
+```
+
+We can immediately map these data as well, because `tidycensus` can get you the geography corresponding to your data. 
+
+Here, I use the `dplyr` pipe "`%>%`" to feed the data into `ggplot` and map the median household income for each census tract in Bexar County in 2015, using a quantile break system. 
+
+```{r}
+
+sa_acs2 %>%
+  mutate(med_income=cut(medhhinc,
+                        breaks = quantile(medhhinc, na.rm=T, p=seq(0,1,length.out = 9)),include.lowest = T))%>%
+  ggplot( aes(fill = med_income, color = med_income)) + 
+  geom_sf() + 
+  ggtitle("Median Household Income", 
+          subtitle = "Bexar County Texas, 2015 - Quantile Breaks")+
+  scale_fill_brewer(palette = "Blues") + 
+  scale_color_brewer(palette = "Blues")
+
+
+```
+
+\newpage
+###ACS margins of error
+The ACS is a survey and in areas where the sample size is small, the errors in estimates can be quite large. As a way to let users know how uncertain the estimates are for any given area, the Census publishes **_Margins of Error_** for each estimate published. In states, counties and cities, these margins of error are usually small since the overall sample size in those larger areas is large enough to provide more certainty about the population estimates. 
+
+In areas that are smaller, tracts and especially block groups, the margins of error can be be very large relative to the estimates. One way to visualize this is to map the **_coefficient of variation_** in the estimates, which is: $CV= \frac{\sigma}{\theta}$, where $\theta$ is the estimate of interest. 
+
+####mapping of errors in variables
+Here I generate a quantile break for the coefficient of variation in census tract income estimates 
+```{r, message=FALSE}
+
+sa_acs2 %>%
+  mutate(cv =(DP03_0062M/1.645)/DP03_0062E)%>%
+  mutate(cv_map=cut(cv,
+                    breaks = quantile(cv, na.rm=T, p=seq(0,1,length.out = 9)),include.lowest = T))%>%
+  ggplot( aes(fill =cv_map, color = cv_map)) + 
+  geom_sf() + 
+  ggtitle("Coefficient of Variation in Median Household Income", 
+          subtitle = "Bexar County Texas, 2015 - Quantile Breaks")+
+  scale_fill_viridis_d(option="B")+ 
+  scale_color_viridis_d(option="B")
+```
+
+
+\newpage
+###Metro area incomes
+Here is another example where we get data for metro/micropolitan areas in the US. I use a detailed table request this time. 
+
+```{r, results='hide'}
+
+v15_acs<- load_variables(year = 2015 , dataset = "acs5",
+                         cache = TRUE) #regular ACS profile tables
+
+View(v15_acs)
+
+#Search for variables by keywords in the label 
+v15_acs[grep(x = v15_Profile$label, "Median household"), c("name", "label")]
+
+metro<-get_acs(geography = "metropolitan statistical area/micropolitan statistical area",
+               year = 2015,
+                variables=c( "B19013_001E") ,
+                geometry = F, output = "wide")
+
+```
+
+For this geography, `tidycensus` won't download the geometrys automatically (maybe in a later release), so we use Kyle Walker's other library `tigris` for downloading Census geographic data. 
+
+```{r, results='hide'}
+library(tigris)
+options(tigris_class = "sf") #for use with ggplot2
+
+met_geo<-core_based_statistical_areas(cb=T, year = 2015)
+
+#Filter out territories
+sts<-states(cb = T, year = 2015)%>%
+  filter(!STATEFP%in%c( "60", "66", "69", "72", "78"))
+
+#merge geographic data to table data
+met_join<-geo_join(met_geo, metro, by="GEOID")
+
+#rename variables and filter missing cases
+met_join<-met_join%>%
+  mutate( medhhinc=B19013_001E) %>%
+  mutate(med_income=cut(medhhinc,
+                        breaks = quantile(medhhinc, na.rm=T, p=seq(0,1,length.out = 9)),include.lowest = T))
+
+##Create our map
+
+map1<-met_join%>%
+  st_transform(crs = 102740)%>%
+  ggplot( aes(fill = med_income, color = med_income)) + 
+  geom_sf() + 
+  ggtitle("Median Household Income", 
+          subtitle = "MSAs, 2015 - Quantile Breaks")+
+  scale_fill_brewer(palette = "Blues") + 
+  scale_color_brewer(palette = "Blues")+
+  geom_sf(data=sts, fill=NA, color="black")
+    
+map1
+
+```
+
+If you would like to zoom in, we can use the `mapview` library. This is very useful for teaching and for presentations.
+
+```{r}
+library(mapview)
+
+pal <- colorRampPalette(viridisLite::viridis(n=6)) #set colors
+
+mapview(met_join, zcol="med_income", col.regions=pal, legend=T,map.types="OpenStreetMap", layer.name="Median Income")
+
+```
+
+\newpage
+#Using the censusapi package
+The Census has lots of APIs that are available. `tidycensus` is great for accessing the ACS and decennial census, but if you want data from another API, the more general `censusapi` package gives you access to all of the Census APIs
+
+First, since this is a different package, you'll need to add your API key to your `.Renviron` data. You can do this by following the example below:
+
+```{r, eval=F}
+
+Sys.setenv(CENSUS_KEY="yourkeyhere")
+# Reload .Renviron
+readRenviron("~/.Renviron")
+# Check to see that the expected key is output in your R console
+Sys.getenv("CENSUS_KEY")
+```
+
+Now we load all of the available APIs into an R object so we can look what's available.
+
+```{r}
+apis <- listCensusApis()
+View(apis)
+
+```
+
+So, we can see there are a lot. For a concrete example, let's examine the effect of the [Patient Protection and Affordable Care Act](https://en.wikipedia.org/wiki/Patient_Protection_and_Affordable_Care_Act) on uninsurance rates in US states. 
+
+For this, we will use the [Small Area Health Insurance Estimates](https://www.census.gov/programs-surveys/sahie.html) program. This program combines data from the ACS and data from individual states on other health insurance programs to produce model-based estimates of the overall rates of insurance and uninsurance for states and counties. 
+
+Census maintains a nice [website](https://www.census.gov/data-tools/demo/sahie/#/) for browsing the data and downloading images of data visualizations, but anything custom can be a process. In R this is no problem. 
+
+Below, we first look up the variables available in the SAHIE data, then we do an extract and create a dataset for Texas and California for unsinsurance rates by race/ethnicity. Next, we create a line plot of the uninsurance time series for each state and demographic group. 
+
+```{r}
+#timeseries/poverty/saipe
+sahevars<-listCensusMetadata(name = "timeseries/healthins/sahie", type = "v")
+head(sahevars)
+#SAEPOVRTALL_PT
+
+```
+
+###Get the data for states
+```{r}
+ui_rates<-getCensus(name = "timeseries/healthins/sahie",
+          vars = c("STATE", "YEAR","RACECAT", "PCTUI_PT"), 
+          region = "state:*")
+
+
+
+head(ui_rates)
+```
+
+
+###Clean up the data and make a line plot:
+
+```{r}
+ui_rates%>%
+  mutate(yr=as.numeric(YEAR), uninsure_rate=as.numeric(PCTUI_PT))%>%
+  filter(STATE%in%c("06", "48"), RACECAT!="0")%>%
+  select(STATE,  yr,RACECAT, uninsure_rate)%>%
+  mutate(new_race=case_when( .$RACECAT=='1' ~ "NH White", 
+                    .$RACECAT=='2' ~ "NH Black",
+                    .$RACECAT=='3' ~ "Hispanic"))%>%
+  ggplot(aes(x=yr, y=uninsure_rate))+geom_line(aes(color= new_race, linetype=STATE, group=interaction(STATE, new_race)))+ylim(low=0,high=50)+ylab("% Uninsured")+xlab("Year")+ggtitle("% Uninsured in Texas and California by Race/Ethnicty", subtitle = "SAHIE Estimates")
+
+```
+
+\newpage
+Another big Census estimate program focus on poverty and income, and is called the [Small Area Income and Poverty Estimate](https://www.census.gov/programs-surveys/saipe.html), or SAIPE program. Like the SAHIE, the SAIPE creates model based estimates of income and poverty for states, counties and school districts on an annual basis. 
+
+Below, we do an extract from the SAIPE for Texas and California and create a line plot for the under-4 and total poverty rates for each state over time. 
+ 
+```{r}
+saipvars<-listCensusMetadata(name = "timeseries/poverty/saipe", type = "v")
+head(saipvars)
+#SAEPOVRTALL_PT
+ 
+p_rates<-getCensus(name = "timeseries/poverty/saipe",
+          vars = c("STATE", "YEAR", "SAEPOVRTALL_PT", "SAEPOVRT0_4_PT"), 
+          region = "state:*")
+
+p_rates%>%
+  mutate(yr=as.numeric(YEAR), tot_pov_rate=as.numeric(SAEPOVRTALL_PT), child04_poverty=as.numeric(SAEPOVRT0_4_PT))%>%
+  filter(STATE%in%c("06", "48"))%>%
+  select(STATE,  yr, tot_pov_rate, child04_poverty)%>%
+  ggplot(aes(x=yr, y=child04_poverty))+geom_line(aes(color= STATE, group=STATE))+ylim(low=0,high=40)+ylab("% In Poverty")+xlab("Year")+ggtitle("% Children under age 4 Below the Poverty Line in Texas and California ", subtitle = "SAIPE Estimates")
+
+
+p_rates%>%
+  mutate(yr=as.numeric(YEAR), tot_pov_rate=as.numeric(SAEPOVRTALL_PT), child04_poverty=as.numeric(SAEPOVRT0_4_PT))%>%
+  filter(STATE%in%c("06", "48"))%>%
+  select(STATE,  yr, tot_pov_rate, child04_poverty)%>%
+  ggplot(aes(x=yr, y=tot_pov_rate))+geom_line(aes(color= STATE, group=STATE))+ylim(low=0,high=40)+ylab("% In Poverty")+xlab("Year")+ggtitle("% Below the Poverty Line in Texas and California ", subtitle = "SAIPE Estimates")
+
+```
+
+\newpage
+#Using the ipumsr package
+The previous examples focused on getting data for places from several Census program. This section focuses on getting data on *individuals*. 
+
+Each year, when the ACS is done, or on a decennial year when the Census is carried out, each individual survey is published in a **_Public Use Microdata_** file. For example, in the 2011 - 2016 ACS 5 year data release, there were 15,681,972 persons in the data, while the 1 year file contained 3,156,487 persons. 
+
+*So, you can get a lot of data!*
+
+To get access to the microdata, you can get the files [directly from Census](https://www.census.gov/programs-surveys/acs/data/pums.html), or use the data that has been cleaned and homogenized by the [IPUMS project](https://www.ipums.org/) at the [University of Minnesota Population Center](https://pop.umn.edu/). 
+
+
+In addition to the ACS, you can get decennial Census data going back to the 1790 Census, international census data for nearly 100 countries, [Current Population Survey](https://www.census.gov/programs-surveys/cps.html) data, [Demographic and Health Survey](https://dhsprogram.com/) data, the [National Historic GIS](https://www.nhgis.org/), and more. 
+
+Basically, you can spend your entire career working with the data at the IPUMS project. 
+
+The benefit to using IPUMS is that you can download multiple years of data at a single time, with as many or as few variables as you want, for places you want. Moreover, you can get the data in multiple formats (SAS, Stata, SPSS, and R), with a fully formatted codebook for everything. 
+
+The staff at IPUMS have created a R package to read in IPUMS data (and they're working on an API too!!) called `ipumsr`. It will read data from any IPUMS project. 
+
+Here is a link to an [introduction to the package](https://cran.r-project.org/web/packages/ipumsr/vignettes/ipums.html) written by IPUMS staff. 
+
+Here is a [CPS example](https://cran.r-project.org/web/packages/ipumsr/vignettes/ipums-cps.html) done by IPUMS staff and a [NHGIS example](https://cran.r-project.org/web/packages/ipumsr/vignettes/ipums-nhgis.html).
+
+
+###Getting your own IPUMS data
+First create an account with the IPUMS project, let them know who you are and what you will be using their data for, and most importantly that you will not be using it for EVIL!
+
+Browse the IPUMS data source of your choice <see on screen example>
+
+Submit your data extract request
+
+Wait....
+
+Download the data file and the XML file, and save them somewhere  you will remember. To use the `ipumsr` package, download the DDI codebook and the .DAT unformatted data file. Otherwise, we could download the stata or SPSS format files and read them in using the `haven` library, easy peasy. 
+
+\includegraphics{C:/Users/ozd504/Google Drive/talks/ipums1.PNG}
+
+\includegraphics{C:/Users/ozd504/Google Drive/talks/ipums2.PNG}
+
+Then use `ipumsr`!
+
+
+```{r, results='hide'}
+if (!require("ipumsr")) stop("Reading IPUMS data into R requires the ipumsr package. It can be installed using the following command: install.packages('ipumsr')")
+
+ddi <- read_ipums_ddi("~/Google Drive/talks/usa_00071.xml")
+data <- read_ipums_micro(ddi)
+
+
+names(data)
+```
+
+So, now we have the 2016 ACS 1 year data read into memory in R, and we could do anything we want now. 
+
+I use these data for lots of reasons, but I'll show a few general things that you need to do in order to use them. 
+
+###Recoding IPUMS variables
+**_Survey data are a mess!_** They have missing data codes, top codes, numerical values when you want categorical values, and vice versa. Generally, you have to recode variables in order to have them be useful. 
+
+Here, I recode several things into standards used in social demographic research. 
+
+```{r}
+names(data)<-tolower(names(data))
+data<-haven::zap_labels(data)
+library(car)
+#survey weights
+data$pwt <- data$perwt/100
+data$hwt <- data$hhwt/100
+
+#race/ethnicity 
+data$hisp <- Recode(data$hispan, recodes = "9=NA; 1:4='Hispanic'; 0='NonHispanic'")
+data$race_rec <- Recode(data$race, recodes = "1='White'; 2='Black'; 3='Other'; 4:6='Asian'; 7:9='Other'")
+data$race_eth <- interaction(data$hisp, data$race_rec, sep = "_")
+data$race_eth  <- as.factor(ifelse(substr(as.character(data$race_eth),1,8) == "Hispanic", "Hispanic", as.character(data$race_eth)))
+data$race_eth <- relevel(data$race_eth, ref = "NonHispanic_White")
+
+#Gender
+data$male <- ifelse(data$sex == 1,1,0)
+
+#foreign born status
+data$usborn <- Recode(data$bpl, recodes = "1:120=1; 121:900=0; else=NA")
+
+#educational attainment
+data$educ_level<- Recode(data$educd, recodes = "2:61='0LT_HS';62:64='1_HSD/GED';65:80='2_somecoll';90:100='2_somecoll'; 81:83='3_AssocDegree';101='4_bachelordegree'; 110:116='4_BAplus_GradDegree'; else=NA")
+
+
+#Employment status
+data$employed <- Recode(data$empstatd, recodes = "10:12=1; 20:22=0; else=NA")
+
+data$inc_wage<- Recode(data$incwage, recodes = "0=NA")
+
+
+```
+
+
+So now we have lots of things recoded, we can do some descriptive analysis. For example, let's look at income by gender in Texas cities
+```{r}
+data<-data%>%
+  filter(labforce==2,statefip=="48", age>18) %>%
+  mutate(newwage= ifelse(incwage%in%c(999998,999999), NA, incwage),
+         sexrecode=ifelse(sex==1, "male", "female"),
+         cityrec = case_when(.$met2013==11100~"Amarillo", 
+                            .$met2013 == 12420~"Austin",
+                            .$met2013==15180 ~"Brownsville", 
+                            .$met2013== 17780 ~ "College Station",
+                            .$met2013== 18580 ~ "Corpus Christi",
+                            .$met2013== 21340 ~ "El Paso",
+                            .$met2013== 26420 ~ "Houston",
+                            .$met2013== 29700~ "Laredo",
+                            .$met2013== 32580~ "McAllen",
+                            .$met2013== 47380~ "Waco", 
+                            .$met2013== 41700 ~ "San Antonio",
+                            .$met2013== 19100 ~ "Dallas"))
+
+data%>%
+  group_by(sexrecode, cityrec)%>%
+  summarise(med_income=median(newwage, na.rm=T), n=n())%>%
+  ggplot(aes(cityrec, med_income))+geom_bar(aes(fill=sexrecode),position="dodge", stat="identity")+ylab("Median Income")+xlab("Metro Area")+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+
+We can do a regression analysis of income differences by various factors. 
+
+Before we do this, since the ACS is a complex survey, we cannot simply use regular methods for regression analysis, we must cluster standard errors by sampling cluster and strata and factor in person-weights in the analysis. 
+
+This means we must define a formal survey design object. 
+
+I restrict the analysis to only Texas and control for various demographic and socioeconomic factors, then compare across cities. 
+
+
+
+```{r}
+data<-data%>%
+  filter(employed==1)%>%
+  na.omit()
+
+library(survey)
+library(splines)
+design<-svydesign(ids=~cluster, strata=~strata, weights=~pwt, data=data)
+
+#Base city difference model
+inc_mod_1<- svyglm(log(inc_wage)~cityrec,
+                 design = design)
+
+#city difference after controlling for demographic factors
+inc_mod<- svyglm(log(inc_wage)~male+usborn+educ_level+bs(age)+cityrec,
+                 design = design)
+
+summary(inc_mod_1)
+summary(inc_mod)
+```  
+
+
+\newpage
+
+#Other Resources
+###Miktek
+To build pdf's you'll need a version of Latex installed, [Miktek](https://miktex.org/download) is a good option
+
+###R-markdown cheat sheets
+Rstudio keeps a variety of [cheat sheets](https://www.rstudio.com/resources/cheatsheets/) for various topics, they can be helpful in a pinch
+
+
+###UCLA Statistical computing help
+[This page](http://www.ats.ucla.edu/stat/) has lots of examples of using R for various types of analysis.
+
+###Other examples
+On [my Rpubs page](http://rpubs.com/corey_sparks) I have lots of examples of various types of analysis using R and you can get the data for these on [my Github data  page](https://github.com/coreysparks/data)
+
+##Thanks!
+Let me know how I can help!
+
+[@Coreysparks1](https://twitter.com/CoreySparks1)
+
+[Github](https://github.com/coreysparks)
+
+[Rpubs](http://rpubs.com/corey_sparks)
+
+[UTSA Demography](http://copp.utsa.edu/demography/)
+
