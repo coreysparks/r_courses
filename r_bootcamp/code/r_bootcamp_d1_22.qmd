@@ -4,6 +4,7 @@ author: "Corey S. Sparks, Ph.D."
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 format: 
     html:
+      self-contained: true
       toc: true
       code-fold: false
       code-tools: true
@@ -156,7 +157,7 @@ You can also read data directly from the internet, if it exists as a link-able f
 
 ```{r}
 #| message: false
-prb = readr::read_csv(url("https://raw.githubusercontent.com/coreysparks/r_courses/master/2018_WPDS_Data_Table_FINAL.csv"))
+prb = readr::read_csv(url("https://media.githubusercontent.com/media/coreysparks/r_courses/master/data/2018_WPDS_Data_Table_FINAL.csv"))
 ```
 
 We can view the first few lines of the data using the `head()` function:

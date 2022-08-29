@@ -4,7 +4,12 @@ author: "Corey S. Sparks, Ph.D."
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 format:
   html:
-    toc: true
+      self-contained: true
+      toc: true
+      code-fold: false
+      code-tools: true
+      code-link: true
+      df-print: paged
 editor: visual
 bibliography: book.bib
 ---
@@ -65,7 +70,7 @@ We can read this in using the `read_csv()` function in the `readr` package.
 
 ```{r, message = FALSE }
 library(readr, quietly = TRUE)
-prb = read_csv(file = "https://raw.githubusercontent.com/coreysparks/r_courses/master/2018_WPDS_Data_Table_FINAL.csv")
+prb = read_csv(file = "https://media.githubusercontent.com/media/coreysparks/r_courses/master/data/2018_WPDS_Data_Table_FINAL.csv")
 
 names(prb) = tolower(names(prb))
 ```
@@ -151,8 +156,7 @@ prb$Africa <- ifelse( prb$continent == "AFRICA",
                       no = "Not Africa")
 
 ggplot(data= prb,mapping=aes(x = imr))+
-  geom_histogram(aes( fill = Africa))
-
+  geom_histogram(aes( fill = Africa))+
   facet_wrap( ~ Africa)+
   ggtitle(label = "Distribution of the Infant Mortality Rate, 2018",
           subtitle = "African and Non-Africa Countries")+
@@ -452,7 +456,7 @@ or to include output tables directly into a document:
 
 ```{r, echo = FALSE, results='hide', message = FALSE }
 library(readr, quietly = TRUE)
-prb = read_csv(file = "https://raw.githubusercontent.com/coreysparks/r_courses/master/2018_WPDS_Data_Table_FINAL.csv")
+prb = read_csv(file = "https://media.githubusercontent.com/media/coreysparks/r_courses/master/data/2018_WPDS_Data_Table_FINAL.csv")
 names(prb) = tolower(names(prb))
 ```
 

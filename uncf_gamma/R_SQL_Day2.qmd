@@ -1,7 +1,15 @@
 ---
 title: "R and SQL"
 author: "Corey Sparks"
-format: html
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+format:
+  html:
+    self-contained: true
+    toc: true
+    code-fold: false
+    code-tools: true
+    code-link: true
+    df-print: paged
 editor: visual
 ---
 
@@ -26,7 +34,7 @@ You can find more information about the ACS datasets [here](https://www.census.g
 
 Go to this site and download the database: <https://drive.google.com/file/d/14Kwex8x3IPEGOLIP_lS3CXeU5iDB1cK1/view?usp=sharing>
 
-![](images/paste-FCAC2628.png)
+![](images/paste-86593900.png)
 
 and save it to your local computer. I recommend putting the file *PUMS_data* in the User folder on your computer.
 
@@ -312,10 +320,6 @@ dbExecute(con,
   DROP COLUMN over65;')
 ```
 
-```{r}
-dbDisconnect(con)
-```
-
 # Homework
 
 1\) In three sentences or less, describe the steps you would take to connect to a datasource/server in R
@@ -332,6 +336,8 @@ In a basic sense, we are interested in merging tables that contain different kin
 
 ![](images/paste-1805E248.png)
 
+In the ADRF this will be data from *usually* the Survey of Earned Doctorates, the Survey of Doctoral Recipients, the UMETRICS and possibly the IPEDS data.
+
 ## [Different Types of Joins]{style="color:green"}
 
 There are many ways that we can join tables, and the resulting table will contain different types of records, depending on the join rules we use.
@@ -342,70 +348,74 @@ Joins in SQL
 
 ### Left Joins
 
-When might you use left or right joins? Suppose you want to know which census blocks don't have any jobs. Then, we'd want to make sure that we keep all of the census blocks in the geography crosswalk, even if they aren't present in the workplace area characteristics tables, and add in the workplace area characteristics. This would mean that any blocks with a \`null\` value in the \`C000\` column would be blocks without any jobs.
+A left join is when you want to combine information from one table (the "left" table) and all information from another table (the "right" table) that matches the key field in the left table.
 
-To do this \`JOIN\`, we can use the \`LEFT JOIN\` statement.
+To do this \`JOIN\`, we can use the `LEFT JOIN` statement. If the key field has the same name in both tables, you may get an error about "ambiguous column names", to get around this, you can alias the tables as another name. Below I call the PUMS person table `pums_tx_ca` `x` and the household table `y`.
 
-SELECT w_geocode, tabblk2010, c000, ca01, ca02, ca03, ctyname, cbsaname FROM ca_wac_2015
+In the `LEFT JOIN` statement you use the syntax lefttable.key = righttable.key to merge the two tables together.
 
-LEFT JOIN ca_xwalk
+```{r}
+dbGetQuery(con,
+  'SELECT * FROM pums_tx_ca
+  LIMIT 10;'
+)
 
-ON ca_wac_2015.w_geocode = ca_xwalk.tabblk2010
+dbGetQuery(con,
+  'SELECT * FROM pums_tx_ca_hh
+  LIMIT 10;'
+)
 
-LIMIT 1000;
+dbGetQuery(con,
+  'SELECT * FROM pums_tx_ca x
+  LEFT JOIN pums_tx_ca_hh y 
+  ON x.SERIALNO = y.SERIALNO
+  LIMIT 100
+  ;')
+```
 
-This is very similar to what we've done already with \`JOIN\`, except we add the word \`LEFT\` to it. When doing \`LEFT\` and \`RIGHT JOIN\`s, make sure to keep track of which one is first. Here, \`lodes.ca_wac\` comes first, so that's the table on the "left" side.
+### Right Joins
 
-\### Outer Join
+These are similar to the left join, but you instead get all matching records that are complete based on the information in the second table instead of the first.
 
-An outer join keeps all unique ids, then puts \`NULL\` if it isn't part of that table. This is similar to a \`LEFT\` or \`RIGHT JOIN\`, except instead of only keeping all IDs from one table, it keeps them from both tables. Consider our example with Table A and Table B. We want to join them such that we get a table that looks like:
+### Outer Join
 
-| blockid | C000   | CA01   |
-|---------|--------|--------|
-| 1       | 5      | *null* |
-| 2       | 10     | 2      |
-| 3       | 2      | *null* |
-| 4       | 6      | *null* |
-| 5       | 22     | 4      |
-| 6       | 9      | 1      |
-| 7       | *null* | 2      |
-| 8       | *null* | 0      |
-
-In a way, it's like combining the \`LEFT\` and \`RIGHT JOIN\`s so that we have all information from both tables.
-
-### Applying Outer Joins
-
-Suppose we want to know which census blocks that contain either the residences of people with jobs in the state or the census blocks of the location of the workplace, but not both. We use \`OUTER JOIN\` for that. Unfortunately, we aren't able to show the outer join here, as it isn't supported by SQLite. We've provided the code here, but it won't run, so just make sure to keep it in mind for the future.
-
-SELECT \* FROM ca_wac_2015 OUTER JOIN ca_rac_2015 ON ca_wac_2015.w_geocode = ca_rac_2015.h_geocode LIMIT 1000;
+An outer join keeps all unique ids, then puts \`NULL\` if it isn't part of that table. This is similar to a \`LEFT\` or \`RIGHT JOIN\`, except instead of only keeping all IDs from one table, it keeps them from both tables. Consider our example with Table A and Table B.In a way, it's like combining the \`LEFT\` and \`RIGHT JOIN\`s so that we have all information from both tables.
 
 # Using `dbplyr` to do queries
+
+R has a very handy way of using our familiar `dplyr` syntax to do SQL queries through the `dbplyr` package. **You will need to install it before you can use it!**
+
+The fundamentals are similar to the syntax above, where we first connect to the database, then we identify the tables in the database we want to work with using the `tbl()` function. The code below connects to the database, then selects the person and household tables:
 
 ```{r}
 library(dbplyr)
 
 con <-dbConnect(SQLite(),
-                dbname = "C:/Users/ozd504/OneDrive - University of Texas at San Antonio/PUMS_data")
+                dbname = "C:/Users/ozd504/OneDrive - University of Texas at San Antonio/excelencia_course/PUMS_data")
 
 pums <- tbl(con, "pums_tx_ca")
 pums_hh <- tbl(con, "pums_tx_ca_hh")
-
-pumshh_head <- pums_hh%>%
-  head(n=50)%>%
-  collect()
-
-pums %>% 
-  select(SERIALNO, AGEP, WAGP)%>%
-  left_join(pums_hh)%>%
-  arrange(ST, SERIALNO)%>%
-  head(n=25)
-
-
 ```
+
+We can now use any of the familiar `dplyr` verbs to select, filter and modify our data. Here is an example where I select some variables, create a new variable using `mutate` and print it.
 
 ```{r}
-pums %>% select(SERIALNO, AGEP, ST, WAGP)
+pums %>% 
+  select(SERIALNO, AGEP, WAGP)%>%
+  mutate(over65 = ifelse(AGEP >= 65, "over 65", "under 65"))
+
 ```
+
+What's even better, is that we can add `show_query()` at the bottom to show us the generated SQL syntax:
+
+```{r}
+pums %>% 
+  select(SERIALNO, AGEP, WAGP)%>%
+  mutate(over65 = ifelse(AGEP >= 65, "over 65", "under 65"))%>%
+  show_query()
+```
+
+we can use the `filter()` verb to select cases:
 
 ```{r}
 pums %>% select(SERIALNO, AGEP, ST, WAGP)%>%
@@ -413,12 +423,15 @@ pums %>% select(SERIALNO, AGEP, ST, WAGP)%>%
   head(n =10)
 ```
 
+We can use the `group_by` and `summarise()` verbs to calculate aggregations for groups:
+
 ```{r}
 pums %>% select(SERIALNO, AGEP, ST, WAGP)%>%
   filter(AGEP > 18, WAGP !=0) %>%
   mutate(over65  = ifelse(AGEP >65, 1, 0))%>%
   group_by(ST, over65)%>%
-  summarise(avgwage = mean(WAGP), medwg = median(WAGP))
+  summarise(avgwage = mean(WAGP),
+            medwg = median(WAGP))
 
 
 ```
@@ -437,7 +450,9 @@ pums %>% select(SERIALNO, AGEP, ST, WAGP)%>%
 
 ```
 
-### Use the output of the query in graph
+### Use the output of the query in graph!
+
+Yes, we can even directly pipe the query result into a ggplot figure.
 
 ```{r}
 library(ggplot2)
@@ -459,3 +474,52 @@ pums %>%
   facet_wrap(~gender) +
   scale_y_continuous(labels = scales::label_dollar())
 ```
+
+### Saving your query data
+
+The `collect()` verb will take the result of a query and save it as a R dataframe, so you can do other kinds of analysis. Just be sure to store the result in an object!
+
+```{r}
+summ_query <- pums %>%
+  select(SERIALNO, AGEP, ST,SEX, WAGP)%>%
+  filter(AGEP > 18, WAGP !=0) %>%
+  mutate(over65  = ifelse(AGEP >65, 1, 0),
+         gender = ifelse(SEX ==1 , "Male", "Female"))%>%
+  group_by(ST, over65, gender)%>%
+  summarise(avgwage = mean(WAGP),
+            medwg = median(WAGP),
+            samp = n()) %>%
+  collect()
+
+
+head(summ_query)
+```
+
+### Joins in dbplyr
+
+You can perform all the same types of joins in `dbplyr` as in normal SQL, these verbs are `left_join`, `right_join` and `outer_join`
+
+```{r}
+
+pums %>%
+  mutate(over65 = ifelse(AGEP >= 65, "over 65", "under 65"))%>%
+  select(SERIALNO, AGEP, WAGP, SEX, over65)%>%
+  left_join(pums_hh, by = 'SERIALNO' ) %>%
+  head()%>%
+  show_query()
+
+```
+
+```{r}
+dbDisconnect(con)
+```
+
+# Homework - Day 2
+
+Using the ACS tables from above perform the following
+
+1)  How many households in Texas had values over \$500,000?
+
+2)  Create a table of persons in California with less than a High School degree. How many people are in this table?
+
+3)  Create a merged table with the columns ST_LABEL, AGEP, RAC1P, WAGP, ACCESS and TENURE for persons in California with less than a bachelor's degree.
