@@ -457,7 +457,7 @@ Yes, we can even directly pipe the query result into a ggplot figure.
 
 ```{r}
 library(ggplot2)
-
+library(scales)
 pums %>%
   select(SERIALNO, AGEP, ST,SEX, WAGP)%>%
   filter(AGEP > 18, WAGP !=0) %>%
@@ -473,7 +473,8 @@ pums %>%
       fill=factor(ST))+
   geom_bar(stat="identity")+
   facet_wrap(~gender) +
-  scale_y_continuous(labels = scales::label_dollar())
+  scale_y_continuous(labels = label_dollar(),
+                       breaks = seq(0, 160000, 10000))
 ```
 
 ### Saving your query data
