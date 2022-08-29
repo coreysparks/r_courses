@@ -4335,12 +4335,13 @@ FROM `pums_tx_ca`</code></pre>
 </div>
 <p>We can use the <code>group_by</code> and <code><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarise()</a></code> verbs to calculate aggregations for groups:</p>
 <div class="cell">
-<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">pums</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span><span class="va">SERIALNO</span>, <span class="va">AGEP</span>, <span class="va">ST</span>, <span class="va">WAGP</span><span class="op">)</span><span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">pums</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span> <span class="va">SERIALNO</span>, <span class="va">AGEP</span>, <span class="va">ST</span>, <span class="va">WAGP</span><span class="op">)</span><span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="va">AGEP</span> <span class="op">&gt;</span> <span class="fl">18</span>, <span class="va">WAGP</span> <span class="op">!=</span><span class="fl">0</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>over65  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html">ifelse</a></span><span class="op">(</span><span class="va">AGEP</span> <span class="op">&gt;</span><span class="fl">65</span>, <span class="fl">1</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span><span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html">group_by</a></span><span class="op">(</span><span class="va">ST</span>, <span class="va">over65</span><span class="op">)</span><span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarise</a></span><span class="op">(</span>avgwage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="va">WAGP</span><span class="op">)</span>,</span>
-<span>            medwg <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html">median</a></span><span class="op">(</span><span class="va">WAGP</span><span class="op">)</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span>            medwg <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html">median</a></span><span class="op">(</span><span class="va">WAGP</span><span class="op">)</span><span class="op">)</span><span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>diff <span class="op">=</span> <span class="va">avgwage</span> <span class="op">-</span> <span class="va">medwg</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>`summarise()` has grouped output by &quot;ST&quot;. You can override using the `.groups`
 argument.</code></pre>
@@ -4354,7 +4355,7 @@ This warning is displayed once every 8 hours.</code></pre>
 
 <div data-pagedtable="false">
   <script data-pagedtable-source type="application/json">
-{"columns":[{"label":["ST"],"name":[1],"type":["int"],"align":["right"]},{"label":["over65"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["avgwage"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["medwg"],"name":[4],"type":["int"],"align":["right"]}],"data":[{"1":"6","2":"0","3":"66892.72","4":"45000"},{"1":"6","2":"1","3":"61428.64","4":"32000"},{"1":"48","2":"0","3":"57295.61","4":"40000"},{"1":"48","2":"1","3":"50530.78","4":"28000"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["ST"],"name":[1],"type":["int"],"align":["right"]},{"label":["over65"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["avgwage"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["medwg"],"name":[4],"type":["int"],"align":["right"]},{"label":["diff"],"name":[5],"type":["dbl"],"align":["right"]}],"data":[{"1":"6","2":"0","3":"66892.72","4":"45000","5":"21892.72"},{"1":"6","2":"1","3":"61428.64","4":"32000","5":"29428.64"},{"1":"48","2":"0","3":"57295.61","4":"40000","5":"17295.61"},{"1":"48","2":"1","3":"50530.78","4":"28000","5":"22530.78"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 </div>
@@ -4440,7 +4441,9 @@ the `.groups` argument.</code></pre>
 <pre><code>`summarise()` has grouped output by &quot;ST&quot; and &quot;over65&quot;. You can override using
 the `.groups` argument.</code></pre>
 </div>
-<div class="sourceCode" id="cb54"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">summ_query</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb54"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html">write.csv</a></span><span class="op">(</span><span class="va">summ_query</span>, file <span class="op">=</span> <span class="st">&quot;my great output.csv&quot;</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">summ_query</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 
 <div data-pagedtable="false">
@@ -5084,102 +5087,104 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb58-470"><a href="#cb58-470" aria-hidden="true" tabindex="-1"></a>We can use the <span class="in">`group_by`</span> and <span class="in">`summarise()`</span> verbs to calculate aggregations for groups:</span>
 <span id="cb58-471"><a href="#cb58-471" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb58-474"><a href="#cb58-474" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb58-475"><a href="#cb58-475" aria-hidden="true" tabindex="-1"></a>pums <span class="sc">%&gt;%</span> <span class="fu">select</span>(SERIALNO, AGEP, ST, WAGP)<span class="sc">%&gt;%</span></span>
+<span id="cb58-475"><a href="#cb58-475" aria-hidden="true" tabindex="-1"></a>pums <span class="sc">%&gt;%</span> <span class="fu">select</span>( SERIALNO, AGEP, ST, WAGP)<span class="sc">%&gt;%</span></span>
 <span id="cb58-476"><a href="#cb58-476" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(AGEP <span class="sc">&gt;</span> <span class="dv">18</span>, WAGP <span class="sc">!=</span><span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb58-477"><a href="#cb58-477" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">over65  =</span> <span class="fu">ifelse</span>(AGEP <span class="sc">&gt;</span><span class="dv">65</span>, <span class="dv">1</span>, <span class="dv">0</span>))<span class="sc">%&gt;%</span></span>
 <span id="cb58-478"><a href="#cb58-478" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ST, over65)<span class="sc">%&gt;%</span></span>
 <span id="cb58-479"><a href="#cb58-479" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">avgwage =</span> <span class="fu">mean</span>(WAGP),</span>
-<span id="cb58-480"><a href="#cb58-480" aria-hidden="true" tabindex="-1"></a>            <span class="at">medwg =</span> <span class="fu">median</span>(WAGP))</span>
-<span id="cb58-481"><a href="#cb58-481" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-480"><a href="#cb58-480" aria-hidden="true" tabindex="-1"></a>            <span class="at">medwg =</span> <span class="fu">median</span>(WAGP))<span class="sc">%&gt;%</span></span>
+<span id="cb58-481"><a href="#cb58-481" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">diff =</span> avgwage <span class="sc">-</span> medwg)</span>
 <span id="cb58-482"><a href="#cb58-482" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-483"><a href="#cb58-483" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb58-484"><a href="#cb58-484" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-485"><a href="#cb58-485" aria-hidden="true" tabindex="-1"></a><span class="fu">### See the query!</span></span>
-<span id="cb58-486"><a href="#cb58-486" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-489"><a href="#cb58-489" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb58-490"><a href="#cb58-490" aria-hidden="true" tabindex="-1"></a>pums <span class="sc">%&gt;%</span> <span class="fu">select</span>(SERIALNO, AGEP, ST, WAGP)<span class="sc">%&gt;%</span></span>
-<span id="cb58-491"><a href="#cb58-491" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(AGEP <span class="sc">&gt;</span> <span class="dv">18</span>, WAGP <span class="sc">!=</span><span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb58-492"><a href="#cb58-492" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">over65  =</span> <span class="fu">ifelse</span>(AGEP <span class="sc">&gt;</span><span class="dv">65</span>, <span class="dv">1</span>, <span class="dv">0</span>))<span class="sc">%&gt;%</span></span>
-<span id="cb58-493"><a href="#cb58-493" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ST, over65)<span class="sc">%&gt;%</span></span>
-<span id="cb58-494"><a href="#cb58-494" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">avgwage =</span> <span class="fu">mean</span>(WAGP),</span>
-<span id="cb58-495"><a href="#cb58-495" aria-hidden="true" tabindex="-1"></a>            <span class="at">medwg =</span> <span class="fu">median</span>(WAGP),</span>
-<span id="cb58-496"><a href="#cb58-496" aria-hidden="true" tabindex="-1"></a>            <span class="at">samp =</span> <span class="fu">n</span>())<span class="sc">%&gt;%</span></span>
-<span id="cb58-497"><a href="#cb58-497" aria-hidden="true" tabindex="-1"></a>  <span class="fu">show_query</span>()</span>
-<span id="cb58-498"><a href="#cb58-498" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-499"><a href="#cb58-499" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb58-500"><a href="#cb58-500" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-501"><a href="#cb58-501" aria-hidden="true" tabindex="-1"></a><span class="fu">### Use the output of the query in graph!</span></span>
-<span id="cb58-502"><a href="#cb58-502" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-503"><a href="#cb58-503" aria-hidden="true" tabindex="-1"></a>Yes, we can even directly pipe the query result into a ggplot figure.</span>
-<span id="cb58-504"><a href="#cb58-504" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-507"><a href="#cb58-507" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb58-508"><a href="#cb58-508" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb58-509"><a href="#cb58-509" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-510"><a href="#cb58-510" aria-hidden="true" tabindex="-1"></a>pums <span class="sc">%&gt;%</span></span>
-<span id="cb58-511"><a href="#cb58-511" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SERIALNO, AGEP, ST,SEX, WAGP)<span class="sc">%&gt;%</span></span>
-<span id="cb58-512"><a href="#cb58-512" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(AGEP <span class="sc">&gt;</span> <span class="dv">18</span>, WAGP <span class="sc">!=</span><span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb58-513"><a href="#cb58-513" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">over65  =</span> <span class="fu">ifelse</span>(AGEP <span class="sc">&gt;</span><span class="dv">65</span>, <span class="dv">1</span>, <span class="dv">0</span>),</span>
-<span id="cb58-514"><a href="#cb58-514" aria-hidden="true" tabindex="-1"></a>         <span class="at">gender =</span> <span class="fu">ifelse</span>(SEX <span class="sc">==</span><span class="dv">1</span> , <span class="st">&quot;Male&quot;</span>, <span class="st">&quot;Female&quot;</span>))<span class="sc">%&gt;%</span></span>
-<span id="cb58-515"><a href="#cb58-515" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ST, over65, gender)<span class="sc">%&gt;%</span></span>
-<span id="cb58-516"><a href="#cb58-516" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">avgwage =</span> <span class="fu">mean</span>(WAGP),</span>
-<span id="cb58-517"><a href="#cb58-517" aria-hidden="true" tabindex="-1"></a>            <span class="at">medwg =</span> <span class="fu">median</span>(WAGP),</span>
-<span id="cb58-518"><a href="#cb58-518" aria-hidden="true" tabindex="-1"></a>            <span class="at">samp =</span> <span class="fu">n</span>()) <span class="sc">%&gt;%</span></span>
-<span id="cb58-519"><a href="#cb58-519" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>()<span class="sc">+</span></span>
-<span id="cb58-520"><a href="#cb58-520" aria-hidden="true" tabindex="-1"></a>  <span class="fu">aes</span>(<span class="at">x =</span> ST,</span>
-<span id="cb58-521"><a href="#cb58-521" aria-hidden="true" tabindex="-1"></a>      <span class="at">y =</span> avgwage,</span>
-<span id="cb58-522"><a href="#cb58-522" aria-hidden="true" tabindex="-1"></a>      <span class="at">fill=</span><span class="fu">factor</span>(ST))<span class="sc">+</span></span>
-<span id="cb58-523"><a href="#cb58-523" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat=</span><span class="st">&quot;identity&quot;</span>)<span class="sc">+</span></span>
-<span id="cb58-524"><a href="#cb58-524" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>gender) <span class="sc">+</span></span>
-<span id="cb58-525"><a href="#cb58-525" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">label_dollar</span>())</span>
-<span id="cb58-526"><a href="#cb58-526" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb58-527"><a href="#cb58-527" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-528"><a href="#cb58-528" aria-hidden="true" tabindex="-1"></a><span class="fu">### Saving your query data</span></span>
-<span id="cb58-529"><a href="#cb58-529" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-530"><a href="#cb58-530" aria-hidden="true" tabindex="-1"></a>The <span class="in">`collect()`</span> verb will take the result of a query and save it as a R dataframe, so you can do other kinds of analysis. Just be sure to store the result in an object!</span>
-<span id="cb58-531"><a href="#cb58-531" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-534"><a href="#cb58-534" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb58-535"><a href="#cb58-535" aria-hidden="true" tabindex="-1"></a>summ_query <span class="ot">&lt;-</span> pums <span class="sc">%&gt;%</span></span>
-<span id="cb58-536"><a href="#cb58-536" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SERIALNO, AGEP, ST,SEX, WAGP)<span class="sc">%&gt;%</span></span>
-<span id="cb58-537"><a href="#cb58-537" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(AGEP <span class="sc">&gt;</span> <span class="dv">18</span>, WAGP <span class="sc">!=</span><span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb58-538"><a href="#cb58-538" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">over65  =</span> <span class="fu">ifelse</span>(AGEP <span class="sc">&gt;</span><span class="dv">65</span>, <span class="dv">1</span>, <span class="dv">0</span>),</span>
-<span id="cb58-539"><a href="#cb58-539" aria-hidden="true" tabindex="-1"></a>         <span class="at">gender =</span> <span class="fu">ifelse</span>(SEX <span class="sc">==</span><span class="dv">1</span> , <span class="st">&quot;Male&quot;</span>, <span class="st">&quot;Female&quot;</span>))<span class="sc">%&gt;%</span></span>
-<span id="cb58-540"><a href="#cb58-540" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ST, over65, gender)<span class="sc">%&gt;%</span></span>
-<span id="cb58-541"><a href="#cb58-541" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">avgwage =</span> <span class="fu">mean</span>(WAGP),</span>
-<span id="cb58-542"><a href="#cb58-542" aria-hidden="true" tabindex="-1"></a>            <span class="at">medwg =</span> <span class="fu">median</span>(WAGP),</span>
-<span id="cb58-543"><a href="#cb58-543" aria-hidden="true" tabindex="-1"></a>            <span class="at">samp =</span> <span class="fu">n</span>()) <span class="sc">%&gt;%</span></span>
-<span id="cb58-544"><a href="#cb58-544" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span>
-<span id="cb58-545"><a href="#cb58-545" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-483"><a href="#cb58-483" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-484"><a href="#cb58-484" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb58-485"><a href="#cb58-485" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-486"><a href="#cb58-486" aria-hidden="true" tabindex="-1"></a><span class="fu">### See the query!</span></span>
+<span id="cb58-487"><a href="#cb58-487" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-490"><a href="#cb58-490" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb58-491"><a href="#cb58-491" aria-hidden="true" tabindex="-1"></a>pums <span class="sc">%&gt;%</span> <span class="fu">select</span>(SERIALNO, AGEP, ST, WAGP)<span class="sc">%&gt;%</span></span>
+<span id="cb58-492"><a href="#cb58-492" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(AGEP <span class="sc">&gt;</span> <span class="dv">18</span>, WAGP <span class="sc">!=</span><span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb58-493"><a href="#cb58-493" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">over65  =</span> <span class="fu">ifelse</span>(AGEP <span class="sc">&gt;</span><span class="dv">65</span>, <span class="dv">1</span>, <span class="dv">0</span>))<span class="sc">%&gt;%</span></span>
+<span id="cb58-494"><a href="#cb58-494" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ST, over65)<span class="sc">%&gt;%</span></span>
+<span id="cb58-495"><a href="#cb58-495" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">avgwage =</span> <span class="fu">mean</span>(WAGP),</span>
+<span id="cb58-496"><a href="#cb58-496" aria-hidden="true" tabindex="-1"></a>            <span class="at">medwg =</span> <span class="fu">median</span>(WAGP),</span>
+<span id="cb58-497"><a href="#cb58-497" aria-hidden="true" tabindex="-1"></a>            <span class="at">samp =</span> <span class="fu">n</span>())<span class="sc">%&gt;%</span></span>
+<span id="cb58-498"><a href="#cb58-498" aria-hidden="true" tabindex="-1"></a>  <span class="fu">show_query</span>()</span>
+<span id="cb58-499"><a href="#cb58-499" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-500"><a href="#cb58-500" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb58-501"><a href="#cb58-501" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-502"><a href="#cb58-502" aria-hidden="true" tabindex="-1"></a><span class="fu">### Use the output of the query in graph!</span></span>
+<span id="cb58-503"><a href="#cb58-503" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-504"><a href="#cb58-504" aria-hidden="true" tabindex="-1"></a>Yes, we can even directly pipe the query result into a ggplot figure.</span>
+<span id="cb58-505"><a href="#cb58-505" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-508"><a href="#cb58-508" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb58-509"><a href="#cb58-509" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb58-510"><a href="#cb58-510" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-511"><a href="#cb58-511" aria-hidden="true" tabindex="-1"></a>pums <span class="sc">%&gt;%</span></span>
+<span id="cb58-512"><a href="#cb58-512" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SERIALNO, AGEP, ST,SEX, WAGP)<span class="sc">%&gt;%</span></span>
+<span id="cb58-513"><a href="#cb58-513" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(AGEP <span class="sc">&gt;</span> <span class="dv">18</span>, WAGP <span class="sc">!=</span><span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb58-514"><a href="#cb58-514" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">over65  =</span> <span class="fu">ifelse</span>(AGEP <span class="sc">&gt;</span><span class="dv">65</span>, <span class="dv">1</span>, <span class="dv">0</span>),</span>
+<span id="cb58-515"><a href="#cb58-515" aria-hidden="true" tabindex="-1"></a>         <span class="at">gender =</span> <span class="fu">ifelse</span>(SEX <span class="sc">==</span><span class="dv">1</span> , <span class="st">&quot;Male&quot;</span>, <span class="st">&quot;Female&quot;</span>))<span class="sc">%&gt;%</span></span>
+<span id="cb58-516"><a href="#cb58-516" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ST, over65, gender)<span class="sc">%&gt;%</span></span>
+<span id="cb58-517"><a href="#cb58-517" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">avgwage =</span> <span class="fu">mean</span>(WAGP),</span>
+<span id="cb58-518"><a href="#cb58-518" aria-hidden="true" tabindex="-1"></a>            <span class="at">medwg =</span> <span class="fu">median</span>(WAGP),</span>
+<span id="cb58-519"><a href="#cb58-519" aria-hidden="true" tabindex="-1"></a>            <span class="at">samp =</span> <span class="fu">n</span>()) <span class="sc">%&gt;%</span></span>
+<span id="cb58-520"><a href="#cb58-520" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>()<span class="sc">+</span></span>
+<span id="cb58-521"><a href="#cb58-521" aria-hidden="true" tabindex="-1"></a>  <span class="fu">aes</span>(<span class="at">x =</span> ST,</span>
+<span id="cb58-522"><a href="#cb58-522" aria-hidden="true" tabindex="-1"></a>      <span class="at">y =</span> avgwage,</span>
+<span id="cb58-523"><a href="#cb58-523" aria-hidden="true" tabindex="-1"></a>      <span class="at">fill=</span><span class="fu">factor</span>(ST))<span class="sc">+</span></span>
+<span id="cb58-524"><a href="#cb58-524" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat=</span><span class="st">&quot;identity&quot;</span>)<span class="sc">+</span></span>
+<span id="cb58-525"><a href="#cb58-525" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>gender) <span class="sc">+</span></span>
+<span id="cb58-526"><a href="#cb58-526" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">label_dollar</span>())</span>
+<span id="cb58-527"><a href="#cb58-527" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb58-528"><a href="#cb58-528" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-529"><a href="#cb58-529" aria-hidden="true" tabindex="-1"></a><span class="fu">### Saving your query data</span></span>
+<span id="cb58-530"><a href="#cb58-530" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-531"><a href="#cb58-531" aria-hidden="true" tabindex="-1"></a>The <span class="in">`collect()`</span> verb will take the result of a query and save it as a R dataframe, so you can do other kinds of analysis. Just be sure to store the result in an object!</span>
+<span id="cb58-532"><a href="#cb58-532" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-535"><a href="#cb58-535" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb58-536"><a href="#cb58-536" aria-hidden="true" tabindex="-1"></a>summ_query <span class="ot">&lt;-</span> pums <span class="sc">%&gt;%</span></span>
+<span id="cb58-537"><a href="#cb58-537" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SERIALNO, AGEP, ST,SEX, WAGP)<span class="sc">%&gt;%</span></span>
+<span id="cb58-538"><a href="#cb58-538" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(AGEP <span class="sc">&gt;</span> <span class="dv">18</span>, WAGP <span class="sc">!=</span><span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb58-539"><a href="#cb58-539" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">over65  =</span> <span class="fu">ifelse</span>(AGEP <span class="sc">&gt;</span><span class="dv">65</span>, <span class="dv">1</span>, <span class="dv">0</span>),</span>
+<span id="cb58-540"><a href="#cb58-540" aria-hidden="true" tabindex="-1"></a>         <span class="at">gender =</span> <span class="fu">ifelse</span>(SEX <span class="sc">==</span><span class="dv">1</span> , <span class="st">&quot;Male&quot;</span>, <span class="st">&quot;Female&quot;</span>))<span class="sc">%&gt;%</span></span>
+<span id="cb58-541"><a href="#cb58-541" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ST, over65, gender)<span class="sc">%&gt;%</span></span>
+<span id="cb58-542"><a href="#cb58-542" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">avgwage =</span> <span class="fu">mean</span>(WAGP),</span>
+<span id="cb58-543"><a href="#cb58-543" aria-hidden="true" tabindex="-1"></a>            <span class="at">medwg =</span> <span class="fu">median</span>(WAGP),</span>
+<span id="cb58-544"><a href="#cb58-544" aria-hidden="true" tabindex="-1"></a>            <span class="at">samp =</span> <span class="fu">n</span>()) <span class="sc">%&gt;%</span></span>
+<span id="cb58-545"><a href="#cb58-545" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span>
 <span id="cb58-546"><a href="#cb58-546" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-547"><a href="#cb58-547" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(summ_query)</span>
-<span id="cb58-548"><a href="#cb58-548" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb58-549"><a href="#cb58-549" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-550"><a href="#cb58-550" aria-hidden="true" tabindex="-1"></a><span class="fu">### Joins in dbplyr</span></span>
+<span id="cb58-547"><a href="#cb58-547" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(summ_query, <span class="at">file =</span> <span class="st">&quot;my great output.csv&quot;</span>)</span>
+<span id="cb58-548"><a href="#cb58-548" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-549"><a href="#cb58-549" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(summ_query)</span>
+<span id="cb58-550"><a href="#cb58-550" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb58-551"><a href="#cb58-551" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-552"><a href="#cb58-552" aria-hidden="true" tabindex="-1"></a>You can perform all the same types of joins in <span class="in">`dbplyr`</span> as in normal SQL, these verbs are <span class="in">`left_join`</span>, <span class="in">`right_join`</span> and <span class="in">`outer_join`</span></span>
+<span id="cb58-552"><a href="#cb58-552" aria-hidden="true" tabindex="-1"></a><span class="fu">### Joins in dbplyr</span></span>
 <span id="cb58-553"><a href="#cb58-553" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-556"><a href="#cb58-556" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb58-557"><a href="#cb58-557" aria-hidden="true" tabindex="-1"></a>pums <span class="sc">%&gt;%</span></span>
-<span id="cb58-558"><a href="#cb58-558" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">over65 =</span> <span class="fu">ifelse</span>(AGEP <span class="sc">&gt;=</span> <span class="dv">65</span>, <span class="st">&quot;over 65&quot;</span>, <span class="st">&quot;under 65&quot;</span>))<span class="sc">%&gt;%</span></span>
-<span id="cb58-559"><a href="#cb58-559" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SERIALNO, AGEP, WAGP, SEX, over65)<span class="sc">%&gt;%</span></span>
-<span id="cb58-560"><a href="#cb58-560" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(pums_hh, <span class="at">by =</span> <span class="st">&#39;SERIALNO&#39;</span> ) <span class="sc">%&gt;%</span></span>
-<span id="cb58-561"><a href="#cb58-561" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>()<span class="sc">%&gt;%</span></span>
-<span id="cb58-562"><a href="#cb58-562" aria-hidden="true" tabindex="-1"></a>  <span class="fu">show_query</span>()</span>
-<span id="cb58-563"><a href="#cb58-563" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-564"><a href="#cb58-564" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb58-554"><a href="#cb58-554" aria-hidden="true" tabindex="-1"></a>You can perform all the same types of joins in <span class="in">`dbplyr`</span> as in normal SQL, these verbs are <span class="in">`left_join`</span>, <span class="in">`right_join`</span> and <span class="in">`outer_join`</span></span>
+<span id="cb58-555"><a href="#cb58-555" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-558"><a href="#cb58-558" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb58-559"><a href="#cb58-559" aria-hidden="true" tabindex="-1"></a>pums <span class="sc">%&gt;%</span></span>
+<span id="cb58-560"><a href="#cb58-560" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">over65 =</span> <span class="fu">ifelse</span>(AGEP <span class="sc">&gt;=</span> <span class="dv">65</span>, <span class="st">&quot;over 65&quot;</span>, <span class="st">&quot;under 65&quot;</span>))<span class="sc">%&gt;%</span></span>
+<span id="cb58-561"><a href="#cb58-561" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SERIALNO, AGEP, WAGP, SEX, over65)<span class="sc">%&gt;%</span></span>
+<span id="cb58-562"><a href="#cb58-562" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(pums_hh, <span class="at">by =</span> <span class="st">&#39;SERIALNO&#39;</span> ) <span class="sc">%&gt;%</span></span>
+<span id="cb58-563"><a href="#cb58-563" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>()<span class="sc">%&gt;%</span></span>
+<span id="cb58-564"><a href="#cb58-564" aria-hidden="true" tabindex="-1"></a>  <span class="fu">show_query</span>()</span>
 <span id="cb58-565"><a href="#cb58-565" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-568"><a href="#cb58-568" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb58-569"><a href="#cb58-569" aria-hidden="true" tabindex="-1"></a><span class="fu">dbDisconnect</span>(con)</span>
-<span id="cb58-570"><a href="#cb58-570" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb58-571"><a href="#cb58-571" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-572"><a href="#cb58-572" aria-hidden="true" tabindex="-1"></a><span class="fu"># Homework - Day 2</span></span>
+<span id="cb58-566"><a href="#cb58-566" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb58-567"><a href="#cb58-567" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-570"><a href="#cb58-570" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb58-571"><a href="#cb58-571" aria-hidden="true" tabindex="-1"></a><span class="fu">dbDisconnect</span>(con)</span>
+<span id="cb58-572"><a href="#cb58-572" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb58-573"><a href="#cb58-573" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-574"><a href="#cb58-574" aria-hidden="true" tabindex="-1"></a>Using the ACS tables from above perform the following</span>
+<span id="cb58-574"><a href="#cb58-574" aria-hidden="true" tabindex="-1"></a><span class="fu"># Homework - Day 2</span></span>
 <span id="cb58-575"><a href="#cb58-575" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-576"><a href="#cb58-576" aria-hidden="true" tabindex="-1"></a>1)  How many households in Texas had values over \$500,000?</span>
+<span id="cb58-576"><a href="#cb58-576" aria-hidden="true" tabindex="-1"></a>Using the ACS tables from above perform the following</span>
 <span id="cb58-577"><a href="#cb58-577" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-578"><a href="#cb58-578" aria-hidden="true" tabindex="-1"></a>2)  Create a table of persons in California with less than a High School degree. How many people are in this table?</span>
+<span id="cb58-578"><a href="#cb58-578" aria-hidden="true" tabindex="-1"></a>1)  How many households in Texas had values over \$500,000?</span>
 <span id="cb58-579"><a href="#cb58-579" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-580"><a href="#cb58-580" aria-hidden="true" tabindex="-1"></a>3)  Create a merged table with the columns ST_LABEL, AGEP, RAC1P, WAGP, ACCESS and TENURE for persons in California with less than a bachelor&#39;s degree.</span>
+<span id="cb58-580"><a href="#cb58-580" aria-hidden="true" tabindex="-1"></a>2)  Create a table of persons in California with less than a High School degree. How many people are in this table?</span>
+<span id="cb58-581"><a href="#cb58-581" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-582"><a href="#cb58-582" aria-hidden="true" tabindex="-1"></a>3)  Create a merged table with the columns ST_LABEL, AGEP, RAC1P, WAGP, ACCESS and TENURE for persons in California with less than a bachelor&#39;s degree.</span>
 </code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->

@@ -426,12 +426,13 @@ pums %>% select(SERIALNO, AGEP, ST, WAGP)%>%
 We can use the `group_by` and `summarise()` verbs to calculate aggregations for groups:
 
 ```{r}
-pums %>% select(SERIALNO, AGEP, ST, WAGP)%>%
+pums %>% select( SERIALNO, AGEP, ST, WAGP)%>%
   filter(AGEP > 18, WAGP !=0) %>%
   mutate(over65  = ifelse(AGEP >65, 1, 0))%>%
   group_by(ST, over65)%>%
   summarise(avgwage = mean(WAGP),
-            medwg = median(WAGP))
+            medwg = median(WAGP))%>%
+  mutate(diff = avgwage - medwg)
 
 
 ```
@@ -491,6 +492,7 @@ summ_query <- pums %>%
             samp = n()) %>%
   collect()
 
+write.csv(summ_query, file = "my great output.csv")
 
 head(summ_query)
 ```
