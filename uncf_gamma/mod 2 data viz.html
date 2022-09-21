@@ -3927,8 +3927,9 @@ dbl  (9): SPORDER, WGTP, PWGTP, AGEP, WAGP, TYPE, SEX, FOD1P, RAC1P
 </div>
 </div>
 </section><section id="slightly-better---adding-color-and-annotations" class="level4"><h4 class="anchored" data-anchor-id="slightly-better---adding-color-and-annotations">Slightly better - adding color and annotations</h4>
+<p>ggplot has a lot of color options, <a href="http://www.sthda.com/english/wiki/ggplot2-colors-how-to-change-colors-automatically-and-manually">this link</a> is a good site that goes over how to change colors in a plot, and so is <a href="https://www.datanovia.com/en/blog/top-r-color-palettes-to-know-for-great-data-visualization/">this site</a>.</p>
 <p>Have a look at color scale options</p>
-<p><code>?scale_color_brewer()</code> <code>?scale_color_viridis_c()</code> <code>?scale_color_viridis_c()</code> <code>?scale_color_manual()</code></p>
+<p><code>?scale_color_brewer()</code> <code>?scale_color_viridis_c()</code> <code>?scale_color_viridis_d()</code> <code>?scale_color_manual()</code></p>
 <p>I will often use the <code>_manual()</code> function to put in my own custom colors</p>
 <p>Note, if you are using <code>geom_bar</code>, or <code>geom_col</code>, these scales will be like: <code>scale_fill_*</code> because you are filling those geometries with color, unline lines or point geometries.</p>
 <div class="cell">
@@ -4311,100 +4312,102 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb16-137"><a href="#cb16-137" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb16-138"><a href="#cb16-138" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Slightly better - adding color and annotations</span></span>
 <span id="cb16-139"><a href="#cb16-139" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-140"><a href="#cb16-140" aria-hidden="true" tabindex="-1"></a>Have a look at color scale options </span>
+<span id="cb16-140"><a href="#cb16-140" aria-hidden="true" tabindex="-1"></a>ggplot has a lot of color options, <span class="co">[</span><span class="ot">this link</span><span class="co">](http://www.sthda.com/english/wiki/ggplot2-colors-how-to-change-colors-automatically-and-manually)</span> is a good site that goes over how to change colors in a plot, and so is <span class="co">[</span><span class="ot">this site</span><span class="co">](https://www.datanovia.com/en/blog/top-r-color-palettes-to-know-for-great-data-visualization/)</span>. </span>
 <span id="cb16-141"><a href="#cb16-141" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-142"><a href="#cb16-142" aria-hidden="true" tabindex="-1"></a><span class="in">`?scale_color_brewer() `</span></span>
-<span id="cb16-143"><a href="#cb16-143" aria-hidden="true" tabindex="-1"></a><span class="in">`?scale_color_viridis_c()`</span></span>
-<span id="cb16-144"><a href="#cb16-144" aria-hidden="true" tabindex="-1"></a><span class="in">`?scale_color_viridis_c()`</span></span>
-<span id="cb16-145"><a href="#cb16-145" aria-hidden="true" tabindex="-1"></a><span class="in">`?scale_color_manual()`</span></span>
-<span id="cb16-146"><a href="#cb16-146" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-147"><a href="#cb16-147" aria-hidden="true" tabindex="-1"></a>I will often use the <span class="in">`_manual()`</span> function to put in my own custom colors</span>
+<span id="cb16-142"><a href="#cb16-142" aria-hidden="true" tabindex="-1"></a>Have a look at color scale options </span>
+<span id="cb16-143"><a href="#cb16-143" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-144"><a href="#cb16-144" aria-hidden="true" tabindex="-1"></a><span class="in">`?scale_color_brewer() `</span></span>
+<span id="cb16-145"><a href="#cb16-145" aria-hidden="true" tabindex="-1"></a><span class="in">`?scale_color_viridis_c()`</span></span>
+<span id="cb16-146"><a href="#cb16-146" aria-hidden="true" tabindex="-1"></a><span class="in">`?scale_color_viridis_d()`</span></span>
+<span id="cb16-147"><a href="#cb16-147" aria-hidden="true" tabindex="-1"></a><span class="in">`?scale_color_manual()`</span></span>
 <span id="cb16-148"><a href="#cb16-148" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-149"><a href="#cb16-149" aria-hidden="true" tabindex="-1"></a>Note, if you are using <span class="in">`geom_bar`</span>, or <span class="in">`geom_col`</span>, these scales will be like:</span>
-<span id="cb16-150"><a href="#cb16-150" aria-hidden="true" tabindex="-1"></a><span class="in">`scale_fill_*`</span> because you are filling those geometries with color, unline lines or point geometries. </span>
-<span id="cb16-151"><a href="#cb16-151" aria-hidden="true" tabindex="-1"></a> </span>
-<span id="cb16-154"><a href="#cb16-154" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb16-155"><a href="#cb16-155" aria-hidden="true" tabindex="-1"></a>census_sub<span class="sc">%&gt;%</span></span>
-<span id="cb16-156"><a href="#cb16-156" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(sex2, age5)<span class="sc">%&gt;%</span></span>
-<span id="cb16-157"><a href="#cb16-157" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarize</span>(<span class="at">median_inc =</span> <span class="fu">median</span>(WAGP, <span class="at">na.rm=</span><span class="cn">TRUE</span>))<span class="sc">%&gt;%</span></span>
-<span id="cb16-158"><a href="#cb16-158" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">is.na</span>(age5)<span class="sc">==</span>F)<span class="sc">%&gt;%</span></span>
-<span id="cb16-159"><a href="#cb16-159" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()<span class="sc">%&gt;%</span></span>
-<span id="cb16-160"><a href="#cb16-160" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">group =</span> sex2, <span class="at">color=</span>sex2, <span class="at">x=</span>age5, <span class="at">y=</span>median_inc))<span class="sc">+</span></span>
-<span id="cb16-161"><a href="#cb16-161" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="at">lwd =</span> <span class="dv">2</span>)<span class="sc">+</span>  <span class="co">#make a thicker line</span></span>
-<span id="cb16-162"><a href="#cb16-162" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Age&quot;</span>,</span>
-<span id="cb16-163"><a href="#cb16-163" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">&quot;Median Income&quot;</span>,</span>
-<span id="cb16-164"><a href="#cb16-164" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">&quot;Wage gap between male and female PhD&#39;s&quot;</span>, </span>
-<span id="cb16-165"><a href="#cb16-165" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">&quot;2019 American Community Survey&quot;</span>, <span class="co">#additional subtitle</span></span>
-<span id="cb16-166"><a href="#cb16-166" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption =</span> <span class="st">&quot;Calculations by Corey Sparks&quot;</span>) <span class="sc">+</span> <span class="co"># own it!</span></span>
-<span id="cb16-167"><a href="#cb16-167" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>()<span class="sc">+</span></span>
-<span id="cb16-168"><a href="#cb16-168" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">dollar_format</span>(),</span>
-<span id="cb16-169"><a href="#cb16-169" aria-hidden="true" tabindex="-1"></a>                     <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">160000</span>)) <span class="sc">+</span> </span>
-<span id="cb16-170"><a href="#cb16-170" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">name =</span> <span class="st">&quot;Gender&quot;</span>, <span class="at">values =</span> <span class="fu">c</span>(<span class="st">&quot;#004f9e&quot;</span>,<span class="st">&quot;#e36c2c&quot;</span>)) <span class="co">#change legend label and add custom colors</span></span>
-<span id="cb16-171"><a href="#cb16-171" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-172"><a href="#cb16-172" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb16-149"><a href="#cb16-149" aria-hidden="true" tabindex="-1"></a>I will often use the <span class="in">`_manual()`</span> function to put in my own custom colors</span>
+<span id="cb16-150"><a href="#cb16-150" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-151"><a href="#cb16-151" aria-hidden="true" tabindex="-1"></a>Note, if you are using <span class="in">`geom_bar`</span>, or <span class="in">`geom_col`</span>, these scales will be like:</span>
+<span id="cb16-152"><a href="#cb16-152" aria-hidden="true" tabindex="-1"></a><span class="in">`scale_fill_*`</span> because you are filling those geometries with color, unline lines or point geometries. </span>
+<span id="cb16-153"><a href="#cb16-153" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb16-156"><a href="#cb16-156" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb16-157"><a href="#cb16-157" aria-hidden="true" tabindex="-1"></a>census_sub<span class="sc">%&gt;%</span></span>
+<span id="cb16-158"><a href="#cb16-158" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(sex2, age5)<span class="sc">%&gt;%</span></span>
+<span id="cb16-159"><a href="#cb16-159" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarize</span>(<span class="at">median_inc =</span> <span class="fu">median</span>(WAGP, <span class="at">na.rm=</span><span class="cn">TRUE</span>))<span class="sc">%&gt;%</span></span>
+<span id="cb16-160"><a href="#cb16-160" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">is.na</span>(age5)<span class="sc">==</span>F)<span class="sc">%&gt;%</span></span>
+<span id="cb16-161"><a href="#cb16-161" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()<span class="sc">%&gt;%</span></span>
+<span id="cb16-162"><a href="#cb16-162" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">group =</span> sex2, <span class="at">color=</span>sex2, <span class="at">x=</span>age5, <span class="at">y=</span>median_inc))<span class="sc">+</span></span>
+<span id="cb16-163"><a href="#cb16-163" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="at">lwd =</span> <span class="dv">2</span>)<span class="sc">+</span>  <span class="co">#make a thicker line</span></span>
+<span id="cb16-164"><a href="#cb16-164" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Age&quot;</span>,</span>
+<span id="cb16-165"><a href="#cb16-165" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">&quot;Median Income&quot;</span>,</span>
+<span id="cb16-166"><a href="#cb16-166" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">&quot;Wage gap between male and female PhD&#39;s&quot;</span>, </span>
+<span id="cb16-167"><a href="#cb16-167" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">&quot;2019 American Community Survey&quot;</span>, <span class="co">#additional subtitle</span></span>
+<span id="cb16-168"><a href="#cb16-168" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption =</span> <span class="st">&quot;Calculations by Corey Sparks&quot;</span>) <span class="sc">+</span> <span class="co"># own it!</span></span>
+<span id="cb16-169"><a href="#cb16-169" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>()<span class="sc">+</span></span>
+<span id="cb16-170"><a href="#cb16-170" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">dollar_format</span>(),</span>
+<span id="cb16-171"><a href="#cb16-171" aria-hidden="true" tabindex="-1"></a>                     <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">160000</span>)) <span class="sc">+</span> </span>
+<span id="cb16-172"><a href="#cb16-172" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">name =</span> <span class="st">&quot;Gender&quot;</span>, <span class="at">values =</span> <span class="fu">c</span>(<span class="st">&quot;#004f9e&quot;</span>,<span class="st">&quot;#e36c2c&quot;</span>)) <span class="co">#change legend label and add custom colors</span></span>
 <span id="cb16-173"><a href="#cb16-173" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-174"><a href="#cb16-174" aria-hidden="true" tabindex="-1"></a><span class="fu">## Showing uncertainty</span></span>
-<span id="cb16-175"><a href="#cb16-175" aria-hidden="true" tabindex="-1"></a>None of the estimates we will derive are perfect, they all have error in them. If you ignore the error in your estimates, you can mislead your audience into thinking something is different, when it is not</span>
-<span id="cb16-176"><a href="#cb16-176" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-177"><a href="#cb16-177" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Another example - uncertainty in estimates + point plot</span></span>
-<span id="cb16-178"><a href="#cb16-178" aria-hidden="true" tabindex="-1"></a>I can add uncertainty to any calculation by using geometries like</span>
-<span id="cb16-179"><a href="#cb16-179" aria-hidden="true" tabindex="-1"></a><span class="in">`geom_errorbar(aes(ymin, ymax))`</span>  or <span class="in">`geom_pointrange(aes(ymin, ymax))`</span> </span>
-<span id="cb16-180"><a href="#cb16-180" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-181"><a href="#cb16-181" aria-hidden="true" tabindex="-1"></a>This assumes you can calculate some measure of variation in your estimates, such as the standard error of a median:</span>
+<span id="cb16-174"><a href="#cb16-174" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb16-175"><a href="#cb16-175" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-176"><a href="#cb16-176" aria-hidden="true" tabindex="-1"></a><span class="fu">## Showing uncertainty</span></span>
+<span id="cb16-177"><a href="#cb16-177" aria-hidden="true" tabindex="-1"></a>None of the estimates we will derive are perfect, they all have error in them. If you ignore the error in your estimates, you can mislead your audience into thinking something is different, when it is not</span>
+<span id="cb16-178"><a href="#cb16-178" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-179"><a href="#cb16-179" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Another example - uncertainty in estimates + point plot</span></span>
+<span id="cb16-180"><a href="#cb16-180" aria-hidden="true" tabindex="-1"></a>I can add uncertainty to any calculation by using geometries like</span>
+<span id="cb16-181"><a href="#cb16-181" aria-hidden="true" tabindex="-1"></a><span class="in">`geom_errorbar(aes(ymin, ymax))`</span>  or <span class="in">`geom_pointrange(aes(ymin, ymax))`</span> </span>
 <span id="cb16-182"><a href="#cb16-182" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-183"><a href="#cb16-183" aria-hidden="true" tabindex="-1"></a>$$\sigma(median) = 1.253 \frac{\sigma}{\sqrt{n}}$$</span>
+<span id="cb16-183"><a href="#cb16-183" aria-hidden="true" tabindex="-1"></a>This assumes you can calculate some measure of variation in your estimates, such as the standard error of a median:</span>
 <span id="cb16-184"><a href="#cb16-184" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-187"><a href="#cb16-187" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb16-188"><a href="#cb16-188" aria-hidden="true" tabindex="-1"></a>census_sub<span class="sc">%&gt;%</span></span>
-<span id="cb16-189"><a href="#cb16-189" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(sex2, age5, WAGP)<span class="sc">%&gt;%</span></span>
-<span id="cb16-190"><a href="#cb16-190" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(sex2, age5)<span class="sc">%&gt;%</span></span>
-<span id="cb16-191"><a href="#cb16-191" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise_each</span>(<span class="fu">funs</span>(median, <span class="at">se=</span><span class="fl">1.253</span><span class="sc">*</span>(<span class="fu">sd</span>(.)<span class="sc">/</span><span class="fu">sqrt</span>(<span class="fu">n</span>()))))<span class="sc">%&gt;%</span></span>
-<span id="cb16-192"><a href="#cb16-192" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">is.na</span>(age5)<span class="sc">==</span>F)<span class="sc">%&gt;%</span></span>
-<span id="cb16-193"><a href="#cb16-193" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()<span class="sc">%&gt;%</span></span>
-<span id="cb16-194"><a href="#cb16-194" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">group =</span> sex2, <span class="at">color=</span>sex2, <span class="at">x=</span>age5, <span class="at">y=</span>median))<span class="sc">+</span></span>
-<span id="cb16-195"><a href="#cb16-195" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_pointrange</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> median <span class="sc">-</span><span class="fl">1.96</span><span class="sc">*</span>se,</span>
-<span id="cb16-196"><a href="#cb16-196" aria-hidden="true" tabindex="-1"></a>                        <span class="at">ymax =</span> median <span class="sc">+</span> <span class="fl">1.96</span><span class="sc">*</span>se),</span>
-<span id="cb16-197"><a href="#cb16-197" aria-hidden="true" tabindex="-1"></a>                    <span class="at">lwd=</span> .<span class="dv">5</span>)<span class="sc">+</span> <span class="co">#calculate se(mean)</span></span>
-<span id="cb16-198"><a href="#cb16-198" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">lwd =</span> <span class="fl">1.2</span>)<span class="sc">+</span><span class="co">#make a thicker line</span></span>
-<span id="cb16-199"><a href="#cb16-199" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Age&quot;</span>,</span>
-<span id="cb16-200"><a href="#cb16-200" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">&quot;Median Income&quot;</span>,</span>
-<span id="cb16-201"><a href="#cb16-201" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">&quot;Wage gap between male and female PhD&#39;s&quot;</span>, </span>
-<span id="cb16-202"><a href="#cb16-202" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">&quot;2019 American Community Survey&quot;</span>, <span class="co">#additional subtitle</span></span>
-<span id="cb16-203"><a href="#cb16-203" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption =</span> <span class="st">&quot;Calculations by Corey Sparks&quot;</span>) <span class="sc">+</span> <span class="co"># own it!</span></span>
-<span id="cb16-204"><a href="#cb16-204" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>()<span class="sc">+</span></span>
-<span id="cb16-205"><a href="#cb16-205" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">dollar_format</span>(),</span>
-<span id="cb16-206"><a href="#cb16-206" aria-hidden="true" tabindex="-1"></a>                     <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">180000</span>)) <span class="sc">+</span> </span>
-<span id="cb16-207"><a href="#cb16-207" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">name =</span> <span class="st">&quot;Gender&quot;</span>, <span class="at">values =</span> <span class="fu">c</span>(<span class="st">&quot;#004f9e&quot;</span>,<span class="st">&quot;#e36c2c&quot;</span>)) <span class="co">#change legend label and add custom colors</span></span>
-<span id="cb16-208"><a href="#cb16-208" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-209"><a href="#cb16-209" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-210"><a href="#cb16-210" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb16-185"><a href="#cb16-185" aria-hidden="true" tabindex="-1"></a>$$\sigma(median) = 1.253 \frac{\sigma}{\sqrt{n}}$$</span>
+<span id="cb16-186"><a href="#cb16-186" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-189"><a href="#cb16-189" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb16-190"><a href="#cb16-190" aria-hidden="true" tabindex="-1"></a>census_sub<span class="sc">%&gt;%</span></span>
+<span id="cb16-191"><a href="#cb16-191" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(sex2, age5, WAGP)<span class="sc">%&gt;%</span></span>
+<span id="cb16-192"><a href="#cb16-192" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(sex2, age5)<span class="sc">%&gt;%</span></span>
+<span id="cb16-193"><a href="#cb16-193" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise_each</span>(<span class="fu">funs</span>(median, <span class="at">se=</span><span class="fl">1.253</span><span class="sc">*</span>(<span class="fu">sd</span>(.)<span class="sc">/</span><span class="fu">sqrt</span>(<span class="fu">n</span>()))))<span class="sc">%&gt;%</span></span>
+<span id="cb16-194"><a href="#cb16-194" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">is.na</span>(age5)<span class="sc">==</span>F)<span class="sc">%&gt;%</span></span>
+<span id="cb16-195"><a href="#cb16-195" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()<span class="sc">%&gt;%</span></span>
+<span id="cb16-196"><a href="#cb16-196" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">group =</span> sex2, <span class="at">color=</span>sex2, <span class="at">x=</span>age5, <span class="at">y=</span>median))<span class="sc">+</span></span>
+<span id="cb16-197"><a href="#cb16-197" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_pointrange</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> median <span class="sc">-</span><span class="fl">1.96</span><span class="sc">*</span>se,</span>
+<span id="cb16-198"><a href="#cb16-198" aria-hidden="true" tabindex="-1"></a>                        <span class="at">ymax =</span> median <span class="sc">+</span> <span class="fl">1.96</span><span class="sc">*</span>se),</span>
+<span id="cb16-199"><a href="#cb16-199" aria-hidden="true" tabindex="-1"></a>                    <span class="at">lwd=</span> .<span class="dv">5</span>)<span class="sc">+</span> <span class="co">#calculate se(mean)</span></span>
+<span id="cb16-200"><a href="#cb16-200" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">lwd =</span> <span class="fl">1.2</span>)<span class="sc">+</span><span class="co">#make a thicker line</span></span>
+<span id="cb16-201"><a href="#cb16-201" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Age&quot;</span>,</span>
+<span id="cb16-202"><a href="#cb16-202" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">&quot;Median Income&quot;</span>,</span>
+<span id="cb16-203"><a href="#cb16-203" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">&quot;Wage gap between male and female PhD&#39;s&quot;</span>, </span>
+<span id="cb16-204"><a href="#cb16-204" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">&quot;2019 American Community Survey&quot;</span>, <span class="co">#additional subtitle</span></span>
+<span id="cb16-205"><a href="#cb16-205" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption =</span> <span class="st">&quot;Calculations by Corey Sparks&quot;</span>) <span class="sc">+</span> <span class="co"># own it!</span></span>
+<span id="cb16-206"><a href="#cb16-206" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>()<span class="sc">+</span></span>
+<span id="cb16-207"><a href="#cb16-207" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">dollar_format</span>(),</span>
+<span id="cb16-208"><a href="#cb16-208" aria-hidden="true" tabindex="-1"></a>                     <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">180000</span>)) <span class="sc">+</span> </span>
+<span id="cb16-209"><a href="#cb16-209" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">name =</span> <span class="st">&quot;Gender&quot;</span>, <span class="at">values =</span> <span class="fu">c</span>(<span class="st">&quot;#004f9e&quot;</span>,<span class="st">&quot;#e36c2c&quot;</span>)) <span class="co">#change legend label and add custom colors</span></span>
+<span id="cb16-210"><a href="#cb16-210" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb16-211"><a href="#cb16-211" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-212"><a href="#cb16-212" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Using geom_errorbar() and geom_bar()</span></span>
-<span id="cb16-213"><a href="#cb16-213" aria-hidden="true" tabindex="-1"></a>Here&#39;s an example of showing uncertainty in a bar plot</span>
-<span id="cb16-214"><a href="#cb16-214" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-217"><a href="#cb16-217" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb16-218"><a href="#cb16-218" aria-hidden="true" tabindex="-1"></a>census_sub<span class="sc">%&gt;%</span></span>
-<span id="cb16-219"><a href="#cb16-219" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(sex2, age5, WAGP)<span class="sc">%&gt;%</span></span>
-<span id="cb16-220"><a href="#cb16-220" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(sex2, age5)<span class="sc">%&gt;%</span></span>
-<span id="cb16-221"><a href="#cb16-221" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise_each</span>(<span class="fu">funs</span>(median, <span class="at">se=</span><span class="fl">1.253</span><span class="sc">*</span>(<span class="fu">sd</span>(.)<span class="sc">/</span><span class="fu">sqrt</span>(<span class="fu">n</span>()))))<span class="sc">%&gt;%</span></span>
-<span id="cb16-222"><a href="#cb16-222" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">is.na</span>(age5)<span class="sc">==</span>F)<span class="sc">%&gt;%</span></span>
-<span id="cb16-223"><a href="#cb16-223" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()<span class="sc">%&gt;%</span></span>
-<span id="cb16-224"><a href="#cb16-224" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x=</span>age5, <span class="at">fill=</span>sex2,  <span class="at">y=</span>median))<span class="sc">+</span></span>
-<span id="cb16-225"><a href="#cb16-225" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">&quot;identity&quot;</span>, <span class="at">color=</span> <span class="st">&quot;black&quot;</span>,</span>
-<span id="cb16-226"><a href="#cb16-226" aria-hidden="true" tabindex="-1"></a>            <span class="at">position=</span><span class="fu">position_dodge</span>())<span class="sc">+</span></span>
-<span id="cb16-227"><a href="#cb16-227" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> median , <span class="co">#only show 1 side of error bar</span></span>
-<span id="cb16-228"><a href="#cb16-228" aria-hidden="true" tabindex="-1"></a>                        <span class="at">ymax =</span> median <span class="sc">+</span> <span class="fl">1.96</span><span class="sc">*</span>se), <span class="at">width=</span>.<span class="dv">2</span>,</span>
-<span id="cb16-229"><a href="#cb16-229" aria-hidden="true" tabindex="-1"></a>                 <span class="at">position=</span><span class="fu">position_dodge</span>(.<span class="dv">9</span>))<span class="sc">+</span> <span class="co">#calculate se(mean)</span></span>
-<span id="cb16-230"><a href="#cb16-230" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Age&quot;</span>,</span>
-<span id="cb16-231"><a href="#cb16-231" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">&quot;Median Income&quot;</span>,</span>
-<span id="cb16-232"><a href="#cb16-232" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">&quot;Wage gap between male and female PhD&#39;s&quot;</span>, </span>
-<span id="cb16-233"><a href="#cb16-233" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">&quot;2019 American Community Survey&quot;</span>, <span class="co">#additional subtitle</span></span>
-<span id="cb16-234"><a href="#cb16-234" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption =</span> <span class="st">&quot;Calculations by Corey Sparks&quot;</span>)<span class="sc">+</span>  <span class="co"># own it!</span></span>
-<span id="cb16-235"><a href="#cb16-235" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>()<span class="sc">+</span></span>
-<span id="cb16-236"><a href="#cb16-236" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">dollar_format</span>(),</span>
-<span id="cb16-237"><a href="#cb16-237" aria-hidden="true" tabindex="-1"></a>                     <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">180000</span>)) <span class="sc">+</span> </span>
-<span id="cb16-238"><a href="#cb16-238" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">name =</span> <span class="st">&quot;Gender&quot;</span>, <span class="at">values =</span> <span class="fu">c</span>(<span class="st">&quot;#004f9e&quot;</span>,<span class="st">&quot;#e36c2c&quot;</span>)) <span class="co">#change legend label and add custom colors</span></span>
-<span id="cb16-239"><a href="#cb16-239" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb16-212"><a href="#cb16-212" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb16-213"><a href="#cb16-213" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-214"><a href="#cb16-214" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Using geom_errorbar() and geom_bar()</span></span>
+<span id="cb16-215"><a href="#cb16-215" aria-hidden="true" tabindex="-1"></a>Here&#39;s an example of showing uncertainty in a bar plot</span>
+<span id="cb16-216"><a href="#cb16-216" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-219"><a href="#cb16-219" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb16-220"><a href="#cb16-220" aria-hidden="true" tabindex="-1"></a>census_sub<span class="sc">%&gt;%</span></span>
+<span id="cb16-221"><a href="#cb16-221" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(sex2, age5, WAGP)<span class="sc">%&gt;%</span></span>
+<span id="cb16-222"><a href="#cb16-222" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(sex2, age5)<span class="sc">%&gt;%</span></span>
+<span id="cb16-223"><a href="#cb16-223" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise_each</span>(<span class="fu">funs</span>(median, <span class="at">se=</span><span class="fl">1.253</span><span class="sc">*</span>(<span class="fu">sd</span>(.)<span class="sc">/</span><span class="fu">sqrt</span>(<span class="fu">n</span>()))))<span class="sc">%&gt;%</span></span>
+<span id="cb16-224"><a href="#cb16-224" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">is.na</span>(age5)<span class="sc">==</span>F)<span class="sc">%&gt;%</span></span>
+<span id="cb16-225"><a href="#cb16-225" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()<span class="sc">%&gt;%</span></span>
+<span id="cb16-226"><a href="#cb16-226" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x=</span>age5, <span class="at">fill=</span>sex2,  <span class="at">y=</span>median))<span class="sc">+</span></span>
+<span id="cb16-227"><a href="#cb16-227" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">&quot;identity&quot;</span>, <span class="at">color=</span> <span class="st">&quot;black&quot;</span>,</span>
+<span id="cb16-228"><a href="#cb16-228" aria-hidden="true" tabindex="-1"></a>            <span class="at">position=</span><span class="fu">position_dodge</span>())<span class="sc">+</span></span>
+<span id="cb16-229"><a href="#cb16-229" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> median , <span class="co">#only show 1 side of error bar</span></span>
+<span id="cb16-230"><a href="#cb16-230" aria-hidden="true" tabindex="-1"></a>                        <span class="at">ymax =</span> median <span class="sc">+</span> <span class="fl">1.96</span><span class="sc">*</span>se), <span class="at">width=</span>.<span class="dv">2</span>,</span>
+<span id="cb16-231"><a href="#cb16-231" aria-hidden="true" tabindex="-1"></a>                 <span class="at">position=</span><span class="fu">position_dodge</span>(.<span class="dv">9</span>))<span class="sc">+</span> <span class="co">#calculate se(mean)</span></span>
+<span id="cb16-232"><a href="#cb16-232" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Age&quot;</span>,</span>
+<span id="cb16-233"><a href="#cb16-233" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">&quot;Median Income&quot;</span>,</span>
+<span id="cb16-234"><a href="#cb16-234" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">&quot;Wage gap between male and female PhD&#39;s&quot;</span>, </span>
+<span id="cb16-235"><a href="#cb16-235" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">&quot;2019 American Community Survey&quot;</span>, <span class="co">#additional subtitle</span></span>
+<span id="cb16-236"><a href="#cb16-236" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption =</span> <span class="st">&quot;Calculations by Corey Sparks&quot;</span>)<span class="sc">+</span>  <span class="co"># own it!</span></span>
+<span id="cb16-237"><a href="#cb16-237" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>()<span class="sc">+</span></span>
+<span id="cb16-238"><a href="#cb16-238" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">dollar_format</span>(),</span>
+<span id="cb16-239"><a href="#cb16-239" aria-hidden="true" tabindex="-1"></a>                     <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">180000</span>)) <span class="sc">+</span> </span>
+<span id="cb16-240"><a href="#cb16-240" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">name =</span> <span class="st">&quot;Gender&quot;</span>, <span class="at">values =</span> <span class="fu">c</span>(<span class="st">&quot;#004f9e&quot;</span>,<span class="st">&quot;#e36c2c&quot;</span>)) <span class="co">#change legend label and add custom colors</span></span>
+<span id="cb16-241"><a href="#cb16-241" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 </code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
