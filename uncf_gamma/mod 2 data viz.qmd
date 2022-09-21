@@ -1,0 +1,225 @@
+---
+title: "UNCF/Excelencia Gamma Cohort - Module 2 - Data Visualization"
+author: "Corey Sparks, PhD"
+format:
+  html:
+      self-contained: true
+      toc: true
+      code-fold: true
+      code-tools: true
+      code-link: true
+      df-print: paged
+editor: visual
+---
+
+
+## Revisiting the American Community Survey
+
+```{r, message=FALSE}
+library(tidyverse)
+library(car)
+
+```
+
+### Read in Census American Community Survey Microdata
+
+In this workbook, we will be using 2019 American Community Survey Public Use Microdata (PUMS). 
+These are public-use data sets containing information about responses to the Census Bureau American Community Survey. Information about the ACS project can be found at [https://www.census.gov/programs-surveys/acs](https://www.census.gov/programs-surveys/acs). 
+
+We will be using the ACS PUMS dataset for Texas and California in our examples in this workbook.
+
+You can find more information about the ACS datasets [here](https://www.census.gov/programs-surveys/acs/microdata/access.2019.html) and the Codebook for the data [here](https://raw.githubusercontent.com/coreysparks/data/master/pums_vars.csv).
+
+You can download the data using [this link](https://drive.google.com/file/d/14A-HNcjzfm60TxJ8PGIFYPWGF-ZVQ-P2/view?usp=sharing)
+
+```{r}
+census <- read_csv("G:/My Drive/excelencia_uncf_gamma_shared_files/data/pums_tx_ca_2019.csv")
+
+```
+
+```{r}
+head(census)
+```
+
+## Variables we will use in this example
+In this example and homework we will work with a few of the variables in this data. 
+
+- **WAGP = Annual Wages**
+- **SEX = Respondent's self idenfied sex**
+- **SCHL = Respondent's self idenfied educational attainment**
+- **ESR = Respondent's self idenfied employment status**
+- **HISP = Respondent's self idenfied Hispanic ethnicity**
+- **RAC1P = Respondent's self idenfied race**
+- **ST = Respondent's state of residence**
+
+Specific codes and response options can be found in the codebook
+
+# Basic visualization using ggplot and dplyr
+
+The R packages dplyr and ggplot work very well together, with dplyr being used to process and summarize data and ggplot being used to visualize the summaries.
+
+### Recoding variables
+One common task that we have to do when using microdata, like we have in the ADRF, is to recode variables. There many ways to do this, I like the `car` package as its syntax is very approachable, but you could easily do this using `ifelse` or `dplyr::case_when` within a `mutate()` step. Here, I show how to use the `car::Recode()` function within a `mutate` step. I also insert comments using the # key to show what is being done in each step.
+
+**NOTE** `!=` stands for *not equal*, and `==` is R's way of saying *exactly equivalent*
+
+```{r}
+library(car)
+census_sub <- census %>%
+    filter(ESR %in% c(1,2),  #select people who are employed
+          WAGP !=0 & is.na(WAGP)!=T, #select people with recorded wages
+          SCHL == 24, # select only doctoral recipients
+          AGEP  > 25)%>% 
+    mutate(sex2 = Recode (SEX, recodes = "1='Male'; 2='Female' "), 
+              as.factor=TRUE, 
+           age5 = cut(AGEP, breaks = seq(25, 65, 5), 
+                      include.lowest=T), 
+           hisp = Recode(as.numeric(HISP),
+                         recodes = " 2:24='Hispanic'; 1='NonHispanic'",
+                         as.factor=T), 
+           race_recode = Recode(RAC1P,
+                                recodes = "1='White'; 2='Black'; 3='Other'; 4:6='Asian'; 7:9='Other'",
+                                as.factor=T))%>%
+        # Combine these two using paste()
+    mutate(race_eth = paste(hisp, race_recode, sep = "_"))%>%
+        #use substr() to see if the first 8 characters of the value == Hispanic
+    mutate(race_eth  = as.factor(ifelse(substr(as.character(race_eth),1,8) == "Hispanic",
+                                        yes = "Hispanic",
+                                        no = as.character(race_eth))))%>%
+        #Relevel the factor with nonHispanic whites as the reference level
+    mutate(race_eth = relevel(race_eth, ref = "NonHispanic_White")) #create new sex variable with labels instead of numbers
+
+
+```
+#### Basic summary plot of income by age + gender
+
+```{r}
+library(ggplot2)
+census_sub%>%
+    group_by(sex2, age5)%>%
+    summarize(median_inc = median(WAGP, na.rm=TRUE))%>%
+  filter(is.na(age5)==F)%>%
+  ungroup()%>%
+ggplot(mapping = aes(group = sex2, color=sex2, x=age5, y=median_inc))+
+    geom_line()
+```
+We can do better
+
+
+#### Slightly better - adding labels
+
+```{r}
+census_sub%>%
+    group_by(sex2, age5)%>%
+    summarize(median_inc = median(WAGP, na.rm=TRUE))%>%
+  filter(is.na(age5)==F)%>%
+  ungroup()%>%
+ggplot(mapping = aes(group = sex2, color=sex2, x=age5, y=median_inc))+
+    geom_line()+ 
+  labs(x = "Age",  # add axis labels and title
+       y = "Median Income",
+       title = "Wage gap between male and female PhD's, 2019") + 
+  theme_classic()+ #simpler overall plot theme
+  scale_y_continuous(labels = scales::dollar_format(), #format y axis to dollars
+                     limits = c(0, 160000)) + 
+  scale_color_discrete(name = "Gender") #change legend label
+```
+
+#### Slightly better - adding color and annotations
+
+Have a look at color scale options 
+
+`?scale_color_brewer() `
+`?scale_color_viridis_c()`
+`?scale_color_viridis_c()`
+`?scale_color_manual()`
+
+I will often use the `_manual()` function to put in my own custom colors
+
+Note, if you are using `geom_bar`, or `geom_col`, these scales will be like:
+`scale_fill_*` because you are filling those geometries with color, unline lines or point geometries. 
+ 
+```{r}
+census_sub%>%
+    group_by(sex2, age5)%>%
+    summarize(median_inc = median(WAGP, na.rm=TRUE))%>%
+  filter(is.na(age5)==F)%>%
+  ungroup()%>%
+ggplot(mapping = aes(group = sex2, color=sex2, x=age5, y=median_inc))+
+    geom_line(lwd = 2)+  #make a thicker line
+  labs(x = "Age",
+       y = "Median Income",
+       title = "Wage gap between male and female PhD's", 
+       subtitle = "2019 American Community Survey", #additional subtitle
+       caption = "Calculations by Corey Sparks") + # own it!
+  theme_classic()+
+  scale_y_continuous(labels = scales::dollar_format(),
+                     limits = c(0, 160000)) + 
+  scale_color_manual(name = "Gender", values = c("#004f9e","#e36c2c")) #change legend label and add custom colors
+
+```
+
+## Showing uncertainty
+None of the estimates we will derive are perfect, they all have error in them. If you ignore the error in your estimates, you can mislead your audience into thinking something is different, when it is not
+
+#### Another example - uncertainty in estimates + point plot
+I can add uncertainty to any calculation by using geometries like
+`geom_errorbar(aes(ymin, ymax))`  or `geom_pointrange(aes(ymin, ymax))` 
+
+This assumes you can calculate some measure of variation in your estimates, such as the standard error of a median:
+
+$$\sigma(median) = 1.253 \frac{\sigma}{\sqrt{n}}$$
+
+```{r}
+
+census_sub%>%
+  select(sex2, age5, WAGP)%>%
+    group_by(sex2, age5)%>%
+    summarise_each(funs(median, se=1.253*(sd(.)/sqrt(n()))))%>%
+  filter(is.na(age5)==F)%>%
+  ungroup()%>%
+ggplot(mapping = aes(group = sex2, color=sex2, x=age5, y=median))+
+    geom_pointrange(aes(ymin = median -1.96*se,
+                        ymax = median + 1.96*se),
+                    lwd= .5)+ #calculate se(mean)
+  geom_line(lwd = 1.2)+#make a thicker line
+  labs(x = "Age",
+       y = "Median Income",
+       title = "Wage gap between male and female PhD's", 
+       subtitle = "2019 American Community Survey", #additional subtitle
+       caption = "Calculations by Corey Sparks") + # own it!
+  theme_classic()+
+  scale_y_continuous(labels = scales::dollar_format(),
+                     limits = c(0, 180000)) + 
+  scale_color_manual(name = "Gender", values = c("#004f9e","#e36c2c")) #change legend label and add custom colors
+
+
+```
+
+#### Using geom_errorbar() and geom_bar()
+Here's an example of showing uncertainty in a bar plot
+
+```{r}
+census_sub%>%
+  select(sex2, age5, WAGP)%>%
+    group_by(sex2, age5)%>%
+    summarise_each(funs(median, se=1.253*(sd(.)/sqrt(n()))))%>%
+  filter(is.na(age5)==F)%>%
+  ungroup()%>%
+ggplot(mapping = aes(x=age5, fill=sex2,  y=median))+
+  geom_bar(stat = "identity", color= "black",
+            position=position_dodge())+
+    geom_errorbar(aes(ymin = median , #only show 1 side of error bar
+                        ymax = median + 1.96*se), width=.2,
+                 position=position_dodge(.9))+ #calculate se(mean)
+  labs(x = "Age",
+       y = "Median Income",
+       title = "Wage gap between male and female PhD's", 
+       subtitle = "2019 American Community Survey", #additional subtitle
+       caption = "Calculations by Corey Sparks")+  # own it!
+  theme_classic()+
+  scale_y_continuous(labels = scales::dollar_format(),
+                     limits = c(0, 180000)) + 
+  scale_fill_manual(name = "Gender", values = c("#004f9e","#e36c2c")) #change legend label and add custom colors
+```
+
