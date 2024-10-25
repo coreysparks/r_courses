@@ -1,0 +1,60 @@
+---
+title: "Predictive Modeling - Basic methods for classification"
+author: "Corey Sparks, Ph.D."
+date: "10/29/2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, warning=TRUE}
+library(haven)
+dat<-url("https://github.com/coreysparks/data/blob/master/ZZIR62FL.DTA?raw=true")
+model.dat<-read_dta(dat)
+
+library(dplyr)
+
+model.dat2<-model.dat%>%
+  mutate(region = v024, 
+         modcontra= as.factor(ifelse(v364 ==1,1, 0)),
+         age = v012, 
+         livchildren=v218,
+         educ = v106,
+         currpreg=v213,
+         knowmodern=ifelse(v301==3, 1, 0))%>%
+  filter(currpreg==0, v536>0)%>% #notpreg, sex active
+  select(caseid, region, modcontra,age, livchildren, educ, knowmodern)
+
+```
+
+```{r, results='asis'}
+
+knitr::kable(head(model.dat2))
+```
+
+```{r}
+library(caret)
+set.seed(1115)
+train<- createDataPartition(y = model.dat2$modcontra , p = .80, list=F)
+
+model.dat2train<-model.dat2[train,]
+model.dat2test<-model.dat2[-train,]
+
+table(model.dat2train$modcontra)
+```
+
+```{r}
+glm1<-glm(modcontra~factor(region)+scale(age)+livchildren+factor(educ), data=model.dat2train[,-1], family = binomial)
+summary(glm1)
+
+tr_pred<- predict(glm1, newdata = model.dat2train, type = "response")
+
+tr_predcl<-factor(ifelse(tr_pred>.28, 1, 0))
+
+table(model.dat2train$modcontra, tr_predcl)
+confusionMatrix(data = tr_predcl,model.dat2train$modcontra )
+```

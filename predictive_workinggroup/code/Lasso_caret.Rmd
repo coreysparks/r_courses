@@ -63,7 +63,7 @@ Here is an example where we fit a linear model and the perform variable subset s
 
 ```{r, echo=F, results='asis'}
 library(dplyr)
-load(url("https://github.com/coreysparks/r_courses/raw/refs/heads/master/data/prb_2008.Rdata"))
+load(url("https://github.com/coreysparks/r_courses/blob/master/prb_2008.Rdata?raw=true"))
 
 names(prb)<-tolower(names(prb))
 ```
@@ -295,7 +295,9 @@ library(glmnet)
 library(MASS)
 fm<-glm(modcontra~region+factor(age)+livchildren+wantmore+rural+factor(educ)+partnered+work+wealth, data = dtrain, family=binomial) 
 summary(fm)
+
 ```
+
 
 ## stepwise logistic
 ```{r}
@@ -363,9 +365,42 @@ plot(rmod2)
 rmod3<-glmnet(x,y, data = dtrain, family="binomial", alpha = 1, lambda = s2$lambda.1se)
 rmod3$beta
 
-
+cbind(coef(fm), rmod3$beta, rmod1$beta)
 ```
 
+```{r}
+y<-as.factor(ifelse(y==1,"mod", "notmod"))
+fitControl <- trainControl(method = "repeatedcv",
+                       number = 10,
+                       repeats = 3,
+                       verboseIter = TRUE,
+                       classProbs = TRUE,
+                     search="random",
+                     sampling = "down",
+                     summaryFunction=twoClassSummary,
+                     savePredictions = "all")
+
+fit_logistic <- train(y=y, x=x,
+                   method = "glmnet",metric="AUC",
+                   trControl = fitControl,
+                   tuneLength=20,
+                   family = "binomial")
+
+
+yt<-dtest$modcontra
+xt<-model.matrix(~factor(region)+factor(age)+livchildren+rural+wantmore+factor(educ)+partnered+work+factor(wealth), data=dtest)
+xt<-(xt)[,-1]
+yt<-as.factor(ifelse(yt==1,"mod", "notmod"))
+
+
+predp1<-predict(fit_logistic, newdata=x)
+#predc1<- as.factor(ifelse(predp1 > mean(dtrain$modcontra, na.rm=T), "mod", "notmod"))
+confusionMatrix(data = predp1,y, positive = "mod" )
+
+
+predrp1<-predict(fit_logistic, newdata=xt)
+confusionMatrix(data = predrp1,yt, positive = "mod" )
+```
 
 
 ## classification results

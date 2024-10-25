@@ -1,0 +1,279 @@
+---
+title: "Demography Predictive Modeling Working Group - Cross-validation of models"
+author: "Corey Sparks, Ph.D."
+date: "11/19/2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Classification models
+
+I would suggest you read section 5.1 of [Introduction to Statistical Learning](https://utsacloud-my.sharepoint.com/:b:/g/personal/corey_sparks_utsa_edu/EcwJ43xnPG5Jg2XquDnHdmkBPstgvNIyqTTugCfEeFGDFQ?e=SSlWyT) to get a full treatment of this topic
+
+In classification methods, we are typically interested in using some observed characteristics of a case to predict a binary categorical outcome. This can be extended to a multi-category outcome, but the largest number of applications involve a 1/0 outcome.
+
+In these examples, we will use the Demographic and Health Survey [Model Data](https://dhsprogram.com/data/Model-Datasets.cfm). These are based on the DHS survey, but are publicly available and are used to practice using the DHS data sets, but don't represent a real country.
+
+In this example, we will use the outcome of contraceptive choice (modern vs other/none) as our outcome.
+
+```{r, warning=TRUE}
+library(haven)
+dat<-url("https://github.com/coreysparks/data/blob/master/ZZIR62FL.DTA?raw=true")
+model.dat<-read_dta(dat)
+
+```
+
+Here we recode some of our variables and limit our data to those women who are not currently pregnant and who are sexually active.
+
+```{r}
+library(dplyr)
+
+model.dat2<-model.dat%>%
+  mutate(region = v024, 
+         modcontra= as.factor(ifelse(v364 ==1,"Modcontra", "NoModContra")),
+         age = cut(v012, breaks = 5), 
+         livchildren=v218,
+         educ = v106,
+         currpreg=v213,
+         knowmodern=ifelse(v301==3, 1, 0),
+         age2=v012^2, 
+         rural = ifelse(v025==2, 1,0),
+         wantmore = ifelse(v605%in%c(1,2), 1, 0),
+         wt=v005/1000000)%>%
+  filter(currpreg==0, v536>0)%>% #notpreg, sex active
+  dplyr::select(caseid, region, modcontra,age, age2,livchildren, educ, knowmodern, rural, wantmore, wt)
+
+```
+
+```{r, results='asis'}
+
+knitr::kable(head(model.dat2))
+
+```
+
+
+## Cross-validation of predictive models
+
+The term [cross-validation](https://www.cs.cmu.edu/~schneide/tut5/node42.html) refers to fitting a model on a subset of data and then testing it on another subset of the data. Typically this process is repeated several times. 
+
+The simplest way of doing this is to leave out a single observation, refit the model without it in the data, then predict its value using the rest of the data. This is called **hold out** cross-validation.
+
+**K-fold** cross-validation is a process where you leave out a "group" of observations, it is as follows:
+
+1. Randomize the data
+2. Split the data into k groups, where k is an integer 
+3. For each of the k groups, 
+    + Take one of the groups as a hold out test set
+    + Use the other k-1 groups as training data
+    + Fit a model using the data on the k-1 groups, and test it on the hold out group
+    + Measure predictive accuracy of that model, and **throw the model away!**
+4. Summarize the model accuracy over the measured model accuracy metrics
+
+A further method is called **leave one out, or LOO** cross-validation. This combines hold out and k-fold cross-validation.
+
+
+# Why?
+By doing this, we can see how model accuracy is affected by particular individuals, and overall allows for model accuracy to be measured repeatedly so we can assess things such as model **tuning parameters**.
+
+If you remember from [last time](http://rpubs.com/corey_sparks/544570), the regression partition (rpart) analysis depended upon us choosing a good value for the **complexity parameter, CP**. In a cross-validation analysis, we can use the various resamplings of the data to examine the model's accuracy sensitivity to alternative values of this parameter. 
+
+This evaluation can either be done systematically, along a grid, or using a random search. 
+
+
+## Alternative accuracy measures
+We talked last time about using model accuracy as a measure of overall fit. This was calculated using the observed and predicted values of our outcome. For classification model, another commonly used metric of model predictive power is the Receiver Operating Characteristics (**ROC**) curve. This is a probability curve, and is often accompanied by the area under the curve (**AUC**) measure, which summarizes the separability of the classes. Together they tell you how capable the model is of determining difference between the classes in the data. The higher the values of these, the better, and they are both bound on (0,1). 
+
+A nice description of these are found [here](https://towardsdatascience.com/understanding-auc-roc-curve-68b2303cc9c5). 
+
+
+## Regression partition tree
+
+As we saw in the first working group example, the regression tree is another common technique used in classification problems. Regression or classification trees attempt to find optimal splits in the data so that the best classification of observations can be found. 
+
+
+### Create design matrix
+
+If we have a mixture of factor variables and continuous predictors in our analysis, it is best to set up the design matrix for our models before we run them. Many methods within `caret` won't use factor variables correctly unless we set up the dummy variable representations first.
+
+```{r}
+datmat<-model.matrix(~factor(region)-1+factor(age)+livchildren+rural+wantmore+factor(educ)-1, data=model.dat2)
+datmat<-data.frame(datmat)
+datmat$modcontra<- model.dat2$modcontra
+datmat$wt<-model.dat2$wt
+head(datmat)
+summary(datmat)
+```
+
+### using caret to create training and test sets.
+We use an 80% training fraction
+
+```{r}
+library(caret)
+set.seed(1115)
+train<- createDataPartition(y = datmat$modcontra , p = .80, list=F)
+
+dtrain<-datmat[train,c(-1,-5, -9, -16)]
+dtest<-datmat[-train,c(-1,-5, -9, -16)]
+
+table(dtrain$modcontra)
+prop.table(table(dtrain$modcontra))
+```
+```{r}
+summary(dtrain)
+summary(dtest)
+```
+
+### Set up caret for 10 fold cross-validation
+To set up the training controls for a caret model, we typically have to specify the type of re-sampling method, the number of resamplings, the number of repeats (if you're doing repeated sampling).
+Here we will do a 10 fold cross-validation, 10 is often recommended as a choice for k based on experimental sensitivity analysis. 
+
+The other things we specify are:
+
+* repeats - These are the number of times we wish to repeat the cross-validation, typically 3 or more is used
+* classProbs = TRUE - this is necessary to assess accuracy in the confusion matrix
+* search = "random" is used if you want to randomly search along the values of the tuning parameter
+* sampling - Here we can specify alternative sampling methods to account for unbalanced outcomes
+* SummaryFunction=twoClassSummary - keeps information on the two classes of the outcome 
+* savePredictions = T - have the process save all the predicted values throughout the process, we need this for the ROC curves
+
+```{r}
+fitctrl <- trainControl(method="cv", 
+                        number=5, 
+                        repeats=3,
+                        classProbs = TRUE,
+                     #search="random",
+                     sampling = "down",
+                     summaryFunction=twoClassSummary,
+                     savePredictions = "all")
+
+```
+
+### Train models using caret
+Here we use caret to fit the rpart model
+
+```{r}
+library(rpart)
+rp1<-caret::train(modcontra~., 
+           data=dtrain,
+           metric="ROC",
+           method ="glm",
+          tuneLength=10, #try 20 random values of the tuning parameters
+           trControl=fitctrl)
+
+rp2<-caret::train(modcontra~., 
+           data=dtrain,
+           metric="ROC",
+           method ="rf",
+          tuneLength=10, #try 20 random values of the tuning parameters
+           trControl=fitctrl)
+
+rp3<-caret::train(modcontra~., 
+           data=dtrain,
+           metric="ROC",
+           method ="knn",tuneGrid=expand.grid(k = c(30, 35, 40, 45, 50, 55, 60)),
+          #tuneLength=10, #try 20 random values of the tuning parameters
+           trControl=fitctrl)
+
+rp1
+wts<-datmat$wt[train]
+rp2<-caret::train(modcontra~., 
+           data=dtrain,
+           metric="ROC",
+           method ="knn",
+          tuneGrid=expand.grid(k = c(30, 35, 40, 45, 50, 55, 60)), #try 20 random values of the tuning parameters
+           trControl=fitctrl)
+
+rp2
+
+
+gl1<-caret::train(modcontra~., preProcess=c("center", "scale"),
+           data=dtrain,
+           #metric="ROC",
+           method ="knn",trControl=fitctrl, tuneLength=10)
+,
+           #family=binomial,
+           t#uneGrid=c(k=3),trControl=fitctrl)
+           #,
+          #tuneLength=10, #try 20 random values of the tuning parameters
+           #trControl=fitctrl)
+
+gl1
+
+
+##Accuracy on training set
+predrp1<-predict(rp2, newdata=dtrain, type = "prob")
+roc1<-roc(dtrain$modcontra, predrp1$Modcontra)
+plot(roc1)
+confusionMatrix(data = predict(rp1, newdata=dtrain),dtrain$modcontra, positive = "Modcontra" )
+confusionMatrix(data = predict(rp2, newdata=dtrain),dtrain$modcontra, positive = "Modcontra" )
+confusionMatrix(data = predict(rp3, newdata=dtrain),dtrain$modcontra, positive = "Modcontra" )
+
+
+    predgl1<-predict(gl1, newdata=dtrain)
+confusionMatrix(data = predgl1,dtrain$modcontra, positive = "Modcontra" )
+
+```
+
+We see that by down sampling the more common level of the outcome, we end up with much more balanced accuracy in terms of specificity and sensitivity.
+
+We can visualize the resulting "best fitting" model like we did before:
+
+```{r, fig.height=11, fig.width=10}
+library(rpart.plot)
+# rpart.plot(rp1$finalModel, 
+# box.palette="GnBu",
+# shadow.col="gray", 
+# nn=TRUE, main="Classification tree for using modern contraception")
+
+prp(rp1$finalModel,type=4, extra = 4, 
+    main="Classification tree for using modern contraception")
+
+```
+
+You see that the best fitting model is much more complicated than the previous one. Each node box displays the classification, the probability of each class at that node (i.e. the probability of the class conditioned on the node) and the percentage of observations used at that node. [From here](https://blog.revolutionanalytics.com/2013/06/plotting-classification-and-regression-trees-with-plotrpart.html).
+
+### ROC curve
+The ROC curve can be shown for the model:
+
+```{r}
+
+library(pROC)
+# Select a parameter setting
+mycp<-rp2$pred$k==rp2$bestTune$k
+selectedIndices <- rp2$pred$k==mycp
+# Plot:
+plot.roc(rp2$pred$obs[selectedIndices], rp2$pred$Modcontra[selectedIndices], grid=T)
+plot.roc(gl1$pred$obs, gl1$pred$Modcontra, add=T, col="blue")
+
+#Value of ROC and AUC
+roc(rp1$pred$obs[selectedIndices],  rp1$pred$Modcontra[selectedIndices])
+roc(gl1$pred$obs, gl1$pred$Modcontra)
+auc(rp1$pred$obs[selectedIndices],  rp1$pred$Modcontra[selectedIndices])
+auc(gl1$pred$obs, gl1$pred$Modcontra)
+
+roc.test(roc(gl1$pred$obs, gl1$pred$Modcontra),roc(rp1$pred$obs[selectedIndices],  rp1$pred$Modcontra[selectedIndices]) )
+```
+
+### Assess fit on test data
+
+```{r}
+predrp1<-predict(rp1, newdata=dtest)
+confusionMatrix(data = predrp1,dtest$modcontra, positive = "Modcontra" )
+
+predgl1<-predict(gl1, newdata=dtest)
+confusionMatrix(data = predgl1,dtest$modcontra, positive = "Modcontra" )
+
+
+```
+
+### So what?
+
+By doing cross-validation, we can do a few things:
+
+1. Assess model fit better by using iterated subsets of data
+2. Tune model parameters by allowing them to vary across cross-validation samples

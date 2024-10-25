@@ -1,0 +1,280 @@
+---
+title: "Demography Predictive Modeling Working Group - Basic methods for classification"
+author: "Corey Sparks, Ph.D."
+date: "10/29/2019"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Classification methods and models
+In classification methods, we are typically interested in using some observed characteristics of a case to predict a binary categorical outcome. This can be extended to a multi-category outcome, but the largest number of applications involve a 1/0 outcome.
+
+Below, we look at a few classic methods of doing this:
+
+ - Logistic regression
+ 
+ - Regression/Partitioning Trees
+ 
+ - Linear Discriminant Functions
+ 
+There are other methods that we will examine but these are probably the easiest to understand.
+
+In these examples, we will use the Demographic and Health Survey [Model Data](https://dhsprogram.com/data/Model-Datasets.cfm). These are based on the DHS survey, but are publicly available and are used to practice using the DHS data sets, but don't represent a real country.
+
+In this example, we will use the outcome of contraceptive choice (modern vs other/none) as our outcome.
+
+```{r, warning=TRUE}
+library(haven)
+dat<-url("https://github.com/coreysparks/data/blob/master/ZZIR62FL.DTA?raw=true")
+model.dat<-read_dta(dat)
+
+```
+
+Here we recode some of our variables and limit our data to those women who are not currently pregnant and who are sexually active.
+
+```{r}
+library(dplyr)
+
+model.dat2<-model.dat%>%
+  mutate(region = v024, 
+         modcontra= as.factor(ifelse(v364 ==1,1, 0)),
+         age = v012, 
+         livchildren=v218,
+         educ = v106,
+         currpreg=v213,
+         knowmodern=ifelse(v301==3, 1, 0),
+         age2=v012^2)%>%
+  filter(currpreg==0, v536>0)%>% #notpreg, sex active
+  dplyr::select(caseid, region, modcontra,age, age2,livchildren, educ, knowmodern)
+
+```
+
+```{r, results='asis'}
+
+knitr::kable(head(model.dat2))
+
+```
+
+### using caret to create training and test sets.
+We use an 80% training fraction
+
+```{r}
+library(caret)
+set.seed(1115)
+train<- createDataPartition(y = model.dat2$modcontra , p = .80, list=F)
+
+model.dat2train<-model.dat2[train,]
+model.dat2test<-model.dat2[-train,]
+
+table(model.dat2train$modcontra)
+prop.table(table(model.dat2train$modcontra))
+```
+```{r}
+summary(model.dat2train)
+```
+
+## Logistic regression for classification
+Here we use a basic binomial GLM to estimate the probability of a woman using modern contraception. We use information on their region of residence, age, number of living children and level of education. 
+
+This model can be written: 
+$$ln \left ( \frac{Pr(\text{Modern Contraception})}{1-Pr(\text{Modern Contraception})} \right ) = X' \beta$$
+
+Which can be converted to the probability scale via the inverse logit transform:
+
+$$Pr(\text{Modern Contraception}) = \frac{1}{1+exp (-X' \beta)}$$ 
+
+```{r}
+glm1<-glm(modcontra~factor(region)+scale(age)+scale(age2)+scale(livchildren)+factor(educ), data=model.dat2train[,-1], family = binomial)
+summary(glm1)
+
+
+```
+
+We see that all the predictors are significantly related to our outcome
+
+Next we see how the model performs in terms of accuracy of prediction. This is new comparison to how we typically use logistic regression. 
+
+We use the `predict()` function to get the estimated class probabilities for each case
+
+```{r}
+tr_pred<- predict(glm1, newdata = model.dat2train, type = "response")
+head(tr_pred)
+
+```
+
+These are the estimated probability that each of these women used modern contraception, based on the model. 
+
+In order to create classes (uses modern vs doesn't use modern contraception) we have to use a **decision rule**. A decision rule is when we choose a cut off point, or *threshold* value of the probability to classify each observation as belonging to one class or the other.
+
+A basic decision rule is if $Pr(y=\text{Modern Contraception} |X) >.5$ Then classify the observation as a modern contraception user, and otherwise not. This is what we will use here. 
+
+
+```{r}
+
+tr_predcl<-factor(ifelse(tr_pred>.5, 1, 0))
+
+library(ggplot2)
+
+pred1<-data.frame(pr=tr_pred, gr=tr_predcl, modcon=model.dat2train$modcontra)
+
+pred1%>%
+  ggplot()+geom_density(aes(x=pr, color=gr, group=gr))+ggtitle(label = "Probability of Modern Contraception", subtitle = "Threshold = .5")
+
+
+pred1%>%
+  ggplot()+geom_density(aes(x=pr, color=modcon, group=modcon))+ggtitle(label = "Probability of Modern Contraception", subtitle = "Truth")
+
+```
+
+
+Next we need to see how we did. A simple cross tab of the observed classes versus the predicted classes is called the **confusion matrix**. 
+
+```{r}
+table( tr_predcl,model.dat2train$modcontra)
+```
+
+This is great, but typically it's easier to understand the model's predictive ability by converting these to proportions. The `confusionMatrix()` function in `caret` can do this, plus other stuff. 
+
+This provides lots of output summarizing the classification results. At its core is the matrix of observed classes versus predicted classes. I got one depiction of this [here](https://www.geeksforgeeks.org/confusion-matrix-machine-learning/) and from the [Wikipedia page](https://en.wikipedia.org/wiki/Confusion_matrix)
+
+![Confusion matrix](C:/Users/ozd504/OneDrive - University of Texas at San Antonio/predictive_workinggroup/images/cm1.PNG)
+
+Lots of information on the predictive accuracy can be found from this 2x2 table:
+
+
+![Confusion matrix](C:/Users/ozd504/OneDrive - University of Texas at San Antonio/predictive_workinggroup/images/cm2.PNG)
+
+Generally, we are interested in overall accuracy, sensitivity and specificity. 
+
+
+
+```{r}
+confusionMatrix(data = tr_predcl,model.dat2train$modcontra )
+```
+
+Overall the model has a 73.9% accuracy, which isn't bad! What is bad is some of the other measures. The sensitivity is really low ` 267/(267+1142) = .189`, so we are only predicting the positive class (modern contraception) in 19% of cases correctly. In other word the model is pretty good at predicting if you don't use modern contraception, `3761/(3761+275)= .931`, but not at predicting if you do. 
+
+We could try a different decision rule, in this case, I use the mean of the response as the cutoff value. 
+
+```{r}
+tr_predcl<-factor(ifelse(tr_pred>.258, 1, 0)) #mean of response
+
+pred2<-data.frame(pr=tr_pred, gr=tr_predcl, modcon=model.dat2train$modcontra)
+pred2%>%
+  ggplot()+geom_density(aes(x=pr, color=gr, group=gr))+ggtitle(label = "Probability of Modern Contraception", subtitle = "Threshold = .258")
+
+pred2%>%
+  ggplot()+geom_density(aes(x=pr, color=modcon, group=modcon))+ggtitle(label = "Probability of Modern Contraception", subtitle = "Truth")
+
+
+
+```
+
+
+```{r}
+confusionMatrix(data = tr_predcl,model.dat2train$modcontra, positive = "1" )
+
+```
+
+Which drops the accuracy a little, but increases the specificity at the cost of the sensitivity.
+
+Next we do this on the test set to evaluate model performance outside of the training data
+
+```{r}
+pred_test<-predict(glm1, newdata=model.dat2test, type="response")
+pred_cl<-factor(ifelse(pred_test>.28, 1, 0))
+
+table(model.dat2test$modcontra,pred_cl)
+
+confusionMatrix(data = pred_cl,model.dat2test$modcontra )
+
+```
+
+## Regression partition tree
+
+As we saw in the first working group example, the regression tree is another common technique used in classification problems. Regression or classification trees attempt to 
+
+```{r}
+
+library(rpart)
+library(rpart.plot)
+
+rp1<-rpart(modcontra~factor(region)+(age)+livchildren+factor(educ), 
+           data=model.dat2train,
+           method ="class",
+           control = rpart.control(minbucket = 10, cp=.01)) #lower CP parameter makes for more compliacted tree
+summary(rp1)
+
+rpart.plot(rp1, type = 4,extra=4, 
+box.palette="GnBu",
+shadow.col="gray", 
+nn=TRUE, main="Classification tree for using modern contraception")
+```
+
+Each node box displays the classification, the probability of each class at that node (i.e. the probability of the class conditioned on the node) and the percentage of observations used at that node. [From here](https://blog.revolutionanalytics.com/2013/06/plotting-classification-and-regression-trees-with-plotrpart.html).
+
+
+```{r}
+predrp1<-predict(rp1, newdata=model.dat2train, type = "class")
+confusionMatrix(data = predrp1,model.dat2train$modcontra )
+
+```
+
+We see the regression tree is performing a little better than the logistic regression on the test case using the summary below:
+
+```{r}
+pred_testrp<-predict(rp1, newdata=model.dat2test, type="class")
+
+confusionMatrix(data = pred_testrp,model.dat2test$modcontra )
+
+```
+
+## Linear discriminant function
+
+Linear discriminant functions attempt to separate classes from each other using a strictly linear function of the variables. It attempts to reduce the dimensionality of the original data to a single linear function of the input variables, or the *discriminant function*. This is very similar to what PCA does when it creates a principal component, although in LDA, the function uses this linear transformation of the data to optimally separate classes. 
+
+
+In this case it performs better than the logistic regression but not as well as the regression tree. 
+
+```{r}
+library(MASS)
+lda1<-lda(modcontra~factor(region)+scale(age)+livchildren+factor(educ), data=model.dat2train,prior=c(.74, .26) , CV=T)
+
+pred_ld1<-lda1$class
+head(lda1$posterior) #probabilities of membership in each group
+
+ld1<-data.frame(ppmod= lda1$posterior[, 2],pred=lda1$class, real=model.dat2train$modcontra)
+ld1%>%
+  ggplot()+geom_density(aes(x=ppmod, group=pred, color=pred))+ggtitle(label = "Probabilities of class membership on the linear discriminant function")
+
+ld1%>%
+  ggplot()+geom_density(aes(x=ppmod, group=real, color=real))+ggtitle(label = "Probabilities of class membership and the real class")
+```
+
+Accuracy on the training set
+```{r}
+confusionMatrix(pred_ld1,model.dat2train$modcontra )
+
+
+```
+
+
+```{r}
+lda1<-lda(modcontra~factor(region)+scale(age)+livchildren+factor(educ), data=model.dat2train,prior=c(.74, .26) )
+
+#linear discriminant function
+lda1$scaling
+```
+
+Accuracy on the test set
+```{r}
+pred_ld2<-predict(lda1, model.dat2test)
+
+confusionMatrix(pred_ld2$class, model.dat2test$modcontra)
+
+```

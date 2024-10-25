@@ -1,0 +1,280 @@
+---
+title: "Predictive Modeling - Cluster analysis"
+author: "Corey Sparks, Ph.D."
+date: "10/15/2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+In this topic, we will discuss **Unsupervised Learning**, or as we talked about [last time](http://rpubs.com/corey_sparks/536994), the situation where you are looking for groups in your data when your data don't come with a group variable. I.e. sometimes you want to find groups of similar observations, and you need a statistical tool for doing this. 
+
+In statistics, this is called **Cluster analysis**, another case of the machine learning people inventing a new word for something and taking credit for a type of analysis that's been around for fifty years. 
+
+### Cluster analysis
+- Attempts to find sub-groups within a data set
+- Observations within a particular sub-gruop are statistically more similar to other members of their sub-group than to members of another sub-group
+- Many ways in which to do this:
+    - K-means/K-medioids
+    - Hierarchical clustering
+    - Model based clustering
+    - Latent class analysis
+- All of these methods use observed data to measure the dissimilarity between observations, then create groups, or clusters (buckets) from these observations. 
+
+### Metrics of similiarity 
+- Distance based
+- Euclidean distances between two observations, *i* and *j* is
+
+$$d(x_i,x_j) = \sqrt{(x_i-x_j)'(x_i-x_j)}$$
+
+Where the *x's* are the variables measured on the two observations, for instance, if we have 3 x variables for two observations, then the distance between them is:
+
+```{r}
+
+x1<-c(1,5, 1)
+x2<-c(5, 1, 2)
+
+dist( rbind(x1, x2), method = "euclidean")
+
+```
+
+If the two observations are more similar, the distance is smaller:
+
+```{r}
+
+x1<-c(1,5, 1)
+x2<-c(1, 2, 2)
+x3<-c(8,7,10)
+
+dist( rbind(x1, x2, x3), method = "euclidean")
+
+```
+
+and vice versa. 
+
+```{r, warning=TRUE}
+library(readr)
+prb<-read_csv(file = "https://raw.githubusercontent.com/coreysparks/data/master/PRB2008_All.csv", col_types = read_rds(url("https://raw.githubusercontent.com/coreysparks/r_courses/master/prbspec.rds")))
+names(prb)<-tolower(names(prb))
+
+library(dplyr)
+prb<-prb%>%
+ # mutate(africa=ifelse(continent=="Africa", 1, 0))%>%
+  filter(complete.cases(imr, tfr, percpoplt15, e0total, percurban, percmarwomcontramodern))%>%
+  select(imr, tfr, percpoplt15, e0total, percurban, percmarwomcontramodern)
+
+```
+
+```{r, results='asis'}
+
+knitr::kable(head(prb))
+```
+
+
+### Create data partition 
+Here we use 80% of the data to train our simple model
+```{r}
+library(caret)
+set.seed(1115)
+train<- createDataPartition(y = prb$imr , p = .80, list=F)
+
+prbtrain<-prb[train,]
+prbtest<-prb[-train,]
+
+```
+
+## Hierarchical clustering
+
+First we form our matrix of distances between all the countries on our observed variables:
+```{r}
+dmat<-dist(prbtrain, method="euclidean")
+
+```
+
+Then we run a hierarhical clustering algorithm on the matrix. There are lots of different ways to do this, we will just use the simplest method, the single-linkage, or nearest neighbor approach. This works by first sorting the distances from smallest to largest, then making clusters from the smallest distance pair. 
+
+Once this is done, this pair is merged into a cluster, their distance is then compared to the remaining observations, so on and so on, until you have a set of clusters for every observation. 
+
+The original way to plot these analyses is by a **dendrogram**, or tree plot. 
+
+```{r}
+hc1<-hclust(d= dmat, method="single")
+plot(hc1, hang=-1, main="Single linkage cluster analysis of PRB data")
+
+library(scorecard)
+library(factoextra)
+library(class)
+library(RColorBrewer)
+
+fviz_dend(hc1, k=5, k_colors =brewer.pal(n=5, name="Accent"),
+          color_labels_by_k = TRUE, ggtheme = theme_minimal())
+groups<-cutree(hc1, k=5)
+table(groups)
+
+```
+
+So this is silly becuase the method round 3 cluster that only had one observation. This is a weakness of the single linkage method, instead we use another method. Ward's method is typically seen as a better alternative because it tends to find clusters of similar size.
+
+```{r}
+hc2<-hclust(d= dmat, method="ward.D")
+plot(hc2, hang=-1, main="Ward's cluster analysis of PRB data")
+
+
+
+fviz_dend(hc2, k=5, k_colors = brewer.pal(n=5, name="Accent"),
+          color_labels_by_k = TRUE, ggtheme = theme_minimal())
+groups<-cutree(hc2, k=5)
+table(groups)
+
+```
+
+```{r}
+prbtrain$group1<-factor(cutree(hc2, k=5))
+
+prbtrain%>%
+  ggplot(aes(x=imr, y=tfr, pch=group1,color=group1, cex=3))+geom_point()
+
+```
+
+## K-means
+
+- Another type of cluster finder
+- Will always find a given number of *k* clusters.
+- Ideally we can minimize a within cluster variance measure to find the optimal number
+
+```{r}
+prbtrain<-prb[train,]
+
+km<-kmeans(x = prbtrain, center = 3, nstart = 10)
+km
+
+library(ClusterR)
+km2<-KMeans_rcpp(data=prbtrain, cluster=3, num_init = 10)
+
+prbtrain$cluster<-as.factor(km2$cluster)
+
+
+prbtrain%>%
+  ggplot(aes(x=imr, y=tfr, group=cluster, color=cluster, cex=3))+geom_point()
+
+```
+
+### Finding optimal number of clusters
+
+Here I loop over 1 to 10 clusters and store the between group variances, then plot the relative differences. You are looking for the number of clusters where you see a **shoulder** in the plot.
+
+```{r}
+ss<-NULL
+for(i in 1:10){
+  km<-kmeans(x=prbtrain, nstart = 10, centers = i)
+  ss[i]<-km$betweenss / km$totss
+  
+}
+
+plot(x=2:10, y=diff(ss))
+
+
+```
+
+Looks like the difference in variances stops declining dramatically at k=3 clusters. 
+
+
+Here are the test cases plotted as X's
+
+```{r}
+
+prbtest$cluster<-as.factor(predict_KMeans(data=prbtest, CENTROIDS = km2$centroids))
+
+prbtest%>%
+  ggplot(aes(x=imr, y=tfr, group=cluster, color=cluster,cex=1.5))+geom_point(aes(cex=2.5) ,pch="x")+geom_point(data=prbtrain, aes(x=imr, y=tfr, group=cluster, color=cluster))
+
+
+```
+
+## Gaussian mixtures
+- These are a type of clustering method that is based on finding a finite mixture of Gaussian distributions within data. 
+- Only useful for continuous variables in data
+
+
+```{r}
+
+prbtrain<-prb[train,]
+prbtest<-prb[-train,]
+
+prbtrain<-center_scale(prb[train,])
+prbtest<-center_scale(prb[-train,])
+
+plot(Optimal_Clusters_GMM(data = prbtrain, max_clusters = 10,seed_mode = "random_subset", km_iter = 20, em_iter = 20))
+
+gmprb<-GMM(data = prbtrain, gaussian_comps = 3,seed_mode = "random_subset", km_iter = 10, em_iter = 10)
+
+#gmprb
+```
+
+```{r}
+prbtrain<-data.frame(prbtrain)
+names(prbtrain)<-names(prb)
+prbtrain$cls<-as.factor(apply(gmprb$Log_likelihood, 1, which.max))
+
+
+pred<-predict_GMM(data=prbtest, CENTROIDS = gmprb$centroids, COVARIANCE = gmprb$covariance_matrices, WEIGHTS = gmprb$weights)
+
+prbtest<-data.frame(prbtest)
+names(prbtest)<-names(prb)
+
+prbtest$cls<-as.factor(pred$cluster_labels+1)
+
+prbtest%>%
+  ggplot(aes(x=imr, y=tfr, group=cls, color=cls))+geom_point(pch="x", aes(cex=2.5) )+geom_point(data=prbtrain, aes(x=imr, y=tfr, group=cls, color=cls))
+
+```
+
+
+```{r}
+library(factoextra)
+
+km.res <- eclust(prbtrain[, -7], "kmeans", k = 3,
+                 nstart = 25, graph = FALSE)
+
+fviz_cluster(km.res,  frame.type = "norm", frame.level = 0.68)
+```
+
+```{r}
+fviz_silhouette(km.res)
+```
+
+```{r}
+res.hc <- eclust(prbtrain, "hclust", k = 4,
+                method = "ward.D2", graph = FALSE) 
+head(res.hc$cluster, 15)
+
+fviz_dend(res.hc, rect = TRUE, show_labels = TRUE, cex = 0.5) 
+```
+
+```{r}
+res.hc <- eclust(prbtrain[, -7], "hclust", k = 4,
+                method = "ward.D2", graph = FALSE) 
+grp <- res.hc$cluster
+
+clus.centers <- aggregate(prbtrain, list(grp), mean)
+clus.centers
+```
+
+## Hybrid K-means and Hierarchical clustering
+
+```{r}
+# Compute hierarchical k-means clustering
+res.hk <-hkmeans(prbtrain[, -7], 3)
+# Elements returned by hkmeans()
+names(res.hk)
+res.hk
+
+fviz_dend(res.hk, cex = 0.6, rect = TRUE)
+fviz_cluster(res.hk, palette = "jco", repel = TRUE,
+             ggtheme = theme_classic())
+```
+
