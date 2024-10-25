@@ -38,7 +38,7 @@ $$\hat y = \hat \beta_0 + \sum {\hat \beta_k x_{ik}}$$
 where the terms on the right correspond to the linear predictor for the outcome ($y$), given the values of the predictors ($x_k$). The $\hat \beta$ values are the unbiased estimates of the regression parameters, for the linear model, typically found by least squares estimation. 
 
 ### Generalized linear model
-* Extension of the linear modeling concept to non-gaussian outcomes.
+* Extension of the linear modeling concept to non-Gaussian outcomes.
 
 * Link function $\eta$ links the mean of the outcome to a linear predictor with a nonlinear function $\eta$
 
@@ -57,7 +57,7 @@ The problem is when there are parameters in the model that are zero or nearly ze
 
 The question is how to go about doing this? 
 
-You may have seen methods of regression subsetting via stepwise, forward or backward selection. These methods iteratively insert or remove predictor variables from the model, and in this process the models are scored via either their RSS or AIC or some other information criteria. 
+You may have seen methods of regression subsetting via step-wise, forward or backward selection. These methods iteratively insert or remove predictor variables from the model, and in this process the models are scored via either their RSS or AIC or some other information criteria. 
 
 Here is an example where we fit a linear model and the perform variable subset selection. 
 
@@ -89,7 +89,7 @@ summary(fm)
 length(coef(fm))
 ```
 
-One traditional approach would then be to do some sort of variable selection, what people used to be taught was stepwise (backward or forward) elmination to obtain the best subset of predictors:
+One traditional approach would then be to do some sort of variable selection, what people used to be taught was step-wise (backward or forward) elimination to obtain the best subset of predictors:
 
 ### Stepwise selection model 
 
@@ -109,10 +109,10 @@ AIC(fm)
 AIC(smod)
 ```
 
-This shows that the original model had `r length(coef(fm))` parameters, while the model that used AIC to find the best subset had `r length(smod$coef)` parameters, and the relative model fit, in terms of AIC went from `r AIC(fm)` for the saturated model to `r AIC(smod)` for the stepwise model. 
+This shows that the original model had `r length(coef(fm))` parameters, while the model that used AIC to find the best subset had `r length(smod$coef)` parameters, and the relative model fit, in terms of AIC went from `r AIC(fm)` for the saturated model to `r AIC(smod)` for the step-wise model. 
 
 
-An alternative to stepwise selection is called *Best Subset Regression* and considers all possible combinations of variables from the data, and scores the model based on seeing all possible predictors. 
+An alternative to step-wise selection is called *Best Subset Regression* and considers all possible combinations of variables from the data, and scores the model based on seeing all possible predictors. 
 
 ```{r}
 library(bestglm)
@@ -121,7 +121,7 @@ b1<-bestglm(yx,IC = "AIC", family=gaussian, method = "exhaustive")
 
 summary(b1$BestModel)
 ```
-This creates a parsimonious model, with only `r length(b1$BestModel$coefficients)` coefficients and an AIC of `r AIC(b1$BestModel)` which is slightly lower than the stepwise model. 
+This creates a parsimonious model, with only `r length(b1$BestModel$coefficients)` coefficients and an AIC of `r AIC(b1$BestModel)` which is slightly lower than the step-wise model. 
 
 ## Model shrinkage
 
@@ -420,5 +420,5 @@ table(predicted.classes, observed.classes)
 By doing any type of regression variable selection, you are going to have the computer tell you what variables are going into your models. A lot of people don't like this, but it is very common in the applied world in order to build the best models, especially in high-dimensional data.
 
 #### Take aways
-1. These methods will lead to more parsimonius models with better predictive power
+1. These methods will lead to more parsimonious models with better predictive power
 2. The models are sensitive to their tuning parameters, so please don't jump into this without tuning the model parameters. 
