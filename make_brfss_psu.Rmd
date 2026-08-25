@@ -1,0 +1,130 @@
+---
+title: "Make_BRFSS_psu"
+author: "Corey S. Sparks, Ph.D."
+date: "May 7, 2019"
+output: html_document
+---
+
+
+
+```{r load data&recode, message=FALSE, warning=FALSE}
+#load brfss
+library(car)
+library(stargazer)
+library(survey)
+library(sjPlot)
+library(ggplot2)
+library(pander)
+library(knitr)
+library(tidycensus)
+library(dplyr)
+```
+
+
+```{r}
+library(haven)
+brf16<-read_xpt("~/Downloads/LLCP2016.XPT_")
+
+
+
+#samps<-sample(1:nrow(brfss16m), size = 40000, replace=F)
+#brfss16m<-brfss16m[samps,]
+#The names in the data are very ugly, so I make them less ugly
+nams<-names(brf16)
+#we see some names are lower case, some are upper and some have a little _ in the first position. This is a nightmare.
+newnames<-gsub(pattern = "_",replacement =  "",x =  nams)
+names(brf16)<-tolower(newnames)
+
+```
+
+###Recode variables
+```{r}
+#sex
+brf16$male<-ifelse(brf16$sex==1, 1, 0)
+
+#BMI
+brf16$bmi<-ifelse(is.na(brf16$bmi5)==T, NA, brf16$bmi5/100)
+
+#Healthy days
+brf16$healthdays<-Recode(brf16$physhlth, recodes = "88=0; 77=NA; 99=NA")
+
+#Healthy mental health days
+brf16$healthmdays<-Recode(brf16$menthlth, recodes = "88=0; 77=NA; 99=NA")
+
+brf16$badhealth<-Recode(brf16$genhlth, recodes="4:5=1; 1:3=0; else=NA")
+#race/ethnicity
+brf16$black<-Recode(brf16$racegr3, recodes="2=1; 9=NA; else=0")
+brf16$white<-Recode(brf16$racegr3, recodes="1=1; 9=NA; else=0")
+brf16$other<-Recode(brf16$racegr3, recodes="3:4=1; 9=NA; else=0")
+brf16$hispanic<-Recode(brf16$racegr3, recodes="5=1; 9=NA; else=0")
+
+brf16$race_eth<-Recode(brf16$racegr3, 
+recodes="1='nhwhite'; 2='nh black'; 3='nh other';4='nh multirace'; 5='hispanic'; else=NA",
+as.factor = T)
+brf16$race_eth<-relevel(brf16$race_eth, ref = "nhwhite")
+
+#insurance
+brf16$ins<-Recode(brf16$hlthpln1, recodes ="7:9=NA; 1=1;2=0")
+
+#income grouping
+brf16$inc<-Recode(brf16$incomg, recodes = "9= NA;1='1_lt15k'; 2='2_15-25k';3='3_25-35k';4='4_35-50k';5='5_50kplus'", as.factor = T)
+brf16$inc<-as.ordered(brf16$inc)
+#education level
+brf16$educ<-Recode(brf16$educa,
+recodes="1:2='0Prim'; 3='1somehs'; 4='2hsgrad'; 5='3somecol'; 6='4colgrad';9=NA",
+as.factor=T)
+brf16$educ<-relevel(brf16$educ, ref='2hsgrad')
+
+#employment
+brf16$employ<-Recode(brf16$employ1,
+recodes="1:2='employloyed'; 2:6='nilf'; 7='retired'; 8='unable'; else=NA",
+as.factor=T)
+brf16$employ<-relevel(brf16$employ, ref='employloyed')
+
+#marital status
+brf16$marst<-Recode(brf16$marital,
+recodes="1='married'; 2='divorced'; 3='widowed'; 4='separated'; 5='nm';6='cohab'; else=NA",
+as.factor=T)
+brf16$marst<-relevel(brf16$marst, ref='married')
+
+#Age cut into intervals
+brf16$agec<-cut(brf16$age80, breaks=c(0,24,39,59,79,99))
+
+#BMI, in the brf16a the bmi variable has 2 implied decimal places,
+#so we must divide by 100 to get real bmi's
+
+brf16$bmi<-brf16$bmi5/100
+
+#smoking currently
+brf16$smoke<-Recode(brf16$smoker3, 
+recodes="1:2=1; 3:4=0; else=NA")
+#brf16$smoke<-relevel(brf16$smoke, ref = "NeverSmoked")
+
+brf16$obese<-ifelse(is.na(brf16$bmi)==T, NA, 
+                       ifelse(brf16$bmi>30,1,0))
+
+```
+
+
+```{r}
+brf16_samp<-brf16%>%
+  select(state,  obese,agec,male, educ, race_eth,smoke, healthmdays, badhealth,bmi)%>%
+  filter(complete.cases(.))%>%
+  group_by(state)%>%
+  sample_n(size = 250, replace=F)%>%
+  ungroup()
+
+
+brf_16<-brf16_samp
+library(tidycensus)
+gini<-get_acs(geography = "state", variables  = "B19083_001" ,year = 2015)
+brf_16<-merge(brf_16, gini, by.x="state", by.y="GEOID", all.x=F)
+brf_16<-brf_16%>%
+  rename(gini=estimate)
+
+
+library(dataMaid)
+makeCodebook(brf_16, reportTitle = "Codebook for 2016 BRFSS data subset", vol = 1)
+
+save(brf_16, file = "~/Documents/GitHub/data/brf_16_psu.Rdata")
+```
